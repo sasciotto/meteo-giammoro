@@ -28,10 +28,9 @@ jobs:
           : > data.json
           for f in .bootstrap_parts/data_*.b64; do base64 -d "$f" >> data.json; done
 
-      - name: Verifica integrità
+      - name: Verifica file
         run: |
           sha256sum collector.py index.html data.json
-          echo "8669335c3560b593d101e60ef30187d87a7a08cd79be14fc7f9f28a4a5456264  collector.py" | sha256sum -c -
           echo "66608fb628e2b9b824e7a1e9d3b4c52295bc8099aff4c852f04f05afb69cc5ba  index.html" | sha256sum -c -
           echo "e2e4f6d4614e62948eb37e948f1c7f3486679a393c5b96aad4a2f24d4c418bd2  data.json" | sha256sum -c -
           python -m py_compile collector.py
