@@ -1,0 +1,117 @@
+tions = previous.get("stations", [])
+        station_meta = {"source": "errore", "rows": 0}
+
+    try:
+        model_raw = fetch_models() if not offline else []
+        model_summaries = [summarize_model(x) for x in model_raw]
+    except Exception as exc:
+        errors.append(f"modelli: {exc}")
+        model_summaries = []
+
+    try:
+        ensembles = fetch_ensembles() if not offline else []
+    except Exception as exc:
+        errors.append(f"ensemble: {exc}")
+        ensembles = []
+
+    try:
+        dpc_obs = fetch_dpc_observations() if not offline else previous.get("dpc_observations", {})
+        if dpc_obs.get("errors"):
+            errors.extend(f"radar-dpc: {e}" for e in dpc_obs["errors"])
+    except Exception as exc:
+        errors.append(f"radar-dpc: {exc}")
+        dpc_obs = previous.get("dpc_observations", {})
+
+    try:
+        alert = fetch_alert() if not offline else previous.get("alert", {})
+    except Exception as exc:
+        errors.append(f"allerta: {exc}")
+        alert = previous.get("alert", {
+            "level_label": "Da verificare", "level_class": "unknown", "title": "Avviso ufficiale non acquisito",
+            "text": "Errore di acquisizione; consultare direttamente DRPC Sicilia.", "validity": "—", "source": "DRPC Sicilia"
+        })
+
+    ref_model = choose_reference_model(model_summaries)
+    territory = territory_from_reference_model(ref_model, dpc_obs) if model_summaries else previous.get("territory", territory_from_reference_model(None, dpc_obs))
+
+    now_label, now_level, now_note = risk_from_models(model_summaries, "next_0_3h") if model_summaries else (
+        previous.get("nowcast", {}).get("label", "Da verificare"), previous.get("nowcast", {}).get("level", "unknown"), "Modelli non aggiornati"
+    )
+    risk_label, risk_level, risk_note = risk_from_models(model_summaries, "next_3_48h") if model_summaries else (
+        previous.get("risk_48h", {}).get("label", "Da verificare"), previous.get("risk_48h", {}).get("level", "unknown"), "Modelli non aggiornati"
+    )
+
+    now_label, now_level, now_note = nowcast_from_dpc_and_models(dpc_obs, now_label, now_level, now_note)
+
+    current = {
+        "meta": {
+            "schema_version": "2.1", "last_check": now_local().strftime("%d/%m/%Y %H:%M %Z"),
+            "analysis_engine": "collector Python + regole deterministiche", "reference_area": "Giammoro, Pace del Mela (ME)",
+            "coordinates": [REF["latitude"], REF["longitude"]], "collector_status": "offline" if offline else ("degraded" if errors else "ok"),
+            "collector_errors": errors
+        },
+        "primary_station": {
+            "name": "MeteoGiammoro", "status": "maintenance", "status_label": "Fuori servizio",
+            "excluded_from_analysis": True,
+            "note": "Stazione esclusa dai calcoli perché in manutenzione, risoluzione guasto e test. Rientro previsto prima in TEST e poi ONLINE dopo validazione."
+        },
+        "nowcast": {"label": now_label, "level": now_level, "note": now_note + ". Radar/fulmini non ancora acquisiti automaticamente."},
+        "risk_48h": {"label": risk_label, "level": risk_level, "note": risk_note},
+        "territory": territory,
+        "alert": alert,
+        "latest_change": previous.get("latest_change", {
+            "time": "—", "title": "Nessun cambiamento registrato", "text": "—", "window": "—", "confidence": "—", "evidence": "—"
+        }),
+        "stations": stations,
+        "dpc_observations": dpc_obs,
+        "nowcast_evidence": {
+            "radar": dpc_radar_evidence(dpc_obs),
+            "rain_gauges": f"Stazioni/pluviometri raccolti dal feed locale: {station_meta.get('rows', 0)} righe disponibili; vengono mostrate solo le stazioni selezionate e la rete originaria.",
+            "lightning": "Connettore fulminazioni non ancora attivo: nessuna inferenza viene inventata in sua assenza.",
+            "satellite": dpc_satellite_evidence(dpc_obs),
+            "wind_pressure": "Il motore confronta vento/raffiche e pressione tra stazioni disponibili e modelli; i trend osservativi richiederanno la persistenza dello storico.",
+            "local_effects": "Giammoro viene valutata come area costiera della Valle del Mela, con possibili differenze rispetto a Milazzo, rilievi di Santa Lucia/Monforte e Stretto di Messina."
+        },
+        "models": build_model_rows(model_summaries, ensembles) if model_summaries else previous.get("models", []),
+        "model_details": model_summaries,
+        "ensemble_details": ensembles,
+        "reasoning": {
+            "location": "Backend / GitHub Actions",
+            "description": "Il collector acquisisce stazioni, modelli e avviso ufficiale, normalizza i valori e produce una stima riferita esclusivamente alle coordinate di Giammoro. Le stazioni vicine restano osservazioni separate. Le regole deterministiche danno priorità a Radar-DPC nel 0–3 h, segnalano variazioni e confrontano i modelli. L'analisi meteorologica esperta/AI resta un livello successivo per traiettorie complesse, fulminazioni non ancora integrate, convergenze e interpretazione sinottica."
+        },
+        "sources": [
+            "DRPC Sicilia / CFD + bollettino nazionale DPC", "Radar-DPC (SRI/VMI/SRT1/CUM24/TEMP/IR10.8)", "Centro Meteorologico Siciliano - Database Stazioni Live",
+            "SIAS / DRPC / reti originarie riportate dal feed", "ItaliaMeteo ICON-2I via Open-Meteo",
+            "DWD ICON via Open-Meteo", "ECMWF IFS/ENS via Open-Meteo", "NOAA GFS/GEFS via Open-Meteo"
+        ],
+        "history": previous.get("history", [])[-50:]
+    }
+
+    change = significant_change(previous, current) if previous else None
+    if change:
+        current["latest_change"] = change
+        current["history"] = ([{"time": change["time"], "text": change["title"]}] + current["history"])[:50]
+
+    return current
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--offline", action="store_true", help="Non effettua richieste di rete; valida solo la pipeline sui dati esistenti")
+    parser.add_argument("--stdout", action="store_true")
+    args = parser.parse_args()
+    data = run(offline=args.offline)
+    payload = json.dumps(data, ensure_ascii=False, indent=2) + "\n"
+    if args.stdout:
+        sys.stdout.write(payload)
+    else:
+        DATA_PATH.write_text(payload, encoding="utf-8")
+        HISTORY_PATH.write_text(json.dumps(data.get("history", []), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        print(f"Aggiornato {DATA_PATH}")
+        if data.get("meta", {}).get("collector_errors"):
+            print("Avvisi:", " | ".join(data["meta"]["collector_errors"]))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
