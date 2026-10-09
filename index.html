@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meteo Giammoro — Dashboard territoriale</title>
+<meta name="description" content="Dashboard meteorologica multi-sorgente per il territorio di Giammoro, Pace del Mela (ME).">
+<style>
+:root{
+  color-scheme:light;
+  --bg:#eef3f6;--surface:#fff;--surface2:#f7fafb;--text:#14202a;--muted:#64727d;--line:#d8e1e6;
+  --accent:#0f6786;--accent2:#0d4d66;--ok:#267447;--warn:#986400;--danger:#ad2a2a;--offline:#6c7378;
+  --shadow:0 8px 26px rgba(26,44,56,.07)
+}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:1240px;margin:auto;padding:22px}.hero{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:18px 0 16px}
+h1{font-size:clamp(30px,5vw,48px);line-height:1;margin:0 0 7px;letter-spacing:-.025em}.sub,.muted{color:var(--muted)}
+.hero-meta{text-align:right;font-size:13px;color:var(--muted)}.grid{display:grid;gap:12px}.top-grid{grid-template-columns:repeat(4,1fr)}
+.two{grid-template-columns:1.35fr .65fr}.three{grid-template-columns:repeat(3,1fr)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:17px;box-shadow:var(--shadow)}
+.k{font-size:12px;text-transform:uppercase;letter-spacing:.075em;color:var(--muted)}.v{font-size:23px;font-weight:760;margin-top:3px}.small{font-size:13px}.section{margin-top:14px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:0 0 10px}.section-title h2{font-size:20px;margin:0}
+.badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-weight:750;font-size:12px;white-space:nowrap}.badge:before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}.low,.online{background:#e8f5ed;color:var(--ok)}.moderato,.warning,.test{background:#fff3d8;color:var(--warn)}.elevato,.orange,.red{background:#fee9e9;color:var(--danger)}.offline,.maintenance,.unknown{background:#edf0f2;color:var(--offline)}
+.alert-card{border-left:5px solid var(--warn)}.alert-card.orange-border{border-left-color:#d87312}.change{border-left:4px solid var(--accent);padding-left:14px}.change p{margin:.45rem 0}.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.metric{background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:11px}.metric .mv{font-size:19px;font-weight:740}.metric .ms{font-size:11px;color:var(--muted)}
+.station-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.station{border:1px solid var(--line);border-radius:14px;padding:13px;background:var(--surface)}.station-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;margin-bottom:10px}.station-name{font-weight:760}.station-source{font-size:11px;color:var(--muted)}.station-values{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.station-value{background:var(--surface2);border-radius:9px;padding:8px}.station-value b{display:block;font-size:15px}.station-value span{font-size:10px;color:var(--muted)}
+.table-wrap{overflow:auto}table{width:100%;border-collapse:collapse;min-width:780px}th,td{text-align:left;padding:9px 8px;border-top:1px solid var(--line);white-space:nowrap}th{border-top:0;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.timeline article{padding:10px 0;border-top:1px solid var(--line)}.timeline article:first-child{border-top:0}.sources{display:flex;flex-wrap:wrap;gap:7px}.chip{border:1px solid var(--line);border-radius:999px;padding:5px 9px;background:var(--surface2);font-size:12px}
+a.source-link{color:var(--accent);font-weight:650;text-decoration:none}a.source-link:hover{text-decoration:underline}.callout{background:#eef7fb;border:1px solid #cce3ed;border-radius:13px;padding:12px;color:#214d60}.foot{padding:28px 0 12px;color:var(--muted);font-size:12px}.empty{color:var(--muted);font-style:italic}
+@media(max-width:980px){.top-grid,.three{grid-template-columns:repeat(2,1fr)}.two{grid-template-columns:1fr}.station-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.wrap{padding:14px}.hero{display:block}.hero-meta{text-align:left;margin-top:10px}.top-grid,.three,.metric-grid,.station-grid{grid-template-columns:1fr 1fr}.station-values{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:430px){.top-grid,.three,.metric-grid,.station-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="hero">
+  <div><h1>Meteo Giammoro</h1><div class="sub">Dashboard territoriale multi-sorgente · Pace del Mela (ME)</div></div>
+  <div class="hero-meta">Ultimo controllo: <strong id="checked">—</strong><br><span id="engine">Motore analisi: —</span><br><span id="collector">Collector: —</span></div>
+</header>
+
+<div class="grid top-grid">
+  <div class="card"><div class="k">Territorio di riferimento</div><div class="v">Giammoro</div><div class="small muted">Non una media delle stazioni</div></div>
+  <div class="card"><div class="k">Nowcasting 0–3 h</div><div class="v" id="nowcast">—</div><div class="small muted" id="nowcastNote"></div></div>
+  <div class="card"><div class="k">Rischio 3–48 h</div><div class="v" id="risk">—</div><div class="small muted" id="riskNote"></div></div>
+  <div class="card"><div class="k">Stazione primaria</div><div class="v" id="primaryStation">—</div><div class="small muted" id="primaryStationNote"></div></div>
+</div>
+
+<section class="section grid two">
+  <div class="card">
+    <div class="section-title"><h2>Situazione su Giammoro</h2><span class="badge unknown" id="territoryQuality">—</span></div>
+    <div class="callout" id="territoryBasis">—</div>
+    <div class="metric-grid" id="territoryMetrics" style="margin-top:11px"></div>
+    <div id="territorySummary" style="margin-top:11px"></div>
+  </div>
+  <div class="card alert-card" id="alertCard">
+    <div class="section-title"><h2>Allerta ufficiale</h2><span class="badge unknown" id="alertLevel">—</span></div>
+    <div id="alertBody"></div>
+  </div>
+</section>
+
+<section class="section card">
+  <div class="section-title"><h2>Ultimo cambiamento significativo</h2><span class="small muted" id="changeTime"></span></div>
+  <div class="change" id="latest"></div>
+</section>
+
+<section class="section card">
+  <div class="section-title"><h2>Rete stazioni locali</h2><span class="small muted">Supporto e validazione per Giammoro</span></div>
+  <div class="callout">Le osservazioni delle stazioni vicine restano attribuite alla loro località. Sono usate come evidenza per Giammoro solo dopo controllo di distanza, quota, esposizione, coerenza spaziale e confronto con radar/satellite.</div>
+  <div class="station-grid" id="stations" style="margin-top:11px"></div>
+</section>
+
+<section class="section grid three">
+  <div class="card"><div class="section-title"><h2>Radar / pioggia</h2></div><div id="radar"></div></div>
+  <div class="card"><div class="section-title"><h2>Fulmini / satellite</h2></div><div id="convective"></div></div>
+  <div class="card"><div class="section-title"><h2>Vento / pressione</h2></div><div id="dynamics"></div></div>
+</section>
+
+<section class="section card">
+  <div class="section-title"><h2>Previsione multi-modello</h2><span class="small muted">3–48 h e 2–7+ giorni</span></div>
+  <div class="table-wrap"><table><thead><tr><th>Orizzonte</th><th>Modelli</th><th>Segnale</th><th>Accordo</th><th>Nota per Giammoro</th></tr></thead><tbody id="models"></tbody></table></div>
+</section>
+
+<section class="section grid two">
+  <div class="card timeline"><div class="section-title"><h2>Storico cambiamenti</h2></div><div id="history"></div></div>
+  <div class="card"><div class="section-title"><h2>Fonti e motore di ragionamento</h2></div><div id="reasoning"></div><div class="sources" id="sources" style="margin-top:10px"></div></div>
+</section>
+
+<footer class="foot">Dashboard informativa. Le allerte e le indicazioni operative ufficiali restano quelle della Protezione Civile e delle autorità competenti.</footer>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const show=v=>(v===null||v===undefined||v==='')?'—':esc(v);
+const badge=(label,level='unknown')=>`<span class="badge ${esc(level)}">${esc(label||'—')}</span>`;
+const metric=(label,value,unit='',note='')=>`<div class="metric"><div class="k">${esc(label)}</div><div class="mv">${show(value)}${value===null||value===undefined||value===''?'':esc(unit)}</div>${note?`<div class="ms">${esc(note)}</div>`:''}</div>`;
+const sv=(label,value,unit='')=>`<div class="station-value"><span>${esc(label)}</span><b>${show(value)}${value===null||value===undefined||value===''?'':esc(unit)}</b></div>`;
+const safeUrl=u=>{try{const x=new URL(u,location.href);return ['http:','https:'].includes(x.protocol)?x.href:null}catch{return null}};
+
+fetch('data.json?'+Date.now()).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}).then(d=>{
+  $('checked').textContent=d.meta?.last_check||'—';
+  $('engine').textContent='Motore analisi: '+(d.meta?.analysis_engine||'—');
+  const cs=d.meta?.collector_status||'unknown'; $('collector').innerHTML='Collector: '+badge(cs,cs==='ok'?'online':(cs==='degraded'?'warning':(cs==='offline'?'offline':'unknown')));
+  $('nowcast').innerHTML=badge(d.nowcast?.label,d.nowcast?.level); $('nowcastNote').textContent=d.nowcast?.note||'';
+  $('risk').innerHTML=badge(d.risk_48h?.label,d.risk_48h?.level); $('riskNote').textContent=d.risk_48h?.note||'';
+  const ps=d.primary_station||{}; $('primaryStation').innerHTML=badge(ps.status_label,ps.status); $('primaryStationNote').textContent=ps.note||'';
+
+  const t=d.territory||{}; $('territoryQuality').className='badge '+(t.quality||'unknown'); $('territoryQuality').textContent=t.quality_label||'—';
+  $('territoryBasis').innerHTML=`<strong>${esc(t.title||'Giammoro')}</strong><br>${esc(t.basis||'')}`;
+  const m=t.metrics||{};
+  $('territoryMetrics').innerHTML=[
+    metric('Temperatura',m.temperature?.value,m.temperature?.unit,m.temperature?.quality),metric('Dew point',m.dew_point?.value,m.dew_point?.unit,m.dew_point?.quality),
+    metric('Umidità',m.humidity?.value,m.humidity?.unit,m.humidity?.quality),metric('Pressione',m.pressure?.value,m.pressure?.unit,m.pressure?.trend),
+    metric('Vento',m.wind?.value,m.wind?.unit,m.wind?.direction),metric('Raffica',m.gust?.value,m.gust?.unit),
+    metric('Pioggia 1 h',m.rain_1h?.value,m.rain_1h?.unit,m.rain_1h?.quality),metric('Pioggia 24 h',m.rain_24h?.value,m.rain_24h?.unit,m.rain_24h?.quality),
+    metric('Copertura nuvolosa',m.cloud_cover?.value,m.cloud_cover?.unit,m.cloud_cover?.quality)
+  ].join('');
+  $('territorySummary').innerHTML=`<strong>Valutazione:</strong> ${esc(t.summary||'—')}`;
+
+  const a=d.alert||{}; $('alertLevel').className='badge '+(a.level_class||'unknown'); $('alertLevel').textContent=a.level_label||'—';
+  $('alertCard').className='card alert-card '+(a.level_class==='orange'?'orange-border':'');
+  const alertUrl=safeUrl(a.url); $('alertBody').innerHTML=`<p><strong>${esc(a.title||'Nessuna informazione')}</strong></p><p>${esc(a.text||'')}</p><p class="small muted">Validità: ${esc(a.validity||'—')} · Fonte: ${esc(a.source||'—')}${alertUrl?` · <a class="source-link" href="${esc(alertUrl)}" target="_blank" rel="noopener">apri fonte</a>`:''}</p>`;
+
+  const c=d.latest_change||{}; $('changeTime').textContent=c.time||'';
+  $('latest').innerHTML=`<strong>${esc(c.title||'—')}</strong><p>${esc(c.text||'')}</p><p><b>Finestra:</b> ${esc(c.window||'—')} · <b>Confidenza:</b> ${esc(c.confidence||'—')}</p><p><b>Evidenze:</b> ${esc(c.evidence||'—')}</p>`;
+
+  $('stations').innerHTML=(d.stations||[]).map(s=>{const display=s.display_name||s.name;const actual=(display!==s.name)?`<div class="station-source">Stazione: ${esc(s.name)}</div>`:'';return `<article class="station"><div class="station-head"><div><div class="station-name">${esc(display)}</div>${actual}<div class="station-source">${esc(s.network||'Fonte non indicata')} · ${esc(s.updated||'—')}</div></div>${badge(s.status_label,s.status)}</div><div class="station-values">${sv('T',s.temperature,' °C')}${sv('Td',s.dew_point,' °C')}${sv('UR',s.humidity,' %')}${sv('Press.',s.pressure,' hPa')}${sv('Vento',s.wind,' km/h')}${sv('Raffica',s.gust,' km/h')}${sv('Pioggia oggi',s.rain_day,' mm')}${sv('Dir.',s.wind_direction,'')}</div>${s.note?`<p class="small muted">${esc(s.note)}</p>`:''}</article>`}).join('')||'<div class="empty">Nessuna stazione configurata.</div>';
+
+  $('radar').innerHTML=`<p>${esc(d.nowcast_evidence?.radar||'—')}</p><p class="small muted">Pluviometri: ${esc(d.nowcast_evidence?.rain_gauges||'—')}</p>`;
+  $('convective').innerHTML=`<p>${esc(d.nowcast_evidence?.lightning||'—')}</p><p class="small muted">Satellite: ${esc(d.nowcast_evidence?.satellite||'—')}</p>`;
+  $('dynamics').innerHTML=`<p>${esc(d.nowcast_evidence?.wind_pressure||'—')}</p><p class="small muted">Convergenze/orografia: ${esc(d.nowcast_evidence?.local_effects||'—')}</p>`;
+
+  $('models').innerHTML=(d.models||[]).map(x=>`<tr><td>${esc(x.horizon)}</td><td>${esc(x.models)}</td><td>${esc(x.signal)}</td><td>${esc(x.agreement)}</td><td>${esc(x.note)}</td></tr>`).join('')||'<tr><td colspan="5">Dati modello non disponibili.</td></tr>';
+  $('history').innerHTML=(d.history||[]).map(x=>`<article><b>${esc(x.time)}</b><br>${esc(x.text)}</article>`).join('')||'<div class="empty">Nessun cambiamento registrato.</div>';
+  const r=d.reasoning||{}; $('reasoning').innerHTML=`<p><strong>${esc(r.location||'—')}</strong></p><p>${esc(r.description||'')}</p><p class="small muted">La dashboard non effettua autonomamente inferenze meteorologiche: visualizza l'output validato del motore di analisi.</p>`;
+  $('sources').innerHTML=(d.sources||[]).map(x=>`<span class="chip">${esc(x)}</span>`).join('');
+}).catch(err=>{
+  $('territorySummary').innerHTML=`<b>Dati non disponibili.</b> <span class="muted">${esc(err.message)}</span>`;
+});
+</script></body></html>
