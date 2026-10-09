@@ -1,0 +1,178 @@
+"radius_km": radius_km, "count": 0, "point": point_value, "max": None, "mean": None, "p90": None}
+            return {
+                "radius_km": radius_km,
+                "count": int(vals.size),
+                "point": point_value,
+                "max": round(float(np.nanmax(vals)), 2),
+                "mean": round(float(np.nanmean(vals)), 2),
+                "p90": round(float(np.nanpercentile(vals, 90)), 2),
+            }
+
+
+def fetch_dpc_product_point(product_type: str, radii_km: tuple[int, ...] = (5, 15, 30)) -> dict[str, Any]:
+    latest = dpc_last_product(product_type)
+    ts = int(latest["time"])
+    raw = dpc_download_product(product_type, ts)
+    stats = [sample_geotiff_neighborhood(raw, REF["longitude"], REF["latitude"], r) for r in radii_km]
+    stamp = datetime.fromtimestamp(ts / 1000, tz=ZoneInfo("UTC")).astimezone(TZ)
+    return {
+        "product": product_type,
+        "ok": True,
+        "timestamp": stamp.isoformat(timespec="minutes"),
+        "age_minutes": max(0, int((now_local() - stamp).total_seconds() / 60)),
+        "period": latest.get("period"),
+        "stats": stats,
+    }
+
+
+def fetch_dpc_observations() -> dict[str, Any]:
+    """Scarica prodotti ufficiali DPC utili a Giammoro. Ogni prodotto fallisce in modo indipendente."""
+    products: dict[str, Any] = {}
+    errors: list[str] = []
+    # SRI=intensità istantanea, SRT1=cumulata 1h radar+pluviometri, CUM24=rete a terra interpolata,
+    # TEMP=rete termometrica interpolata, VMI=riflettività massima, IR_108=satellite.
+    for product, radii in [
+        ("SRI", (5, 15, 30)), ("SRT1", (5, 15, 30)), ("CUM24", (5,)),
+        ("TEMP", (5,)), ("VMI", (5, 15, 30)), ("IR_108", (5,)),
+    ]:
+        try:
+            products[product] = fetch_dpc_product_point(product, radii)
+        except Exception as exc:
+            products[product] = {"product": product, "ok": False, "error": str(exc)}
+            errors.append(f"{product}: {exc}")
+    return {"products": products, "errors": errors, "source": "Radar-DPC / Dipartimento Protezione Civile"}
+
+
+def _stat_max(product: dict[str, Any] | None, radius: int) -> float | None:
+    if not product or not product.get("ok"):
+        return None
+    for s in product.get("stats", []):
+        if int(s.get("radius_km", -1)) == radius:
+            return safe_float(s.get("max"))
+    return None
+
+
+def _stat_point(product: dict[str, Any] | None) -> float | None:
+    if not product or not product.get("ok"):
+        return None
+    for s in product.get("stats", []):
+        value = safe_float(s.get("point"))
+        if value is not None:
+            return value
+    return None
+
+
+def nowcast_from_dpc_and_models(dpc: dict[str, Any] | None, model_label: str, model_level: str, model_note: str) -> tuple[str, str, str]:
+    """Dà precedenza alle osservazioni radar DPC; non attribuisce una traiettoria senza HRD/animazione."""
+    products = (dpc or {}).get("products", {})
+    sri = products.get("SRI", {})
+    vmi = products.get("VMI", {})
+    srt = products.get("SRT1", {})
+    sri5, sri15, sri30 = (_stat_max(sri, r) for r in (5, 15, 30))
+    vmi15, vmi30 = (_stat_max(vmi, r) for r in (15, 30))
+    rain1_5 = _stat_max(srt, 5)
+    radar_available = any(v is not None for v in [sri5, sri15, sri30, vmi15, vmi30, rain1_5])
+    if not radar_available:
+        return model_label, model_level, model_note + ". Radar-DPC non disponibile nel ciclo corrente."
+
+    evidence = []
+    if sri5 is not None: evidence.append(f"SRI max 5 km {sri5:.1f} mm/h")
+    if sri15 is not None: evidence.append(f"SRI max 15 km {sri15:.1f} mm/h")
+    if sri30 is not None: evidence.append(f"SRI max 30 km {sri30:.1f} mm/h")
+    if vmi15 is not None: evidence.append(f"VMI max 15 km {vmi15:.0f} dBZ")
+    if rain1_5 is not None: evidence.append(f"SRT1 max 5 km {rain1_5:.1f} mm")
+
+    if (sri5 or 0) >= 10 or (vmi15 or 0) >= 50 or (rain1_5 or 0) >= 15:
+        return "Elevato (osservato)", "elevato", "Fenomeni intensi rilevati nell'area di Giammoro: " + ", ".join(evidence)
+    if (sri15 or 0) >= 5 or (vmi15 or 0) >= 40 or (rain1_5 or 0) >= 5:
+        return "Moderato–elevato (osservato)", "elevato", "Precipitazioni/eco radar significativi nelle immediate vicinanze: " + ", ".join(evidence)
+    if (sri30 or 0) >= 3 or (vmi30 or 0) >= 35:
+        return "Moderato (radar vicino)", "moderato", "Eco/precipitazioni rilevati entro ~30 km; traiettoria non dedotta automaticamente: " + ", ".join(evidence)
+    if (sri30 or 0) > 0.2 or (vmi30 or 0) >= 20:
+        return "Basso–moderato", "moderato", "Segnale radar debole o periferico nell'area vasta: " + ", ".join(evidence)
+    return "Basso (radar)", "low", "Radar-DPC senza segnali precipitativi rilevanti entro ~30 km; " + model_note
+
+
+def choose_reference_model(summaries: list[dict[str, Any]]) -> dict[str, Any] | None:
+    for preferred in ["ItaliaMeteo ICON-2I", "ECMWF IFS", "DWD ICON", "NOAA GFS"]:
+        for s in summaries:
+            if s.get("ok") and s.get("label") == preferred and s.get("current"):
+                return s
+    return next((s for s in summaries if s.get("ok") and s.get("current")), None)
+
+
+def risk_from_models(summaries: list[dict[str, Any]], key: str) -> tuple[str, str, str]:
+    available = [s for s in summaries if s.get("ok")]
+    if not available:
+        return "Da verificare", "unknown", "Modelli non disponibili"
+    severe = 0
+    moderate = 0
+    signals = []
+    for s in available:
+        x = s.get(key, {})
+        rain = x.get("precip_sum") or 0
+        maxh = x.get("precip_max_h") or 0
+        gust = x.get("gust_max") or 0
+        cape = x.get("cape_max") or 0
+        thunder = bool(x.get("thunder_signal"))
+        if thunder or rain >= 20 or maxh >= 10 or gust >= 70 or cape >= 1800:
+            severe += 1
+        if rain >= 5 or maxh >= 3 or gust >= 50 or cape >= 800:
+            moderate += 1
+        if rain >= 1:
+            signals.append(f"{s['label']}: {rain:.1f} mm")
+    n = len(available)
+    if severe >= 2:
+        return "Elevato (modellistico)", "elevato", f"Segnale forte in {severe}/{n} modelli"
+    if moderate >= 2:
+        return "Moderato", "moderato", f"Segnale significativo in {moderate}/{n} modelli"
+    if moderate == 1:
+        return "Basso–moderato", "moderato", f"Segnale isolato in 1/{n} modelli"
+    return "Basso", "low", "Nessun segnale marcato nel consenso modellistico"
+
+
+def model_agreement(summaries: list[dict[str, Any]], key: str) -> tuple[str, str]:
+    vals = []
+    for s in summaries:
+        if not s.get("ok"):
+            continue
+        p = s.get(key, {}).get("precip_sum")
+        if p is not None:
+            vals.append(float(p))
+    if len(vals) < 2:
+        return "insufficiente", "Pochi modelli disponibili"
+    mean = statistics.fmean(vals)
+    spread = max(vals) - min(vals)
+    if spread <= max(2.0, mean * 0.5):
+        return "alto", f"Pioggia prevista abbastanza coerente ({min(vals):.1f}–{max(vals):.1f} mm)"
+    if spread <= max(8.0, mean * 1.2):
+        return "medio", f"Differenze rilevanti ({min(vals):.1f}–{max(vals):.1f} mm)"
+    return "basso", f"Forte divergenza ({min(vals):.1f}–{max(vals):.1f} mm)"
+
+
+def territory_from_reference_model(ref_model: dict[str, Any] | None, dpc: dict[str, Any] | None = None) -> dict[str, Any]:
+    if not ref_model:
+        return {
+            "title": "Giammoro — situazione territoriale", "quality": "unknown", "quality_label": "Dato non disponibile",
+            "basis": "Nessun modello sul punto disponibile e MeteoGiammoro è esclusa.", "metrics": {},
+            "summary": "Impossibile stimare il quadro territoriale senza inventare dati."
+        }
+    c = ref_model.get("current", {})
+    products = (dpc or {}).get("products", {})
+    dpc_temp = _stat_point(products.get("TEMP"))
+    dpc_rain1 = _stat_point(products.get("SRT1"))
+    dpc_rain24 = _stat_point(products.get("CUM24"))
+    temp_value = dpc_temp if dpc_temp is not None else safe_float(c.get("temperature_2m"))
+    temp_source = "Radar-DPC TEMP (rete termometrica interpolata)" if dpc_temp is not None else ref_model["label"]
+    td = None
+    # il current endpoint non espone sempre dewpoint: usa prima ora hourly se necessario, altrimenti formula da T/RH
+    td = dew_point_c(safe_float(c.get("temperature_2m")), safe_float(c.get("relative_humidity_2m")))
+    return {
+        "title": "Giammoro — situazione territoriale",
+        "quality": "test", "quality_label": "Stima sul punto",
+        "basis": f"Valori riferiti alle coordinate di Giammoro da {ref_model['label']}; le stazioni circostanti sono usate separatamente per controllo e contesto, non come sostituzione diretta.",
+        "metrics": {
+            "temperature": {"value": temp_value, "unit": " °C", "quality": temp_source},
+            "dew_point": {"value": td, "unit": " °C", "quality": "derivato da T/UR"},
+            "humidity": {"value": safe_float(c.get("relative_humidity_2m")), "unit": " %", "quality": f"{ref_model['label']}"},
+            "pressure": {"value": safe_float(c.get("pressure_msl")), 
