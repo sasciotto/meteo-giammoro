@@ -1,0 +1,188 @@
+"]
+        note = None
+        if selected["name"] != group["label"]:
+            note = f"Stazione effettiva: {selected['name']}. Il dato resta attribuito a questa stazione ed è usato solo come supporto per {group['label']}."
+        item = {
+            "name": selected["name"], "display_name": display_name,
+            "network": st.get("network") or "fonte non indicata",
+            "source_quality": q, "source_quality_label": q_label,
+            "status": status, "status_label": status_label,
+            "updated": f"{st.get('time') or '—'}" + (f" · {age} min fa" if age is not None else ""),
+            "temperature": st.get("temperature"), "dew_point": td, "humidity": st.get("humidity"),
+            "pressure": st.get("pressure"), "wind": st.get("wind"), "gust": st.get("gust"),
+            "wind_direction": st.get("wind_direction"), "rain_1h": None, "rain_24h": None,
+            "rain_day": st.get("rain_day"), "altitude_m": st.get("altitude_m"),
+            "excluded_from_analysis": status not in {"online", "test"}, "note": note,
+        }
+        stations.append(item)
+        found[group["label"]] = item
+
+    # Supporto aggiuntivo senza duplicati
+    existing = {s["name"] for s in stations}
+    for name in CONFIG.get("additional_support", []):
+        if name not in rows or name in existing:
+            continue
+        st = rows[name]
+        status, status_label, age = station_age_status(st.get("time"), now)
+        q, q_label = network_quality(st.get("network", ""))
+        stations.append({
+            "name": name, "display_name": name, "network": st.get("network") or "fonte non indicata",
+            "source_quality": q, "source_quality_label": q_label, "status": status, "status_label": status_label,
+            "updated": f"{st.get('time') or '—'}" + (f" · {age} min fa" if age is not None else ""),
+            "temperature": st.get("temperature"), "dew_point": dew_point_c(st.get("temperature"), st.get("humidity")),
+            "humidity": st.get("humidity"), "pressure": st.get("pressure"), "wind": st.get("wind"),
+            "gust": st.get("gust"), "wind_direction": st.get("wind_direction"), "rain_1h": None,
+            "rain_24h": None, "rain_day": st.get("rain_day"), "altitude_m": st.get("altitude_m"),
+            "excluded_from_analysis": status not in {"online", "test"},
+            "note": "Stazione aggiuntiva di supporto territoriale."
+        })
+
+    meta = {"source": "Centro Meteorologico Siciliano - Database Stazioni Live", "url": CMS_URL, "rows": len(rows)}
+    return stations, meta
+
+
+def model_params(model_id: str, days: int) -> dict[str, Any]:
+    hourly = [
+        "temperature_2m", "relative_humidity_2m", "dew_point_2m", "precipitation", "showers",
+        "weather_code", "pressure_msl", "cloud_cover", "wind_speed_10m", "wind_direction_10m",
+        "wind_gusts_10m", "cape"
+    ]
+    current = [
+        "temperature_2m", "relative_humidity_2m", "precipitation", "rain", "showers", "weather_code",
+        "cloud_cover", "pressure_msl", "wind_speed_10m", "wind_direction_10m", "wind_gusts_10m"
+    ]
+    return {
+        "latitude": REF["latitude"], "longitude": REF["longitude"], "elevation": REF["elevation_m"],
+        "timezone": REF["timezone"], "forecast_days": days, "models": model_id,
+        "hourly": ",".join(hourly), "current": ",".join(current),
+        "wind_speed_unit": "kmh", "precipitation_unit": "mm", "temperature_unit": "celsius"
+    }
+
+
+def fetch_models() -> list[dict[str, Any]]:
+    results = []
+    for label, model_id, days in MODEL_SPECS:
+        try:
+            raw = fetch_json(OPEN_METEO, model_params(model_id, days))
+            results.append({"label": label, "id": model_id, "ok": True, "raw": raw})
+        except Exception as exc:
+            results.append({"label": label, "id": model_id, "ok": False, "error": str(exc)})
+    return results
+
+
+def hourly_window(raw: dict[str, Any], start_hours: int, end_hours: int, now: datetime | None = None) -> list[dict[str, Any]]:
+    now = now or now_local()
+    h = raw.get("hourly", {})
+    times = h.get("time", [])
+    rows = []
+    for i, t in enumerate(times):
+        try:
+            dt = datetime.fromisoformat(t)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=TZ)
+        except Exception:
+            continue
+        dh = (dt - now).total_seconds() / 3600
+        if start_hours <= dh <= end_hours:
+            row = {"time": dt}
+            for key, vals in h.items():
+                if key == "time" or not isinstance(vals, list) or i >= len(vals):
+                    continue
+                row[key] = vals[i]
+            rows.append(row)
+    return rows
+
+
+def max_numeric(rows: list[dict[str, Any]], key: str) -> float | None:
+    vals = [safe_float(r.get(key)) for r in rows]
+    vals = [v for v in vals if v is not None]
+    return max(vals) if vals else None
+
+
+def sum_numeric(rows: list[dict[str, Any]], key: str) -> float | None:
+    vals = [safe_float(r.get(key)) for r in rows]
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals), 1) if vals else None
+
+
+def summarize_model(model: dict[str, Any], now: datetime | None = None) -> dict[str, Any]:
+    if not model.get("ok"):
+        return {"label": model["label"], "id": model["id"], "ok": False, "error": model.get("error")}
+    raw = model["raw"]
+    w03 = hourly_window(raw, -0.5, 3.5, now)
+    w348 = hourly_window(raw, 3.0, 48.0, now)
+    w27d = hourly_window(raw, 48.0, 168.0, now)
+    def summary(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        codes = [int(v) for v in [safe_float(r.get("weather_code")) for r in rows] if v is not None]
+        temps = [safe_float(r.get("temperature_2m")) for r in rows]
+        temps = [x for x in temps if x is not None]
+        return {
+            "precip_sum": sum_numeric(rows, "precipitation"),
+            "precip_max_h": max_numeric(rows, "precipitation"),
+            "gust_max": max_numeric(rows, "wind_gusts_10m"),
+            "cape_max": max_numeric(rows, "cape"),
+            "thunder_signal": any(c >= 95 for c in codes),
+            "temp_min": round(min(temps), 1) if temps else None,
+            "temp_max": round(max(temps), 1) if temps else None,
+        }
+    return {
+        "label": model["label"], "id": model["id"], "ok": True,
+        "current": raw.get("current", {}),
+        "next_0_3h": summary(w03), "next_3_48h": summary(w348), "days_2_7": summary(w27d),
+        "grid": {"latitude": raw.get("latitude"), "longitude": raw.get("longitude"), "elevation": raw.get("elevation")}
+    }
+
+
+def fetch_ensembles() -> list[dict[str, Any]]:
+    out = []
+    variables = [
+        "temperature_2m", "temperature_2m_spread", "precipitation", "precipitation_spread",
+        "wind_gusts_10m", "wind_gusts_10m_spread", "cape", "cape_spread"
+    ]
+    for label, model_id in ENSEMBLE_SPECS:
+        params = {
+            "latitude": REF["latitude"], "longitude": REF["longitude"], "elevation": REF["elevation_m"],
+            "timezone": REF["timezone"], "forecast_days": 7, "models": model_id,
+            "hourly": ",".join(variables), "wind_speed_unit": "kmh", "precipitation_unit": "mm"
+        }
+        try:
+            raw = fetch_json(OPEN_METEO_ENSEMBLE, params)
+            rows = hourly_window(raw, 48, 168)
+            out.append({
+                "label": label, "id": model_id, "ok": True,
+                "temp_spread_max": max_numeric(rows, "temperature_2m_spread"),
+                "precip_mean_sum_2_7d": sum_numeric(rows, "precipitation"),
+                "precip_spread_max": max_numeric(rows, "precipitation_spread"),
+                "gust_mean_max": max_numeric(rows, "wind_gusts_10m"),
+                "gust_spread_max": max_numeric(rows, "wind_gusts_10m_spread"),
+                "cape_mean_max": max_numeric(rows, "cape"),
+                "cape_spread_max": max_numeric(rows, "cape_spread")
+            })
+        except Exception as exc:
+            out.append({"label": label, "id": model_id, "ok": False, "error": str(exc)})
+    return out
+
+
+def normalize_alert_class(value: str | None) -> str:
+    """Converte la terminologia italiana dell'allerta nelle classi UI interne."""
+    v = (value or "unknown").strip().lower()
+    return {
+        "verde": "low", "green": "low", "low": "low",
+        "gialla": "warning", "giallo": "warning", "yellow": "warning", "warning": "warning",
+        "arancione": "orange", "orange": "orange",
+        "rossa": "red", "rosso": "red", "red": "red",
+    }.get(v, "unknown")
+
+
+def parse_alert_level_from_text(text: str) -> tuple[str | None, str | None, str]:
+    clean = re.sub(r"\s+", " ", text or " ")
+    patterns = [
+        r"(?:ZONA|zona)\s*A.{0,500}?\b(ROSSA|ARANCIONE|GIALLA|VERDE)\b",
+        r"\bA\b.{0,250}?\b(ROSSA|ARANCIONE|GIALLA|VERDE)\b",
+    ]
+    for pat in patterns:
+        m = re.search(pat, clean, flags=re.I)
+        if m:
+            word = m.group(1).upper()
+            return normalize_alert_class(word), word.title(), "estrazione automatica zona A"
+    return 
