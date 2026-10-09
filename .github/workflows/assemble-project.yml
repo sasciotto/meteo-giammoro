@@ -1,0 +1,62 @@
+name: Assembla Meteo Giammoro
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/assemble-project.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ricomponi file
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .bootstrap_parts/collector_*.part > collector.py
+          : > index.html
+          for f in .bootstrap_parts/index_*.b64; do base64 -d "$f" >> index.html; done
+          : > data.json
+          for f in .bootstrap_parts/data_*.b64; do base64 -d "$f" >> data.json; done
+
+      - name: Verifica integrità
+        run: |
+          echo "8669335c3560b593d101e60ef30187d87a7a08cd79be14fc7f9f28a4a5456264  collector.py" | sha256sum -c -
+          echo "66608fb628e2b9b824e7a1e9d3b4c52295bc8099aff4c852f04f05afb69cc5ba  index.html" | sha256sum -c -
+          echo "e2e4f6d4614e62948eb37e948f1c7f3486679a393c5b96aad4a2f24d4c418bd2  data.json" | sha256sum -c -
+
+      - name: Correggi nota nowcasting
+        run: |
+          sed -i 's/Radar\/fulmini non ancora acquisiti automaticamente\./Fulminazioni non ancora acquisite automaticamente./' collector.py
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Dipendenze
+        run: pip install -r requirements.txt
+
+      - name: Test
+        run: python -m pytest -q
+
+      - name: Primo aggiornamento live
+        run: python collector.py
+
+      - name: Pubblica progetto
+        run: |
+          rm -rf .bootstrap_parts
+          git config user.name "meteo-giammoro-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A collector.py index.html data.json history.json .bootstrap_parts
+          git commit -m "Pubblica dashboard Meteo Giammoro 2.1 e primo aggiornamento live"
+          git push
