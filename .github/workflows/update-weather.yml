@@ -4,18 +4,32 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "7,37 * * * *"
+  push:
+    branches:
+      - main
+    paths:
+      - "index.html"
+      - "data.json"
+      - "history.json"
+      - ".github/workflows/update-weather.yml"
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 concurrency:
-  group: meteo-giammoro-update
+  group: meteo-giammoro-pages
   cancel-in-progress: true
 
 jobs:
-  update:
+  update-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,14 +49,32 @@ jobs:
       - name: Aggiorna dati
         run: python collector.py
 
-      - name: Pubblica solo se cambia data.json
+      - name: Salva dati aggiornati nel repository
         run: |
           if git diff --quiet -- data.json history.json; then
             echo "Nessuna modifica ai dati"
-            exit 0
+          else
+            git config user.name "meteo-giammoro-bot"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data.json history.json
+            git commit -m "Aggiorna dati meteo"
+            git push
           fi
-          git config user.name "meteo-giammoro-bot"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data.json history.json
-          git commit -m "Aggiorna dati meteo"
-          git push
+
+      - name: Prepara sito
+        run: |
+          rm -rf _site
+          mkdir _site
+          cp index.html data.json history.json .nojekyll _site/
+
+      - name: Configura GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Carica artifact Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Pubblica GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
