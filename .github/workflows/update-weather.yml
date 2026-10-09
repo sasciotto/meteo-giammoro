@@ -1,0 +1,48 @@
+name: Aggiorna Meteo Giammoro
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "7,37 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meteo-giammoro-update
+  cancel-in-progress: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Dipendenze
+        run: pip install -r requirements.txt
+
+      - name: Test
+        run: python -m pytest -q
+
+      - name: Aggiorna dati
+        run: python collector.py
+
+      - name: Pubblica solo se cambia data.json
+        run: |
+          if git diff --quiet -- data.json history.json; then
+            echo "Nessuna modifica ai dati"
+            exit 0
+          fi
+          git config user.name "meteo-giammoro-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json history.json
+          git commit -m "Aggiorna dati meteo"
+          git push
