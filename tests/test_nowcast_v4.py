@@ -44,3 +44,29 @@ def test_refresh_runtime_text_mentions_active_sources():
     assert "Radar-DPC" in row["models"]
     assert "EUMETSAT MTG-LI" in row["models"]
     assert "EUMETSAT MTG-LI" in data["analysis_confidence"]["note"]
+
+
+def test_hazard_cell_prefers_nearer_relevant_cell_over_tracked_identity():
+    data = {
+        "nowcast_tracking": {
+            "status": "detected",
+            "product": "SRI",
+            "cell": {"lat": 38.30, "lon": 15.55, "distance_km": 30.0, "peak_value": 35.0, "pixels": 60},
+            "candidates": [
+                {"lat": 38.30, "lon": 15.55, "distance_km": 30.0, "peak_value": 35.0, "pixels": 60, "relevance": 90},
+                {"lat": 38.21, "lon": 15.34, "distance_km": 4.0, "peak_value": 12.0, "pixels": 12, "relevance": 30},
+            ],
+        }
+    }
+    nowcast_v4.attach_hazard_cells(data)
+    tr = data["nowcast_tracking"]
+    assert tr["tracked_cell"]["distance_km"] == 30.0
+    assert tr["hazard_cell"]["distance_km"] == 4.0
+    assert tr["hazard_same_as_tracked"] is False
+    assert tr["hazard_cell"]["hazard_score"] > 0
+
+
+def test_hazard_score_penalizes_distance_strongly():
+    near = {"distance_km": 5, "peak_value": 10, "pixels": 10}
+    far = {"distance_km": 30, "peak_value": 25, "pixels": 20}
+    assert nowcast_v4.hazard_score(near, "SRI") > nowcast_v4.hazard_score(far, "SRI")
