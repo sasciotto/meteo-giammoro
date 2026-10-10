@@ -15,6 +15,8 @@ on:
       - "nowcast_v4.py"
       - "lightning_eumetsat.py"
       - "verification_engine.py"
+      - "verification_engine_v2.py"
+      - "config/**"
       - "requirements.txt"
       - "tests/**"
       - ".github/workflows/update-weather.yml"
@@ -65,7 +67,7 @@ jobs:
         run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
 
       - name: Verifica ex-post e archivio eventi
-        run: python verification_engine.py --data data.json --verification verification.json --events events.json
+        run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
 
       - name: Salva dati aggiornati nel repository
         run: |
@@ -98,5 +100,5 @@ jobs:
         uses: actions/deploy-pages@v4
 
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
-# Verifica ex-post: orizzonti 30/60/120 min; non modifica le decisioni operative del nowcasting.
+# Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
