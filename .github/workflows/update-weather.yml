@@ -14,7 +14,6 @@ on:
       - "collector.py"
       - "nowcast_engine.py"
       - "nowcast_v2.py"
-      - "nowcast_v3.py"
       - "tests/**"
       - ".github/workflows/update-weather.yml"
 
@@ -57,8 +56,8 @@ jobs:
       - name: Aggiorna dati base
         run: python collector.py
 
-      - name: Tracking multi-cella, multi-frame e fulminazioni
-        run: python nowcast_v3.py --data data.json --previous /tmp/data-previous.json --history history.json
+      - name: Tracking multi-cella e multi-frame
+        run: python nowcast_v2.py --data data.json --previous /tmp/data-previous.json --history history.json
 
       - name: Salva dati aggiornati nel repository
         run: |
@@ -68,7 +67,7 @@ jobs:
             git config user.name "meteo-giammoro-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data.json history.json
-            git commit -m "Aggiorna dati meteo, tracking e fulminazioni"
+            git commit -m "Aggiorna dati meteo e tracking radar"
             git push
           fi
 
@@ -90,4 +89,4 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# Il deploy espone tracking radar multi-cella, confidence score e LTG/LAMPINET.
+# LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
