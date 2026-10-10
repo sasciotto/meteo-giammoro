@@ -14,6 +14,7 @@ on:
       - "collector.py"
       - "nowcast_engine.py"
       - "nowcast_v2.py"
+      - "nowcast_v3.py"
       - "tests/**"
       - ".github/workflows/update-weather.yml"
 
@@ -57,7 +58,7 @@ jobs:
         run: python collector.py
 
       - name: Tracking multi-cella, multi-frame e fulminazioni
-        run: python nowcast_v2.py --data data.json --previous /tmp/data-previous.json --history history.json
+        run: python nowcast_v3.py --data data.json --previous /tmp/data-previous.json --history history.json
 
       - name: Salva dati aggiornati nel repository
         run: |
