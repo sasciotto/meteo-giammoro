@@ -10,6 +10,7 @@ on:
     paths:
       - "index.html"
       - "collector.py"
+      - "home_forecast.py"
       - "nowcast_engine.py"
       - "nowcast_v2.py"
       - "nowcast_v4.py"
@@ -66,6 +67,19 @@ jobs:
       - name: Tracking multi-cella, multi-frame e fulminazioni
         run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
 
+      - name: Sintesi home e previsione breve
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import collector
+          import home_forecast
+          p=Path('data.json')
+          data=json.loads(p.read_text(encoding='utf-8'))
+          data=home_forecast.apply(data, collector)
+          p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          PY
+
       - name: Verifica ex-post e archivio eventi
         run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
 
@@ -77,7 +91,7 @@ jobs:
             git config user.name "meteo-giammoro-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data.json history.json verification.json events.json
-            git commit -m "Aggiorna dati meteo, tracking e verifica ex-post"
+            git commit -m "Aggiorna dati meteo, tracking, home e verifica ex-post"
             git push
           fi
 
@@ -101,4 +115,5 @@ jobs:
 
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
+# Home: sintesi deterministica backend + previsione oraria/oggi-domani.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
