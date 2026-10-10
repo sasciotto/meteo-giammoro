@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 import lightning_eumetsat as eum_li
@@ -38,6 +39,51 @@ def sanitize_territory_metrics(data: dict) -> None:
         metrics["dew_point"] = dew
 
 
+def hazard_score(candidate: dict, product: str) -> float:
+    """Punteggio della rilevanza locale per Giammoro, distinto dal tracking."""
+    try:
+        distance = max(0.0, float(candidate.get("distance_km", 999.0)))
+        peak = max(0.0, float(candidate.get("peak_value", 0.0)))
+        pixels = max(1.0, float(candidate.get("pixels", 1.0)))
+    except (TypeError, ValueError):
+        return 0.0
+    base = 1.0 if str(product).upper() == "SRI" else 30.0
+    intensity = peak / base
+    proximity_penalty = 1.0 + (distance / 8.0) ** 2
+    return intensity * math.sqrt(pixels) / proximity_penalty
+
+
+def attach_hazard_cells(data: dict) -> None:
+    """Espone separatamente la cella tracciata e quella più rilevante localmente."""
+    tr = data.get("nowcast_tracking", {}) or {}
+    if tr.get("status") != "detected":
+        return
+
+    tracked = dict(tr.get("cell", {}) or {})
+    if not tracked:
+        return
+    tr["tracked_cell"] = tracked
+
+    candidates = [dict(c) for c in (tr.get("candidates", []) or []) if isinstance(c, dict)]
+    if not candidates:
+        hazard = dict(tracked)
+        hazard["hazard_score"] = round(hazard_score(hazard, tr.get("product", "SRI")), 3)
+    else:
+        for cand in candidates:
+            cand["hazard_score"] = round(hazard_score(cand, tr.get("product", "SRI")), 3)
+        hazard = max(candidates, key=lambda c: c.get("hazard_score", 0.0))
+        hazard.pop("relevance", None)
+
+    tr["hazard_cell"] = hazard
+    same = tracked.get("lat") == hazard.get("lat") and tracked.get("lon") == hazard.get("lon")
+    tr["hazard_same_as_tracked"] = same
+    tr["hazard_note"] = (
+        "La cella di pericolo locale coincide con la cella tracciata."
+        if same
+        else "La cella più rilevante per Giammoro è diversa dalla cella mantenuta dal tracking temporale."
+    )
+
+
 def refresh_runtime_text(data: dict) -> None:
     """Allinea le descrizioni tecniche alle sorgenti realmente operative."""
     territory = data.get("territory", {}) or {}
@@ -57,7 +103,8 @@ def refresh_runtime_text(data: dict) -> None:
     reasoning["description"] = (
         "Il backend acquisisce stazioni, modelli, prodotti Radar-DPC, fulminazioni EUMETSAT MTG-LI "
         "e allerte ufficiali. Giammoro resta il punto di riferimento; le stazioni vicine sono supporto separato. "
-        "Nel 0–3 h hanno priorità osservazioni, radar, fulmini e tracking; oltre il brevissimo termine vengono confrontati modelli ed ensemble."
+        "Nel 0–3 h hanno priorità osservazioni, radar, fulmini e tracking; la cella tracciata è distinta dalla cella di pericolo locale. "
+        "Oltre il brevissimo termine vengono confrontati modelli ed ensemble."
     )
 
     confidence = data.get("analysis_confidence", {}) or {}
@@ -73,16 +120,14 @@ def refresh_runtime_text(data: dict) -> None:
 def run(data_path: Path, previous_path: Path | None = None, history_path: Path | None = None):
     import collector
 
-    # Prima esegue la pipeline radar stabile v2.
     data = v2.run(data_path, previous_path, history_path)
     previous = json.loads(previous_path.read_text(encoding="utf-8")) if previous_path and previous_path.exists() else {}
     rlat = float(collector.REF["latitude"])
     rlon = float(collector.REF["longitude"])
 
-    # Timestamp machine-readable per la pagina: permette di mostrare la freschezza reale dei dati.
     data.setdefault("meta", {})["last_check_iso"] = collector.now_local().isoformat(timespec="seconds")
+    attach_hazard_cells(data)
 
-    # Se le credenziali EUMETSAT esistono, sostituisce il placeholder fulmini con osservazioni MTG-LI.
     lightning = eum_li.fetch_lightning(rlat, rlon)
     data["lightning"] = lightning
     data.setdefault("nowcast_evidence", {})["lightning"] = eum_li.summary(lightning)
@@ -92,7 +137,6 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
         data["analysis_confidence"] = v2.enhanced_confidence(data, tr, lightning)
         v2.significant_lightning_change(data, previous, lightning)
 
-    # Mantiene il testo leggibile e non duplica messaggi delle vecchie sorgenti.
     note = str(data.get("nowcast", {}).get("note", "")).strip()
     markers = [
         "LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato.",
@@ -121,7 +165,7 @@ def main():
     p.add_argument("--history", default="history.json")
     a = p.parse_args()
     run(Path(a.data), Path(a.previous) if a.previous else None, Path(a.history) if a.history else None)
-    print("Nowcast v4: radar multi-frame + EUMETSAT MTG-LI opzionale aggiornato")
+    print("Nowcast v4: radar multi-frame + hazard locale + EUMETSAT MTG-LI aggiornato")
     return 0
 
 
