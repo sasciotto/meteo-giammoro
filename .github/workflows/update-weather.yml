@@ -11,6 +11,9 @@ on:
       - "index.html"
       - "data.json"
       - "history.json"
+      - "collector.py"
+      - "nowcast_engine.py"
+      - "tests/**"
       - ".github/workflows/update-weather.yml"
 
 permissions:
@@ -46,8 +49,14 @@ jobs:
       - name: Test
         run: python -m pytest -q
 
-      - name: Aggiorna dati
+      - name: Conserva ciclo precedente
+        run: cp data.json /tmp/data-previous.json
+
+      - name: Aggiorna dati base
         run: python collector.py
+
+      - name: Tracking radar e confidenza
+        run: python nowcast_engine.py --data data.json --previous /tmp/data-previous.json --history history.json
 
       - name: Salva dati aggiornati nel repository
         run: |
@@ -57,7 +66,7 @@ jobs:
             git config user.name "meteo-giammoro-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data.json history.json
-            git commit -m "Aggiorna dati meteo"
+            git commit -m "Aggiorna dati meteo e tracking radar"
             git push
           fi
 
