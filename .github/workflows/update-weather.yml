@@ -9,11 +9,12 @@ on:
       - main
     paths:
       - "index.html"
-      - "data.json"
-      - "history.json"
       - "collector.py"
       - "nowcast_engine.py"
       - "nowcast_v2.py"
+      - "nowcast_v4.py"
+      - "lightning_eumetsat.py"
+      - "requirements.txt"
       - "tests/**"
       - ".github/workflows/update-weather.yml"
 
@@ -33,6 +34,9 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      EUMETSAT_CONSUMER_KEY: ${{ secrets.EUMETSAT_CONSUMER_KEY }}
+      EUMETSAT_CONSUMER_SECRET: ${{ secrets.EUMETSAT_CONSUMER_SECRET }}
 
     steps:
       - name: Checkout
@@ -56,8 +60,8 @@ jobs:
       - name: Aggiorna dati base
         run: python collector.py
 
-      - name: Tracking multi-cella e multi-frame
-        run: python nowcast_v2.py --data data.json --previous /tmp/data-previous.json --history history.json
+      - name: Tracking multi-cella, multi-frame e fulminazioni
+        run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
 
       - name: Salva dati aggiornati nel repository
         run: |
@@ -67,7 +71,7 @@ jobs:
             git config user.name "meteo-giammoro-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add data.json history.json
-            git commit -m "Aggiorna dati meteo e tracking radar"
+            git commit -m "Aggiorna dati meteo, tracking e fulminazioni"
             git push
           fi
 
@@ -89,4 +93,5 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+# Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
