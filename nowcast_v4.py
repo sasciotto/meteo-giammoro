@@ -79,6 +79,9 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     rlat = float(collector.REF["latitude"])
     rlon = float(collector.REF["longitude"])
 
+    # Timestamp machine-readable per la pagina: permette di mostrare la freschezza reale dei dati.
+    data.setdefault("meta", {})["last_check_iso"] = collector.now_local().isoformat(timespec="seconds")
+
     # Se le credenziali EUMETSAT esistono, sostituisce il placeholder fulmini con osservazioni MTG-LI.
     lightning = eum_li.fetch_lightning(rlat, rlon)
     data["lightning"] = lightning
