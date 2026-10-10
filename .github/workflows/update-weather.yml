@@ -14,6 +14,7 @@ on:
       - "nowcast_v2.py"
       - "nowcast_v4.py"
       - "lightning_eumetsat.py"
+      - "verification_engine.py"
       - "requirements.txt"
       - "tests/**"
       - ".github/workflows/update-weather.yml"
@@ -63,15 +64,18 @@ jobs:
       - name: Tracking multi-cella, multi-frame e fulminazioni
         run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
 
+      - name: Verifica ex-post e archivio eventi
+        run: python verification_engine.py --data data.json --verification verification.json --events events.json
+
       - name: Salva dati aggiornati nel repository
         run: |
-          if git diff --quiet -- data.json history.json; then
+          if git diff --quiet -- data.json history.json verification.json events.json; then
             echo "Nessuna modifica ai dati"
           else
             git config user.name "meteo-giammoro-bot"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.json history.json
-            git commit -m "Aggiorna dati meteo, tracking e fulminazioni"
+            git add data.json history.json verification.json events.json
+            git commit -m "Aggiorna dati meteo, tracking e verifica ex-post"
             git push
           fi
 
@@ -79,7 +83,7 @@ jobs:
         run: |
           rm -rf _site
           mkdir _site
-          cp index.html data.json history.json .nojekyll _site/
+          cp index.html data.json history.json verification.json events.json .nojekyll _site/
 
       - name: Configura GitHub Pages
         uses: actions/configure-pages@v5
@@ -94,5 +98,5 @@ jobs:
         uses: actions/deploy-pages@v4
 
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
+# Verifica ex-post: orizzonti 30/60/120 min; non modifica le decisioni operative del nowcasting.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
-# Verifica configurazione EUMETSAT eseguita dopo inserimento dei repository secrets.
