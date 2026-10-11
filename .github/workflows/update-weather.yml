@@ -3,7 +3,7 @@ name: Aggiorna Meteo Giammoro
 on:
   workflow_dispatch:
   schedule:
-    - cron: "3,13,23,33,43,53 * * * *"
+    - cron: "3-59/10 * * * *"
   push:
     branches:
       - main
@@ -113,7 +113,8 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
-# Scheduler: ogni 10 minuti con offset 03/13/23/33/43/53 per evitare i picchi allo scoccare dell'ora.
+# Scheduler principale: ogni 10 minuti con offset :03.
+# Un workflow watchdog indipendente controlla la freschezza e rilancia questo workflow se i dati diventano troppo vecchi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
 # Home: sintesi deterministica backend + previsione oraria/oggi-domani.
