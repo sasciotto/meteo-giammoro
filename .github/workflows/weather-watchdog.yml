@@ -1,0 +1,63 @@
+name: Watchdog Meteo Giammoro
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "8-59/10 * * * *"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  freshness-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Controlla freschezza data.json
+        id: freshness
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          data=json.loads(Path('data.json').read_text(encoding='utf-8'))
+          raw=(data.get('meta') or {}).get('last_check_iso')
+          stale=True
+          age=9999
+          if raw:
+              try:
+                  dt=datetime.fromisoformat(raw)
+                  if dt.tzinfo is None:
+                      dt=dt.replace(tzinfo=timezone.utc)
+                  age=max(0,int((datetime.now(timezone.utc)-dt.astimezone(timezone.utc)).total_seconds()/60))
+                  stale=age>20
+              except Exception:
+                  pass
+          print(f"age_minutes={age}")
+          print(f"stale={'true' if stale else 'false'}")
+          PY
+
+      - name: Mostra stato
+        run: echo "Età data.json = ${{ steps.freshness.outputs.age_minutes }} minuti"
+
+      - name: Rilancia aggiornamento se obsoleto
+        if: steps.freshness.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl --fail-with-body -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/actions/workflows/update-weather.yml/dispatches \
+            -d '{"ref":"main"}'
+
+# Il watchdog gira sfalsato di 5 minuti rispetto al ciclo principale.
+# Se data.json supera 20 minuti di età, richiama il workflow principale via workflow_dispatch.
