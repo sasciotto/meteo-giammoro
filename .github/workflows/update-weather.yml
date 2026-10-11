@@ -45,6 +45,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Python
         uses: actions/setup-python@v5
@@ -83,18 +85,6 @@ jobs:
       - name: Verifica ex-post e archivio eventi
         run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
 
-      - name: Salva dati aggiornati nel repository
-        run: |
-          if git diff --quiet -- data.json history.json verification.json events.json; then
-            echo "Nessuna modifica ai dati"
-          else
-            git config user.name "meteo-giammoro-bot"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data.json history.json verification.json events.json
-            git commit -m "Aggiorna dati meteo, tracking, home e verifica ex-post"
-            git push
-          fi
-
       - name: Prepara sito
         run: |
           rm -rf _site
@@ -113,7 +103,40 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@v4
 
+      - name: Salva dati aggiornati nel repository
+        run: |
+          if git diff --quiet -- data.json history.json verification.json events.json; then
+            echo "Nessuna modifica ai dati"
+            exit 0
+          fi
+
+          git config user.name "meteo-giammoro-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data.json history.json verification.json events.json
+          git commit -m "Aggiorna dati meteo, tracking, home e verifica ex-post"
+
+          for attempt in 1 2 3; do
+            if git push; then
+              echo "Persistenza dati completata al tentativo ${attempt}"
+              exit 0
+            fi
+
+            echo "Push rifiutato al tentativo ${attempt}: riallineo main e riprovo"
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "::warning::Conflitto durante il rebase: Pages è già aggiornata, salto la persistenza di questo ciclo"
+              git rebase --abort || true
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+
+          echo "::warning::Pages è aggiornata ma non è stato possibile persistere i file dati dopo 3 tentativi"
+          exit 0
+
 # Scheduler principale: ogni 10 minuti con offset :03.
+# Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
+# Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
 # Un workflow watchdog indipendente controlla la freschezza e rilancia questo workflow se i dati diventano troppo vecchi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
