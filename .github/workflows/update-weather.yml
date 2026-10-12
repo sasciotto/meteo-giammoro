@@ -29,7 +29,7 @@ permissions:
 
 concurrency:
   group: meteo-giammoro-pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   update-and-deploy:
@@ -135,9 +135,10 @@ jobs:
           exit 0
 
 # Scheduler principale: ogni 10 minuti con offset :03.
+# Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
-# Un workflow watchdog indipendente controlla la freschezza e rilancia questo workflow se i dati diventano troppo vecchi.
+# Un watchdog interno e un possibile scheduler esterno controllano la freschezza dei dati.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
 # Home: sintesi deterministica backend + previsione oraria/oggi-domani.
