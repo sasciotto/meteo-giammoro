@@ -29,11 +29,24 @@ def test_main_dispatches_when_data_are_stale(monkeypatch):
     called = []
     monkeypatch.setattr(es, "STALE_MINUTES", 15)
     monkeypatch.setattr(es, "fetch_published_age_minutes", lambda: 27)
+    monkeypatch.setattr(es, "has_active_update", lambda token: False)
     monkeypatch.setattr(es, "dispatch_update", lambda token: called.append(token))
     monkeypatch.setenv("METEO_GITHUB_TOKEN", "secret-token")
 
     assert es.main() == 0
     assert called == ["secret-token"]
+
+
+def test_main_skips_dispatch_when_update_is_already_active(monkeypatch):
+    called = []
+    monkeypatch.setattr(es, "STALE_MINUTES", 15)
+    monkeypatch.setattr(es, "fetch_published_age_minutes", lambda: 27)
+    monkeypatch.setattr(es, "has_active_update", lambda token: True)
+    monkeypatch.setattr(es, "dispatch_update", lambda token: called.append(token))
+    monkeypatch.setenv("METEO_GITHUB_TOKEN", "secret-token")
+
+    assert es.main() == 0
+    assert called == []
 
 
 def test_main_requires_token_only_when_recovery_is_needed(monkeypatch):
