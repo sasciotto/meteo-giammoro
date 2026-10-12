@@ -36,7 +36,9 @@ jobs:
                   if dt.tzinfo is None:
                       dt=dt.replace(tzinfo=timezone.utc)
                   age=max(0,int((datetime.now(timezone.utc)-dt.astimezone(timezone.utc)).total_seconds()/60))
-                  stale=age>20
+                  # Con ciclo principale ogni 10 minuti, 15 minuti sono sufficienti
+                  # per identificare un aggiornamento saltato senza rilanciare cicli normali.
+                  stale=age>=15
               except Exception:
                   pass
           print(f"age_minutes={age}")
@@ -59,5 +61,7 @@ jobs:
             https://api.github.com/repos/${{ github.repository }}/actions/workflows/update-weather.yml/dispatches \
             -d '{"ref":"main"}'
 
-# Il watchdog gira sfalsato di 5 minuti rispetto al ciclo principale.
-# Se data.json supera 20 minuti di età, richiama il workflow principale via workflow_dispatch.
+# Watchdog interno: sfalsato di 5 minuti rispetto al ciclo principale.
+# Watchdog esterno: può richiamare questo stesso workflow via workflow_dispatch ogni 10 minuti.
+# Se data.json raggiunge 15 minuti di età, il watchdog richiama il workflow principale.
+# In questo modo lo scheduler esterno resta leggero e non duplica il collector quando i dati sono freschi.
