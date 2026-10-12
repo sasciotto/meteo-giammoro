@@ -36,8 +36,6 @@ jobs:
                   if dt.tzinfo is None:
                       dt=dt.replace(tzinfo=timezone.utc)
                   age=max(0,int((datetime.now(timezone.utc)-dt.astimezone(timezone.utc)).total_seconds()/60))
-                  # Con ciclo principale ogni 10 minuti, 15 minuti sono sufficienti
-                  # per identificare un aggiornamento saltato senza rilanciare cicli normali.
                   stale=age>=15
               except Exception:
                   pass
@@ -48,8 +46,46 @@ jobs:
       - name: Mostra stato
         run: echo "Età data.json = ${{ steps.freshness.outputs.age_minutes }} minuti"
 
-      - name: Rilancia aggiornamento se obsoleto
+      - name: Controlla se un aggiornamento è già attivo
+        id: active
         if: steps.freshness.outputs.stale == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+
+          token=os.environ['GH_TOKEN']
+          repo=os.environ['GITHUB_REPOSITORY']
+          workflow='update-weather.yml'
+          headers={
+              'Accept':'application/vnd.github+json',
+              'Authorization':f'Bearer {token}',
+              'X-GitHub-Api-Version':'2022-11-28',
+              'User-Agent':'meteo-giammoro-watchdog',
+          }
+          active=False
+          try:
+              for status in ('in_progress','queued'):
+                  query=urllib.parse.urlencode({'status':status,'per_page':1})
+                  url=f'https://api.github.com/repos/{repo}/actions/workflows/{workflow}/runs?{query}'
+                  req=urllib.request.Request(url,headers=headers)
+                  with urllib.request.urlopen(req,timeout=20) as response:
+                      payload=json.loads(response.read().decode('utf-8'))
+                  if int(payload.get('total_count') or 0)>0:
+                      active=True
+                      break
+          except Exception as exc:
+              print(f'::warning::Impossibile verificare run attivi: {exc}')
+              active=True
+          print(f"active={'true' if active else 'false'}")
+          PY
+
+      - name: Rilancia aggiornamento se obsoleto e inattivo
+        if: steps.freshness.outputs.stale == 'true' && steps.active.outputs.active == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -63,5 +99,4 @@ jobs:
 
 # Watchdog interno: sfalsato di 5 minuti rispetto al ciclo principale.
 # Watchdog esterno: può richiamare questo stesso workflow via workflow_dispatch ogni 10 minuti.
-# Se data.json raggiunge 15 minuti di età, il watchdog richiama il workflow principale.
-# In questo modo lo scheduler esterno resta leggero e non duplica il collector quando i dati sono freschi.
+# Se data.json raggiunge 15 minuti di età, il watchdog rilancia il principale solo se non è già attivo.
