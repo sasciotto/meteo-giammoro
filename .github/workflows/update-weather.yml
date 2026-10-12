@@ -3,7 +3,7 @@ name: Aggiorna Meteo Giammoro
 on:
   workflow_dispatch:
   schedule:
-    - cron: "3-59/10 * * * *"
+    - cron: "7,22,37,52 * * * *"
   push:
     branches:
       - main
@@ -134,11 +134,11 @@ jobs:
           echo "::warning::Pages è aggiornata ma non è stato possibile persistere i file dati dopo 3 tentativi"
           exit 0
 
-# Scheduler principale: ogni 10 minuti con offset :03.
+# Scheduler principale: ogni 15 minuti ai minuti :07, :22, :37 e :52.
+# I minuti sono sfalsati dall'inizio dell'ora per ridurre il rischio di ritardi dovuti al carico GitHub Actions.
 # Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
-# Un watchdog interno e un possibile scheduler esterno controllano la freschezza dei dati.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
 # Home: sintesi deterministica backend + previsione oraria/oggi-domani.
