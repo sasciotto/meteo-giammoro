@@ -33,7 +33,7 @@ DATA_URL = os.getenv(
 )
 STALE_MINUTES = int(os.getenv("METEO_STALE_MINUTES", "15"))
 TIMEOUT_SECONDS = int(os.getenv("METEO_HTTP_TIMEOUT", "20"))
-USER_AGENT = "meteo-giammoro-external-scheduler/1.0"
+USER_AGENT = "meteo-giammoro-external-scheduler/1.1"
 
 
 def _request(url: str, *, method: str = "GET", data: bytes | None = None, headers: dict[str, str] | None = None):
@@ -42,6 +42,14 @@ def _request(url: str, *, method: str = "GET", data: bytes | None = None, header
         merged.update(headers)
     req = urllib.request.Request(url, data=data, headers=merged, method=method)
     return urllib.request.urlopen(req, timeout=TIMEOUT_SECONDS)
+
+
+def _github_headers(token: str) -> dict[str, str]:
+    return {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {token}",
+        "X-GitHub-Api-Version": "2022-11-28",
+    }
 
 
 def parse_age_minutes(payload: dict, *, now: datetime | None = None) -> int | None:
@@ -68,16 +76,24 @@ def fetch_published_age_minutes() -> int | None:
     return parse_age_minutes(payload)
 
 
+def has_active_update(token: str) -> bool:
+    workflow = urllib.parse.quote(WORKFLOW, safe="")
+    base = f"https://api.github.com/repos/{OWNER}/{REPO}/actions/workflows/{workflow}/runs"
+    for status_name in ("in_progress", "queued"):
+        query = urllib.parse.urlencode({"status": status_name, "per_page": 1})
+        with _request(f"{base}?{query}", headers=_github_headers(token)) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        if int(payload.get("total_count") or 0) > 0:
+            return True
+    return False
+
+
 def dispatch_update(token: str) -> None:
     workflow = urllib.parse.quote(WORKFLOW, safe="")
     url = f"https://api.github.com/repos/{OWNER}/{REPO}/actions/workflows/{workflow}/dispatches"
     body = json.dumps({"ref": REF}).encode("utf-8")
-    headers = {
-        "Accept": "application/vnd.github+json",
-        "Authorization": f"Bearer {token}",
-        "Content-Type": "application/json",
-        "X-GitHub-Api-Version": "2022-11-28",
-    }
+    headers = _github_headers(token)
+    headers["Content-Type"] = "application/json"
     with _request(url, method="POST", data=body, headers=headers) as response:
         status = getattr(response, "status", response.getcode())
         if status != 204:
@@ -105,6 +121,9 @@ def main() -> int:
         return 2
 
     try:
+        if has_active_update(token):
+            print(f"Recupero non necessario: {reason}, ma un aggiornamento è già in coda o in corso.")
+            return 0
         dispatch_update(token)
     except urllib.error.HTTPError as exc:
         detail = ""
@@ -112,10 +131,10 @@ def main() -> int:
             detail = exc.read().decode("utf-8", errors="replace")
         except Exception:
             pass
-        print(f"Dispatch GitHub fallito: HTTP {exc.code} {detail}", file=sys.stderr)
+        print(f"Controllo/dispatch GitHub fallito: HTTP {exc.code} {detail}", file=sys.stderr)
         return 3
     except Exception as exc:
-        print(f"Dispatch GitHub fallito: {exc}", file=sys.stderr)
+        print(f"Controllo/dispatch GitHub fallito: {exc}", file=sys.stderr)
         return 3
 
     print(f"Recupero avviato: {reason}. Workflow {WORKFLOW} su {REF} inviato.")
