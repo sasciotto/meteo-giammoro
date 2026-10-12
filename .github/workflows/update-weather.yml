@@ -48,28 +48,72 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Verifica se serve un nuovo ciclo
+        id: freshness
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "should_run=true" >> "$GITHUB_OUTPUT"
+            echo "Push di codice/configurazione: eseguo sempre il ciclo"
+            exit 0
+          fi
+
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          should_run = True
+          age = 9999
+          try:
+              data = json.loads(Path('data.json').read_text(encoding='utf-8'))
+              raw = (data.get('meta') or {}).get('last_check_iso')
+              if raw:
+                  dt = datetime.fromisoformat(raw)
+                  if dt.tzinfo is None:
+                      dt = dt.replace(tzinfo=timezone.utc)
+                  age = max(0, int((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds() / 60))
+                  should_run = age >= 10
+          except Exception:
+              should_run = True
+
+          print(f"age_minutes={age}")
+          print(f"should_run={'true' if should_run else 'false'}")
+          PY
+
+      - name: Mostra decisione ciclo
+        if: github.event_name != 'push'
+        run: echo "Età dati = ${{ steps.freshness.outputs.age_minutes }} min; esegui = ${{ steps.freshness.outputs.should_run }}"
+
       - name: Python
+        if: steps.freshness.outputs.should_run == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
 
       - name: Dipendenze
+        if: steps.freshness.outputs.should_run == 'true'
         run: pip install -r requirements.txt
 
       - name: Test
+        if: steps.freshness.outputs.should_run == 'true'
         run: python -m pytest -q
 
       - name: Conserva ciclo precedente
+        if: steps.freshness.outputs.should_run == 'true'
         run: cp data.json /tmp/data-previous.json
 
       - name: Aggiorna dati base
+        if: steps.freshness.outputs.should_run == 'true'
         run: python collector.py
 
       - name: Tracking multi-cella, multi-frame e fulminazioni
+        if: steps.freshness.outputs.should_run == 'true'
         run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
 
       - name: Sintesi home e previsione breve
+        if: steps.freshness.outputs.should_run == 'true'
         run: |
           python - <<'PY'
           import json
@@ -83,27 +127,33 @@ jobs:
           PY
 
       - name: Verifica ex-post e archivio eventi
+        if: steps.freshness.outputs.should_run == 'true'
         run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
 
       - name: Prepara sito
+        if: steps.freshness.outputs.should_run == 'true'
         run: |
           rm -rf _site
           mkdir _site
           cp index.html data.json history.json verification.json events.json .nojekyll _site/
 
       - name: Configura GitHub Pages
+        if: steps.freshness.outputs.should_run == 'true'
         uses: actions/configure-pages@v5
 
       - name: Carica artifact Pages
+        if: steps.freshness.outputs.should_run == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: _site
 
       - name: Pubblica GitHub Pages
+        if: steps.freshness.outputs.should_run == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
 
       - name: Salva dati aggiornati nel repository
+        if: steps.freshness.outputs.should_run == 'true'
         run: |
           if git diff --quiet -- data.json history.json verification.json events.json; then
             echo "Nessuna modifica ai dati"
@@ -134,8 +184,9 @@ jobs:
           echo "::warning::Pages è aggiornata ma non è stato possibile persistere i file dati dopo 3 tentativi"
           exit 0
 
-# Scheduler principale: ogni 15 minuti ai minuti :07, :22, :37 e :52.
-# I minuti sono sfalsati dall'inizio dell'ora per ridurre il rischio di ritardi dovuti al carico GitHub Actions.
+# Scheduler GitHub di backup: ogni 15 minuti ai minuti :07, :22, :37 e :52.
+# Un trigger esterno gratuito può richiamare workflow_dispatch ogni 15 minuti.
+# La guardia iniziale evita di eseguire il collector se i dati hanno meno di 10 minuti.
 # Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
