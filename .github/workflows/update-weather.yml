@@ -104,9 +104,33 @@ jobs:
         if: steps.freshness.outputs.should_run == 'true'
         run: cp data.json /tmp/data-previous.json
 
-      - name: Aggiorna dati base
+      - name: Aggiorna dati base e conserva cache modelli
         if: steps.freshness.outputs.should_run == 'true'
-        run: python collector.py
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import collector
+
+          original_fetch_json = collector.fetch_json
+          model_cache = {}
+
+          def caching_fetch_json(url, params, timeout=30):
+              raw = original_fetch_json(url, params, timeout)
+              model_id = str((params or {}).get('models') or '')
+              if url == collector.OPEN_METEO and model_id:
+                  model_cache[model_id] = raw
+              return raw
+
+          collector.fetch_json = caching_fetch_json
+          rc = collector.main()
+          Path('/tmp/open-meteo-model-cache.json').write_text(
+              json.dumps(model_cache, ensure_ascii=False), encoding='utf-8'
+          )
+          if rc:
+              raise SystemExit(rc)
+          print(f"Modelli deterministici conservati in cache: {len(model_cache)}")
+          PY
 
       - name: Tracking multi-cella, multi-frame e fulminazioni
         if: steps.freshness.outputs.should_run == 'true'
@@ -120,6 +144,19 @@ jobs:
           from pathlib import Path
           import collector
           import home_forecast
+
+          cache_path = Path('/tmp/open-meteo-model-cache.json')
+          model_cache = json.loads(cache_path.read_text(encoding='utf-8')) if cache_path.exists() else {}
+          original_fetch_json = collector.fetch_json
+
+          def reuse_fetch_json(url, params, timeout=30):
+              model_id = str((params or {}).get('models') or '')
+              if url == collector.OPEN_METEO and model_id in model_cache:
+                  print(f"Riutilizzo cache Open-Meteo per {model_id}")
+                  return model_cache[model_id]
+              return original_fetch_json(url, params, timeout)
+
+          collector.fetch_json = reuse_fetch_json
           p=Path('data.json')
           data=json.loads(p.read_text(encoding='utf-8'))
           data=home_forecast.apply(data, collector)
@@ -184,9 +221,10 @@ jobs:
           echo "::warning::Pages è aggiornata ma non è stato possibile persistere i file dati dopo 3 tentativi"
           exit 0
 
+# Heartbeat auto-rilanciante: richiama workflow_dispatch ogni 15 minuti senza dipendere dal cron GitHub.
 # Scheduler GitHub di backup: ogni 15 minuti ai minuti :07, :22, :37 e :52.
-# Un trigger esterno gratuito può richiamare workflow_dispatch ogni 15 minuti.
 # La guardia iniziale evita di eseguire il collector se i dati hanno meno di 10 minuti.
+# Le risposte Open-Meteo deterministiche del collector vengono riutilizzate dalla home senza una seconda richiesta.
 # Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
