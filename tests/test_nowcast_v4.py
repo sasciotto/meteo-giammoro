@@ -109,3 +109,16 @@ def test_confidence_is_capped_when_tracking_is_suspect():
     nowcast_v4.calibrate_confidence(data)
     assert data["analysis_confidence"]["score"] <= 75
     assert data["analysis_confidence"]["components"]["tracking_quality_adjustment"] == -18
+
+
+def test_tracking_quality_is_unavailable_without_cell():
+    data = {
+        "nowcast_tracking": {
+            "status": "no_cell",
+            "association": {"status": "no_candidate"},
+            "motion": {"status": "unavailable"},
+        }
+    }
+    quality = nowcast_v4.assess_tracking_quality(data)
+    assert quality["status"] == "unavailable"
+    assert data["nowcast_evidence"]["tracking_quality"].startswith("Tracking radar non disponibile")

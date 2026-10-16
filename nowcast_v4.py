@@ -104,6 +104,17 @@ def assess_tracking_quality(data: dict) -> dict:
     reasons: list[str] = []
     status = "good"
 
+    if tr.get("status") != "detected" or assoc.get("status") in {"no_candidate", None}:
+        quality = {
+            "status": "unavailable",
+            "penalty_points": 0,
+            "latest_interval_minutes": None,
+            "reasons": ["nessuna cella tracciabile"] if tr.get("status") != "detected" else [],
+        }
+        tr["track_quality"] = quality
+        data.setdefault("nowcast_evidence", {})["tracking_quality"] = "Tracking radar non disponibile: nessuna cella tracciabile."
+        return quality
+
     try:
         implied = float(assoc.get("implied_speed_kmh")) if assoc.get("implied_speed_kmh") is not None else None
     except (TypeError, ValueError):
