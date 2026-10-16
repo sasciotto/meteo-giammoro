@@ -9,6 +9,7 @@ from pathlib import Path
 
 import lightning_eumetsat as eum_li
 import nowcast_v2 as v2
+import quality_guard
 
 
 def sanitize_territory_metrics(data: dict) -> None:
@@ -150,6 +151,10 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     data.setdefault("nowcast", {})["note"] = note
 
     sanitize_territory_metrics(data)
+    quality_guard.guard_alert_quality(data)
+    quality_guard.sanitize_latest_change(data)
+    quality_guard.update_pressure_trend(data, previous)
+    quality_guard.refresh_pressure_evidence(data)
     refresh_runtime_text(data)
 
     data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -165,7 +170,7 @@ def main():
     p.add_argument("--history", default="history.json")
     a = p.parse_args()
     run(Path(a.data), Path(a.previous) if a.previous else None, Path(a.history) if a.history else None)
-    print("Nowcast v4: radar multi-frame + hazard locale + EUMETSAT MTG-LI aggiornato")
+    print("Nowcast v4: radar multi-frame + hazard locale + quality guard + EUMETSAT MTG-LI aggiornato")
     return 0
 
 

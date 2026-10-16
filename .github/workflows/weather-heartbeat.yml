@@ -22,9 +22,11 @@ jobs:
     timeout-minutes: 25
     steps:
       - name: Avvia aggiornamento meteo
+        id: dispatch_update
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          dispatched=false
           for attempt in 1 2 3; do
             if curl --fail-with-body -L \
               -X POST \
@@ -34,13 +36,20 @@ jobs:
               https://api.github.com/repos/${{ github.repository }}/actions/workflows/update-weather.yml/dispatches \
               -d '{"ref":"main"}'; then
               echo "Aggiornamento meteo richiesto"
+              dispatched=true
               break
             fi
             echo "Tentativo ${attempt} fallito, riprovo"
             sleep $((attempt * 10))
           done
 
+          if [ "${dispatched}" != "true" ]; then
+            echo "::error::Impossibile avviare update-weather.yml dopo 3 tentativi"
+            exit 1
+          fi
+
       - name: Attendi 15 minuti
+        if: always()
         run: sleep 900
 
       - name: Rilancia heartbeat
@@ -67,6 +76,7 @@ jobs:
 
 # Questo workflow non dipende dallo scheduler cron di GitHub.
 # Il primo avvio avviene automaticamente quando questo file viene creato/modificato.
-# Ogni ciclo richiama update-weather.yml, attende 15 minuti e poi richiama se stesso via workflow_dispatch.
+# Ogni ciclo prova a richiamare update-weather.yml, attende comunque 15 minuti e poi richiama se stesso.
+# Se il dispatch dell'aggiornamento fallisce dopo 3 tentativi, il run viene marcato failed ma il heartbeat continua.
 # Il workflow principale mantiene una guardia di freschezza per evitare aggiornamenti duplicati inutili.
 # Il cron schedule di update-weather.yml resta solo come backup opportunistico.
