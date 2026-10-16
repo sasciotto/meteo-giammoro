@@ -41,7 +41,9 @@
       .model-outlook.online{background:#eef8f2;border-color:#cee5d7;color:#285c3d}
       .model-outlook.unknown{background:#f4f6f7;color:#56636c}
       .model-values{font-size:11px;margin-top:6px;opacity:.85}
-      @media(max-width:650px){.day-grid{grid-template-columns:1fr}.hourly-strip{grid-auto-columns:minmax(122px,42vw)}}
+      .forecast-summary-two{grid-template-columns:repeat(2,1fr)}
+      @media(max-width:650px){.day-grid{grid-template-columns:1fr}.hourly-strip{grid-auto-columns:minmax(122px,42vw)}.forecast-summary-two{grid-template-columns:1fr 1fr}}
+      @media(max-width:430px){.forecast-summary-two{grid-template-columns:1fr}}
     `;
     document.head.appendChild(style);
   }
@@ -77,6 +79,15 @@
     };
   }
 
+  function hideLegacyCombinedForecast() {
+    const title = byId('homeForecastTitle');
+    const legacyCard = title?.closest('.forecast-card');
+    if (!legacyCard) return;
+    const grid = legacyCard.parentElement;
+    legacyCard.style.display = 'none';
+    if (grid) grid.classList.add('forecast-summary-two');
+  }
+
   function render(data) {
     const home = data?.home_summary || {};
     const hourly = Array.isArray(home.hourly) ? home.hourly.slice(0, 8) : [];
@@ -94,6 +105,8 @@
       if (homeSection && alertCard) homeSection.insertBefore(section, alertCard);
     }
     if (!section) return;
+
+    hideLegacyCombinedForecast();
 
     const hourHtml = hourly.map(h => {
       const rain = num(h.precipitation) || 0;
@@ -121,17 +134,6 @@
       <div class="hourly-strip" aria-label="Previsione oraria">${hourHtml}</div>
       <div class="day-grid">${dayHtml}</div>
       <div class="model-outlook ${consensus.klass}"><strong>${esc(consensus.label)}</strong>${esc(consensus.text)}${consensus.values ? `<div class="model-values">${consensus.values}</div>` : ''}</div>`;
-
-    const today = days.find(x => x.key === 'today');
-    const tomorrow = days.find(x => x.key === 'tomorrow');
-    if (byId('homeForecastTitle') && (today || tomorrow)) {
-      byId('homeForecastTitle').textContent = tomorrow ? `${today?.condition || 'Oggi'} · domani ${tomorrow.condition || 'in aggiornamento'}` : (today?.condition || 'Previsione aggiornata');
-      const bits = [];
-      if (today) bits.push(`Oggi ${fmt(today.temp_min,0)}–${fmt(today.temp_max,0)} °C, scenario ${esc(home.source || 'principale')}: ${fmt(today.precipitation_sum,1)} mm`);
-      if (tomorrow) bits.push(`Domani ${fmt(tomorrow.temp_min,0)}–${fmt(tomorrow.temp_max,0)} °C, scenario ${esc(home.source || 'principale')}: ${fmt(tomorrow.precipitation_sum,1)} mm`);
-      if (home.multi_model?.available) bits.push(`3–48 h: ${home.multi_model.wet_models}/${home.multi_model.models_count} modelli con pioggia, ${fmt(home.multi_model.precip_min_mm,1)}–${fmt(home.multi_model.precip_max_mm,1)} mm`);
-      byId('homeForecastText').textContent = bits.join('. ') + '.';
-    }
   }
 
   function refreshForecast() {
