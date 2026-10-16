@@ -5,6 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
+from datetime import datetime
 from pathlib import Path
 
 import lightning_eumetsat as eum_li
@@ -13,12 +15,7 @@ import quality_guard
 
 
 def sanitize_territory_metrics(data: dict) -> None:
-    """Evita di presentare un dew point incoerente con la temperatura mostrata.
-
-    Quando TEMP DPC sostituisce la temperatura modellistica ma l'umidità resta
-    modellistica, T e UR non appartengono alla stessa sorgente: in quel caso il
-    dew point non viene pubblicato come dato coerente.
-    """
+    """Evita di presentare un dew point incoerente con la temperatura mostrata."""
     metrics = ((data.get("territory", {}) or {}).get("metrics", {}) or {})
     temp = metrics.get("temperature", {}) or {}
     humidity = metrics.get("humidity", {}) or {}
@@ -85,6 +82,127 @@ def attach_hazard_cells(data: dict) -> None:
     )
 
 
+def _latest_track_interval_minutes(tr: dict) -> float | None:
+    history = tr.get("track_history", []) or []
+    if len(history) < 2:
+        return None
+    try:
+        older = datetime.fromisoformat(str(history[-2].get("timestamp")))
+        newer = datetime.fromisoformat(str(history[-1].get("timestamp")))
+        return max(0.0, (newer - older).total_seconds() / 60.0)
+    except (TypeError, ValueError):
+        return None
+
+
+def assess_tracking_quality(data: dict) -> dict:
+    """Qualifica l'associazione radar e invalida proiezioni troppo fragili."""
+    tr = data.get("nowcast_tracking", {}) or {}
+    assoc = tr.get("association", {}) or {}
+    motion = tr.get("motion", {}) or {}
+    interval = _latest_track_interval_minutes(tr)
+    penalty = 0
+    reasons: list[str] = []
+    status = "good"
+
+    try:
+        implied = float(assoc.get("implied_speed_kmh")) if assoc.get("implied_speed_kmh") is not None else None
+    except (TypeError, ValueError):
+        implied = None
+    try:
+        pred_error = float(assoc.get("predicted_error_km")) if assoc.get("predicted_error_km") is not None else None
+    except (TypeError, ValueError):
+        pred_error = None
+    try:
+        assoc_score = float(assoc.get("score")) if assoc.get("score") is not None else None
+    except (TypeError, ValueError):
+        assoc_score = None
+    try:
+        residual = float(motion.get("fit_residual_km")) if motion.get("fit_residual_km") is not None else None
+    except (TypeError, ValueError):
+        residual = None
+
+    if assoc.get("status") == "matched":
+        if implied is not None and interval is not None and interval <= 15 and implied > 90:
+            status = "suspect"
+            penalty += 18
+            reasons.append(f"salto tra frame equivalente a {implied:.0f} km/h in {interval:.0f} min")
+        elif implied is not None and implied > 75:
+            status = "degraded"
+            penalty += 8
+            reasons.append(f"velocità implicita elevata ({implied:.0f} km/h)")
+
+        if pred_error is not None and pred_error > 8:
+            status = "suspect" if pred_error > 12 else ("degraded" if status == "good" else status)
+            penalty += 6
+            reasons.append(f"errore associazione {pred_error:.1f} km")
+        if assoc_score is not None and assoc_score > 15:
+            if status == "good":
+                status = "degraded"
+            penalty += 4
+            reasons.append(f"score associazione {assoc_score:.1f}")
+        if residual is not None and residual > 5:
+            if status == "good":
+                status = "degraded"
+            penalty += 6
+            reasons.append(f"residuo traiettoria {residual:.1f} km")
+
+    if status == "suspect":
+        motion["status"] = "suspect_association"
+        motion["approaching"] = False
+        motion["eta_minutes"] = None
+        motion["closest_approach_km"] = None
+        motion["closest_approach_minutes"] = None
+        note = str((data.get("nowcast", {}) or {}).get("note") or "")
+        note = re.sub(r"; movimento [^.;]+", "; traiettoria non validata per associazione tra frame dubbia", note)
+        note = re.sub(r"\s*In avvicinamento; minima distanza proiettata ~[^.]+\.", "", note)
+        data.setdefault("nowcast", {})["note"] = note.strip()
+
+    quality = {
+        "status": status,
+        "penalty_points": min(30, penalty),
+        "latest_interval_minutes": None if interval is None else round(interval, 1),
+        "reasons": reasons,
+    }
+    tr["track_quality"] = quality
+    data.setdefault("nowcast_evidence", {})["tracking_quality"] = (
+        "Tracking radar coerente."
+        if status == "good"
+        else "Qualità tracking ridotta: " + "; ".join(reasons) + "."
+    )
+    return quality
+
+
+def _confidence_label(score: int) -> str:
+    return "Bassa" if score < 40 else "Media" if score < 65 else "Alta" if score < 85 else "Molto alta"
+
+
+def calibrate_confidence(data: dict) -> None:
+    """Riduce la confidenza quando la continuità del track è debole."""
+    conf = data.get("analysis_confidence", {}) or {}
+    tr = data.get("nowcast_tracking", {}) or {}
+    quality = tr.get("track_quality", {}) or {}
+    try:
+        score = int(round(float(conf.get("score", 0))))
+    except (TypeError, ValueError):
+        return
+
+    penalty = int(quality.get("penalty_points") or 0)
+    adjusted = max(0, score - penalty)
+    if quality.get("status") == "suspect":
+        adjusted = min(adjusted, 75)
+
+    conf.setdefault("components", {})["tracking_quality_adjustment"] = -penalty
+    conf["score"] = adjusted
+    conf["label"] = _confidence_label(adjusted)
+    status = quality.get("status", "unknown")
+    conf["note"] = (
+        "Confidenza nowcasting da freschezza radar, rilevamento celle, qualità del tracking, "
+        "cross-check radar, stazioni, modelli e fulminazioni EUMETSAT MTG-LI. "
+        f"Qualità tracking: {status}."
+    )
+    data["analysis_confidence"] = conf
+
+
 def refresh_runtime_text(data: dict) -> None:
     """Allinea le descrizioni tecniche alle sorgenti realmente operative."""
     territory = data.get("territory", {}) or {}
@@ -105,12 +223,9 @@ def refresh_runtime_text(data: dict) -> None:
         "Il backend acquisisce stazioni, modelli, prodotti Radar-DPC, fulminazioni EUMETSAT MTG-LI "
         "e allerte ufficiali. Giammoro resta il punto di riferimento; le stazioni vicine sono supporto separato. "
         "Nel 0–3 h hanno priorità osservazioni, radar, fulmini e tracking; la cella tracciata è distinta dalla cella di pericolo locale. "
+        "Le proiezioni del tracking vengono declassate quando l'associazione fra frame è poco coerente. "
         "Oltre il brevissimo termine vengono confrontati modelli ed ensemble."
     )
-
-    confidence = data.get("analysis_confidence", {}) or {}
-    if confidence:
-        confidence["note"] = "Confidenza nowcasting da freschezza radar, rilevamento/track delle celle, cross-check radar, stazioni, modelli e fulminazioni EUMETSAT MTG-LI."
 
     sources = data.setdefault("sources", [])
     eum_source = "EUMETSAT MTG Lightning Imager L2 Lightning Flashes"
@@ -128,6 +243,7 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
 
     data.setdefault("meta", {})["last_check_iso"] = collector.now_local().isoformat(timespec="seconds")
     attach_hazard_cells(data)
+    assess_tracking_quality(data)
 
     lightning = eum_li.fetch_lightning(rlat, rlon)
     data["lightning"] = lightning
@@ -152,10 +268,11 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
 
     sanitize_territory_metrics(data)
     quality_guard.guard_alert_quality(data)
-    quality_guard.sanitize_latest_change(data)
+    quality_guard.sanitize_latest_change(data, previous)
     quality_guard.update_pressure_trend(data, previous)
     quality_guard.refresh_pressure_evidence(data)
     refresh_runtime_text(data)
+    calibrate_confidence(data)
 
     data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if history_path:

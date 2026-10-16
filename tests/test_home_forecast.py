@@ -56,3 +56,21 @@ def test_daily_forecast_separates_today_and_tomorrow():
     assert [x["key"] for x in out] == ["today", "tomorrow"]
     assert out[0]["precipitation_sum"] == 0.2
     assert out[1]["precipitation_sum"] == 1.7
+
+
+def test_multi_model_consensus_exposes_range_and_wet_models():
+    data = {
+        "model_details": [
+            {"label": "ICON-2I", "ok": True, "next_3_48h": {"precip_sum": 0.0, "gust_max": 30}},
+            {"label": "ICON", "ok": True, "next_3_48h": {"precip_sum": 1.2, "gust_max": 31}},
+            {"label": "ECMWF", "ok": True, "next_3_48h": {"precip_sum": 8.0, "gust_max": 35}},
+            {"label": "GFS", "ok": True, "next_3_48h": {"precip_sum": 3.0, "gust_max": 32}},
+        ]
+    }
+    out = h.multi_model_consensus(data)
+    assert out["available"] is True
+    assert out["models_count"] == 4
+    assert out["wet_models"] == 3
+    assert out["precip_min_mm"] == 0.0
+    assert out["precip_max_mm"] == 8.0
+    assert out["agreement"] == "basso"

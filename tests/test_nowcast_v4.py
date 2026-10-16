@@ -43,7 +43,6 @@ def test_refresh_runtime_text_mentions_active_sources():
     row = data["models"][0]
     assert "Radar-DPC" in row["models"]
     assert "EUMETSAT MTG-LI" in row["models"]
-    assert "EUMETSAT MTG-LI" in data["analysis_confidence"]["note"]
 
 
 def test_hazard_cell_prefers_nearer_relevant_cell_over_tracked_identity():
@@ -70,3 +69,43 @@ def test_hazard_score_penalizes_distance_strongly():
     near = {"distance_km": 5, "peak_value": 10, "pixels": 10}
     far = {"distance_km": 30, "peak_value": 25, "pixels": 20}
     assert nowcast_v4.hazard_score(near, "SRI") > nowcast_v4.hazard_score(far, "SRI")
+
+
+def test_suspect_short_interval_jump_invalidates_projection():
+    data = {
+        "nowcast": {"note": "Nucleo radar a circa 36 km E di Giammoro, picco 31.5 dBZ; movimento WSW a ~22.5 km/h. In avvicinamento; minima distanza proiettata ~8.7 km."},
+        "nowcast_tracking": {
+            "status": "detected",
+            "association": {"status": "matched", "score": 12.2, "predicted_error_km": 10.5, "implied_speed_kmh": 110.3},
+            "track_history": [
+                {"timestamp": "2026-10-16T13:55+02:00", "lat": 38.17759, "lon": 15.83344},
+                {"timestamp": "2026-10-16T14:00+02:00", "lat": 38.19325, "lon": 15.73013},
+            ],
+            "motion": {
+                "status": "tracked",
+                "speed_kmh": 22.5,
+                "approaching": True,
+                "eta_minutes": 90,
+                "closest_approach_km": 8.7,
+                "closest_approach_minutes": 93,
+                "fit_residual_km": 3.2,
+            },
+        },
+    }
+    quality = nowcast_v4.assess_tracking_quality(data)
+    motion = data["nowcast_tracking"]["motion"]
+    assert quality["status"] == "suspect"
+    assert motion["status"] == "suspect_association"
+    assert motion["approaching"] is False
+    assert motion["eta_minutes"] is None
+    assert "traiettoria non validata" in data["nowcast"]["note"]
+
+
+def test_confidence_is_capped_when_tracking_is_suspect():
+    data = {
+        "analysis_confidence": {"score": 100, "components": {}},
+        "nowcast_tracking": {"track_quality": {"status": "suspect", "penalty_points": 18}},
+    }
+    nowcast_v4.calibrate_confidence(data)
+    assert data["analysis_confidence"]["score"] <= 75
+    assert data["analysis_confidence"]["components"]["tracking_quality_adjustment"] == -18

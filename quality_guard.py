@@ -25,15 +25,19 @@ def _parse_iso(value):
         return None
 
 
+def _alert_text_is_noisy(raw: str) -> bool:
+    text = str(raw or "").strip()
+    return bool(
+        len(text) > 120
+        or any(token in text.upper() for token in ("ROSSA ALLARME", "ARANCIONE", "GIALLA", "PER IL RISCHIO"))
+        or text.count("fino alle ore") > 1
+    )
+
+
 def _clean_alert_validity(alert: dict) -> None:
     """Sostituisce testo PDF contaminato da legenda con una validità prudente."""
     raw = str(alert.get("validity") or "").strip()
-    noisy = (
-        len(raw) > 120
-        or any(token in raw.upper() for token in ("ROSSA ALLARME", "ARANCIONE", "GIALLA", "PER IL RISCHIO"))
-        or raw.count("fino alle ore") > 1
-    )
-    if not noisy:
+    if not _alert_text_is_noisy(raw):
         return
 
     title = str(alert.get("title") or "")
@@ -49,12 +53,7 @@ def _clean_alert_validity(alert: dict) -> None:
 
 
 def guard_alert_quality(data: dict) -> None:
-    """Evita di presentare come certo un livello regionale non cross-validato.
-
-    Se il livello proviene dal parser euristico della zona A e il controllo con
-    il bollettino DPC nazionale fallisce, il candidato regionale viene conservato
-    per l'analisi tecnica ma il livello pubblico diventa ``Da verificare``.
-    """
+    """Evita di presentare come certo un livello regionale non cross-validato."""
     alert = data.get("alert", {}) or {}
     if not alert:
         return
@@ -89,9 +88,42 @@ def guard_alert_quality(data: dict) -> None:
     data["alert"] = alert
 
 
-def sanitize_latest_change(data: dict) -> None:
-    """Rimuove dai cambiamenti storici riferimenti ormai falsi alle fulminazioni."""
+def _false_unvalidated_alert_change(change: dict, alert: dict) -> bool:
+    title = str((change or {}).get("title") or "")
+    regional = (alert or {}).get("regional_candidate", {}) or {}
+    return bool(
+        title.startswith("Variazione allerta ufficiale: Da verificare →")
+        and regional.get("status") == "unvalidated"
+    )
+
+
+def sanitize_latest_change(data: dict, previous: dict | None = None) -> None:
+    """Ripulisce cambiamenti obsoleti e sopprime falsi cambi allerta."""
+    previous = previous or {}
     change = data.get("latest_change", {}) or {}
+    alert = data.get("alert", {}) or {}
+
+    if _false_unvalidated_alert_change(change, alert):
+        prev_change = previous.get("latest_change", {}) or {}
+        if prev_change and not _false_unvalidated_alert_change(prev_change, previous.get("alert", {}) or {}):
+            data["latest_change"] = prev_change
+        else:
+            data["latest_change"] = {}
+
+        cleaned_history = []
+        for item in data.get("history", []) or []:
+            text = str((item or {}).get("text") or "")
+            if text.startswith("Variazione allerta ufficiale: Da verificare →"):
+                continue
+            cleaned_history.append(item)
+        data["history"] = cleaned_history[:50]
+        return
+
+    if str(change.get("title") or "").startswith("Variazione allerta ufficiale:"):
+        window = str(change.get("window") or "")
+        if _alert_text_is_noisy(window):
+            change["window"] = alert.get("validity") or "Validità/orari da verificare nel PDF ufficiale."
+
     evidence = str(change.get("evidence") or "")
     markers = (
         "Fulminazioni non ancora acquisite automaticamente.",
@@ -107,15 +139,13 @@ def sanitize_latest_change(data: dict) -> None:
         evidence = re.sub(r"\s{2,}", " ", evidence).strip(" ;.")
         suffix = "Fulminazioni EUMETSAT MTG-LI integrate nel sistema."
         change["evidence"] = f"{evidence}. {suffix}" if evidence else suffix
+
+    if change:
         data["latest_change"] = change
 
 
 def update_pressure_trend(data: dict, previous: dict) -> None:
-    """Mantiene fino a 6 h di storico e calcola ΔP 1h/3h.
-
-    La pressione territoriale deriva dal modello sul punto: il trend viene quindi
-    etichettato come modellistico e non come osservazione barometrica locale.
-    """
+    """Mantiene fino a 6 h di storico e calcola ΔP 1h/3h."""
     metrics = ((data.get("territory", {}) or {}).get("metrics", {}) or {})
     pressure = metrics.get("pressure", {}) or {}
     current_hpa = _safe_float(pressure.get("value"))

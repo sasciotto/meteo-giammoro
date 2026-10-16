@@ -9,6 +9,7 @@ from typing import Any
 import verification_engine as base
 
 _ORIGINAL_UPDATE_EVENTS = base.update_events
+_ORIGINAL_BUILD_SUMMARY = base.build_summary
 
 
 def observation(data: dict) -> dict[str, Any]:
@@ -74,9 +75,61 @@ def update_events(events_doc: dict, current: dict, now):
     return _ORIGINAL_UPDATE_EVENTS(events_doc, adapted, now)
 
 
+def _pct(numerator: int, denominator: int) -> float | None:
+    return round(100.0 * numerator / denominator, 1) if denominator else None
+
+
+def build_summary(results: list[dict]) -> dict[str, Any]:
+    """Aggiunge metriche event-sensitive alla sintesi storica."""
+    summary = _ORIGINAL_BUILD_SUMMARY(results)
+    binary = [
+        row for row in results
+        if row.get("outcome") != "inconclusive"
+        and isinstance(row.get("predicted_event"), bool)
+        and isinstance(row.get("observed_event"), bool)
+    ]
+
+    tp = sum(1 for r in binary if r["predicted_event"] and r["observed_event"])
+    tn = sum(1 for r in binary if not r["predicted_event"] and not r["observed_event"])
+    fp = sum(1 for r in binary if r["predicted_event"] and not r["observed_event"])
+    fn = sum(1 for r in binary if not r["predicted_event"] and r["observed_event"])
+
+    recall = _pct(tp, tp + fn)
+    specificity = _pct(tn, tn + fp)
+    precision = _pct(tp, tp + fp)
+    far = _pct(fp, tp + fp)
+    csi = _pct(tp, tp + fp + fn)
+    balanced = None
+    if recall is not None and specificity is not None:
+        balanced = round((recall + specificity) / 2.0, 1)
+
+    summary["event_metrics"] = {
+        "samples": len(binary),
+        "true_positive": tp,
+        "true_negative": tn,
+        "false_positive": fp,
+        "false_negative": fn,
+        "event_samples": tp + fn,
+        "no_event_samples": tn + fp,
+        "event_detection_percent": recall,
+        "precision_percent": precision,
+        "false_alarm_ratio_percent": far,
+        "specificity_percent": specificity,
+        "balanced_accuracy_percent": balanced,
+        "csi_percent": csi,
+    }
+    summary["note"] = (
+        "Metriche sperimentali ex-post. L'accuracy globale è mantenuta per compatibilità "
+        "ma può essere dominata dai casi senza evento; per la qualità degli eventi usare "
+        "POD/event detection, false alarm ratio, CSI e balanced accuracy."
+    )
+    return summary
+
+
 def install() -> None:
     base.observation = observation
     base.update_events = update_events
+    base.build_summary = build_summary
 
 
 def run(data_path: Path, verification_path: Path, events_path: Path, now=None):
@@ -91,9 +144,11 @@ def main() -> int:
     p.add_argument("--events", default="events.json")
     args = p.parse_args()
     _, verification, events = run(Path(args.data), Path(args.verification), Path(args.events))
+    metrics = (verification["summary"].get("event_metrics") or {})
     print(
         "Verifica ex-post v2 aggiornata: "
         f"{verification['summary']['evaluable_results']} campioni valutabili, "
+        f"{metrics.get('event_samples', 0)} campioni evento, "
         f"{len(verification['pending'])} snapshot in attesa, "
         f"{len(events.get('events', []))} eventi conclusi"
     )

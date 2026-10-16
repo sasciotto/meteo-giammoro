@@ -50,6 +50,53 @@ def test_latest_change_removes_obsolete_lightning_message():
     assert "EUMETSAT MTG-LI" in evidence
 
 
+def test_unvalidated_alert_does_not_create_fake_change_loop():
+    previous = {
+        "alert": {
+            "level_label": "Da verificare",
+            "regional_candidate": {"level_label": "Verde", "status": "unvalidated"},
+        },
+        "latest_change": {
+            "title": "Variazione allerta ufficiale: Da verificare → Verde",
+            "window": "testo sporco",
+        },
+    }
+    data = {
+        "alert": {
+            "level_label": "Da verificare",
+            "validity": "Validità avviso: 15–16/10/2026; orari da verificare nel PDF ufficiale.",
+            "regional_candidate": {"level_label": "Verde", "status": "unvalidated"},
+        },
+        "latest_change": {
+            "title": "Variazione allerta ufficiale: Da verificare → Verde",
+            "window": "ROSSA ALLARME PER IL RISCHIO",
+        },
+        "history": [
+            {"time": "ora", "text": "Variazione allerta ufficiale: Da verificare → Verde"},
+            {"time": "prima", "text": "Nucleo radar in avvicinamento verso Giammoro"},
+        ],
+    }
+    quality_guard.sanitize_latest_change(data, previous)
+    assert data["latest_change"] == {}
+    assert len(data["history"]) == 1
+    assert data["history"][0]["text"].startswith("Nucleo radar")
+
+
+def test_real_alert_change_gets_clean_validity_window():
+    data = {
+        "alert": {
+            "level_label": "Gialla",
+            "validity": "Validità avviso: 16–17/10/2026; orari da verificare nel PDF ufficiale.",
+        },
+        "latest_change": {
+            "title": "Variazione allerta ufficiale: Verde → Gialla",
+            "window": "ROSSA ALLARME PER IL RISCHIO IDROGEOLOGICO",
+        },
+    }
+    quality_guard.sanitize_latest_change(data)
+    assert data["latest_change"]["window"].startswith("Validità avviso:")
+
+
 def test_pressure_trend_computes_one_hour_delta():
     now = datetime(2026, 10, 16, 10, 0, tzinfo=timezone.utc)
     previous = {

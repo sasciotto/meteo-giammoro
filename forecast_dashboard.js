@@ -34,11 +34,13 @@
       .day-icon{font-size:28px}
       .day-range{font-size:21px;font-weight:770;margin-top:5px}
       .day-meta{font-size:12px;color:var(--muted);margin-top:5px}
+      .day-basis{font-size:10px;color:var(--muted);margin-top:7px}
       .model-outlook{margin-top:12px;padding:12px 14px;border-radius:12px;background:#f4f8fa;border:1px solid var(--line)}
       .model-outlook strong{display:block;margin-bottom:3px}
       .model-outlook.warning{background:#fff8e9;border-color:#ead8aa;color:#654c13}
       .model-outlook.online{background:#eef8f2;border-color:#cee5d7;color:#285c3d}
       .model-outlook.unknown{background:#f4f6f7;color:#56636c}
+      .model-values{font-size:11px;margin-top:6px;opacity:.85}
       @media(max-width:650px){.day-grid{grid-template-columns:1fr}.hourly-strip{grid-auto-columns:minmax(122px,42vw)}}
     `;
     document.head.appendChild(style);
@@ -50,6 +52,29 @@
     if (agreement.includes('medio')) return ['Scenario da monitorare', 'warning'];
     if (agreement.includes('bass')) return ['Incertezza modellistica elevata', 'warning'];
     return ['Incertezza in valutazione', 'unknown'];
+  }
+
+  function consensusHtml(home, data) {
+    const mm = home?.multi_model || {};
+    if (mm.available) {
+      const [label, klass] = uncertainty(mm);
+      const models = Array.isArray(mm.models) ? mm.models : [];
+      const values = models.map(m => `${esc(m.label)} ${fmt(m.precip_mm,1)} mm`).join(' · ');
+      return {
+        label: mm.label || label,
+        klass,
+        text: `${mm.wet_models}/${mm.models_count} modelli indicano pioggia ≥0,5 mm nelle 3–48 h. Intervallo ${fmt(mm.precip_min_mm,1)}–${fmt(mm.precip_max_mm,1)} mm; mediana ${fmt(mm.precip_median_mm,1)} mm.`,
+        values
+      };
+    }
+    const modelRow = (data.models || []).find(x => String(x.horizon || '').includes('3–48')) || {};
+    const [label, klass] = uncertainty(modelRow);
+    return {
+      label,
+      klass,
+      text: modelRow.note || modelRow.signal || 'Confronto multi-modello in aggiornamento.',
+      values: modelRow.signal || ''
+    };
   }
 
   function render(data) {
@@ -86,25 +111,25 @@
       <div class="day-head"><div><div class="k">${esc(day.label || '')}</div><div class="day-title">${esc(day.condition || 'Previsione')}</div></div><div class="day-icon" aria-hidden="true">${esc(day.icon || '•')}</div></div>
       <div class="day-range">${fmt(day.temp_min,1)}° / ${fmt(day.temp_max,1)}°</div>
       <div class="day-meta">Pioggia ${fmt(day.precipitation_sum,1)} mm · raffiche max ${fmt(day.gust_max_kmh)} km/h${day.thunder_signal ? ' · possibile segnale temporalesco' : ''}</div>
+      <div class="day-basis">Scenario orario: ${esc(day.basis || home.source || 'modello di riferimento')}</div>
     </div>`).join('');
 
-    const modelRow = (data.models || []).find(x => String(x.horizon || '').includes('3–48')) || {};
-    const [uncertaintyLabel, uncertaintyClass] = uncertainty(modelRow);
-    const modelText = modelRow.note || modelRow.signal || 'Confronto multi-modello in aggiornamento.';
+    const consensus = consensusHtml(home, data);
 
     section.innerHTML = `
-      <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Aggiornata a ogni ciclo · base oraria ${esc(home.source || 'modello locale')} · controllo multi-modello 3–48 h</div></div></div>
+      <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Aggiornata a ogni ciclo · base oraria ${esc(home.source || 'modello locale')} · consenso multi-modello 3–48 h</div></div></div>
       <div class="hourly-strip" aria-label="Previsione oraria">${hourHtml}</div>
       <div class="day-grid">${dayHtml}</div>
-      <div class="model-outlook ${uncertaintyClass}"><strong>${esc(uncertaintyLabel)}</strong>${esc(modelText)}${modelRow.signal ? `<div class="small" style="margin-top:4px">${esc(modelRow.signal)}</div>` : ''}</div>`;
+      <div class="model-outlook ${consensus.klass}"><strong>${esc(consensus.label)}</strong>${esc(consensus.text)}${consensus.values ? `<div class="model-values">${consensus.values}</div>` : ''}</div>`;
 
     const today = days.find(x => x.key === 'today');
     const tomorrow = days.find(x => x.key === 'tomorrow');
     if (byId('homeForecastTitle') && (today || tomorrow)) {
       byId('homeForecastTitle').textContent = tomorrow ? `${today?.condition || 'Oggi'} · domani ${tomorrow.condition || 'in aggiornamento'}` : (today?.condition || 'Previsione aggiornata');
       const bits = [];
-      if (today) bits.push(`Oggi ${fmt(today.temp_min,0)}–${fmt(today.temp_max,0)} °C, pioggia ${fmt(today.precipitation_sum,1)} mm`);
-      if (tomorrow) bits.push(`Domani ${fmt(tomorrow.temp_min,0)}–${fmt(tomorrow.temp_max,0)} °C, pioggia ${fmt(tomorrow.precipitation_sum,1)} mm`);
+      if (today) bits.push(`Oggi ${fmt(today.temp_min,0)}–${fmt(today.temp_max,0)} °C, scenario ${esc(home.source || 'principale')}: ${fmt(today.precipitation_sum,1)} mm`);
+      if (tomorrow) bits.push(`Domani ${fmt(tomorrow.temp_min,0)}–${fmt(tomorrow.temp_max,0)} °C, scenario ${esc(home.source || 'principale')}: ${fmt(tomorrow.precipitation_sum,1)} mm`);
+      if (home.multi_model?.available) bits.push(`3–48 h: ${home.multi_model.wet_models}/${home.multi_model.models_count} modelli con pioggia, ${fmt(home.multi_model.precip_min_mm,1)}–${fmt(home.multi_model.precip_max_mm,1)} mm`);
       byId('homeForecastText').textContent = bits.join('. ') + '.';
     }
   }

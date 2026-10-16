@@ -36,3 +36,22 @@ def test_base_snapshot_keeps_tracked_cell_for_motion_prediction():
     snap = v2.base.make_snapshot(data_with_split_cells(), now)
     assert snap["prediction"]["radar"]["distance_km"] == 32
     assert snap["prediction"]["radar"]["track_id"] == "T1"
+
+
+def test_event_metrics_separate_events_from_no_events():
+    rows = [
+        {"outcome": "correct", "predicted_event": True, "observed_event": True, "confidence_score": 80},
+        {"outcome": "correct", "predicted_event": False, "observed_event": False, "confidence_score": 80},
+        {"outcome": "false_alarm", "predicted_event": True, "observed_event": False, "confidence_score": 80},
+        {"outcome": "missed_event", "predicted_event": False, "observed_event": True, "confidence_score": 80},
+    ]
+    out = v2.build_summary(rows)
+    metrics = out["event_metrics"]
+    assert metrics["true_positive"] == 1
+    assert metrics["true_negative"] == 1
+    assert metrics["false_positive"] == 1
+    assert metrics["false_negative"] == 1
+    assert metrics["event_detection_percent"] == 50.0
+    assert metrics["false_alarm_ratio_percent"] == 50.0
+    assert metrics["balanced_accuracy_percent"] == 50.0
+    assert metrics["csi_percent"] == 33.3

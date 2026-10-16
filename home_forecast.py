@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import datetime
+from statistics import median
 from typing import Any
 
 
@@ -221,14 +222,72 @@ def daily_forecast(raw: dict, now: datetime) -> list[dict[str, Any]]:
     return out
 
 
+def multi_model_consensus(data: dict) -> dict[str, Any]:
+    """Sintesi 3–48 h dei deterministici già acquisiti dal collector."""
+    rows = []
+    for model in data.get("model_details", []) or []:
+        if not model.get("ok"):
+            continue
+        period = model.get("next_3_48h", {}) or {}
+        precip = num(period.get("precip_sum"))
+        gust = num(period.get("gust_max"))
+        cape = num(period.get("cape_max"))
+        if precip is None:
+            continue
+        rows.append({
+            "label": model.get("label") or model.get("id") or "modello",
+            "precip_mm": round(precip, 1),
+            "gust_max_kmh": None if gust is None else round(gust, 1),
+            "cape_max": None if cape is None else round(cape),
+        })
+
+    if not rows:
+        return {"available": False, "models": []}
+
+    amounts = [row["precip_mm"] for row in rows]
+    wet = sum(1 for value in amounts if value >= 0.5)
+    spread = max(amounts) - min(amounts)
+    if spread <= 1.5:
+        agreement = "alto"
+        label = "Buon accordo tra i modelli"
+    elif spread <= 5.0:
+        agreement = "medio"
+        label = "Scenario da monitorare"
+    else:
+        agreement = "basso"
+        label = "Incertezza modellistica elevata"
+
+    return {
+        "available": True,
+        "horizon": "3–48 h",
+        "models_count": len(rows),
+        "wet_models": wet,
+        "dry_models": len(rows) - wet,
+        "precip_min_mm": round(min(amounts), 1),
+        "precip_max_mm": round(max(amounts), 1),
+        "precip_median_mm": round(float(median(amounts)), 1),
+        "agreement": agreement,
+        "label": label,
+        "models": rows,
+        "note": (
+            f"{wet}/{len(rows)} modelli indicano almeno 0,5 mm; "
+            f"intervallo {min(amounts):.1f}–{max(amounts):.1f} mm, mediana {median(amounts):.1f} mm."
+        ),
+    }
+
+
 def build(data: dict, raw: dict | None, source_label: str, now: datetime) -> dict[str, Any]:
     current = current_summary(data, now)
+    days = daily_forecast(raw or {}, now)
+    for day in days:
+        day["basis"] = source_label
     return {
         "generated_at": now.isoformat(timespec="seconds"),
         "source": source_label,
         "current": current,
         "hourly": hourly_forecast(raw or {}, now),
-        "days": daily_forecast(raw or {}, now),
+        "days": days,
+        "multi_model": multi_model_consensus(data),
         "forecast_available": bool(raw),
     }
 
