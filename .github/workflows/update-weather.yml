@@ -9,12 +9,14 @@ on:
       - main
     paths:
       - "index.html"
+      - "forecast_dashboard.js"
       - "collector.py"
       - "home_forecast.py"
       - "nowcast_engine.py"
       - "nowcast_v2.py"
       - "nowcast_v4.py"
       - "lightning_eumetsat.py"
+      - "quality_guard.py"
       - "verification_engine.py"
       - "verification_engine_v2.py"
       - "config/**"
@@ -167,12 +169,21 @@ jobs:
         if: steps.freshness.outputs.should_run == 'true'
         run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
 
-      - name: Prepara sito
+      - name: Prepara sito con previsione
         if: steps.freshness.outputs.should_run == 'true'
         run: |
           rm -rf _site
           mkdir _site
-          cp index.html data.json history.json verification.json events.json .nojekyll _site/
+          cp index.html forecast_dashboard.js data.json history.json verification.json events.json .nojekyll _site/
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('_site/index.html')
+          html = p.read_text(encoding='utf-8')
+          tag = '<script src="forecast_dashboard.js"></script>'
+          if tag not in html:
+              html = html.replace('</body>', tag + '</body>')
+          p.write_text(html, encoding='utf-8')
+          PY
 
       - name: Configura GitHub Pages
         if: steps.freshness.outputs.should_run == 'true'
@@ -230,5 +241,5 @@ jobs:
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
-# Home: sintesi deterministica backend + previsione oraria/oggi-domani.
+# Home: sintesi deterministica backend + previsione oraria/oggi-domani + modulo forecast_dashboard.js.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
