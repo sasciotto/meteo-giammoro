@@ -20,6 +20,7 @@
       .forecast-detail{margin-top:14px}
       .forecast-detail .section-title{margin-bottom:13px}
       .forecast-source{font-size:12px;color:var(--muted)}
+      .forecast-stale{margin:0 0 12px;padding:10px 12px;border:1px solid #ead8aa;border-radius:11px;background:#fff8e9;color:#654c13;font-size:12px}
       .hourly-strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(128px,1fr);gap:9px;overflow-x:auto;padding-bottom:5px;scroll-snap-type:x proximity}
       .hour-cell{scroll-snap-align:start;background:var(--surface2);border:1px solid var(--line);border-radius:13px;padding:12px;min-height:142px}
       .hour-time{font-size:12px;font-weight:760;color:var(--muted)}
@@ -41,9 +42,7 @@
       .model-outlook.online{background:#eef8f2;border-color:#cee5d7;color:#285c3d}
       .model-outlook.unknown{background:#f4f6f7;color:#56636c}
       .model-values{font-size:11px;margin-top:6px;opacity:.85}
-      .forecast-summary-two{grid-template-columns:repeat(2,1fr)}
-      @media(max-width:650px){.day-grid{grid-template-columns:1fr}.hourly-strip{grid-auto-columns:minmax(122px,42vw)}.forecast-summary-two{grid-template-columns:1fr 1fr}}
-      @media(max-width:430px){.forecast-summary-two{grid-template-columns:1fr}}
+      @media(max-width:650px){.day-grid{grid-template-columns:1fr}.hourly-strip{grid-auto-columns:minmax(122px,42vw)}}
     `;
     document.head.appendChild(style);
   }
@@ -74,26 +73,12 @@
     return {
       label,
       klass,
-      text: modelRow.note || modelRow.signal || 'Confronto multi-modello in aggiornamento.',
+      text: modelRow.note || modelRow.signal || 'Confronto multi-modello temporaneamente non disponibile.',
       values: modelRow.signal || ''
     };
   }
 
-  function hideLegacyCombinedForecast() {
-    const title = byId('homeForecastTitle');
-    const legacyCard = title?.closest('.forecast-card');
-    if (!legacyCard) return;
-    const grid = legacyCard.parentElement;
-    legacyCard.style.display = 'none';
-    if (grid) grid.classList.add('forecast-summary-two');
-  }
-
-  function render(data) {
-    const home = data?.home_summary || {};
-    const hourly = Array.isArray(home.hourly) ? home.hourly.slice(0, 8) : [];
-    const days = Array.isArray(home.days) ? home.days.slice(0, 2) : [];
-    if (!home.forecast_available || (!hourly.length && !days.length)) return;
-
+  function ensureSection() {
     ensureStyles();
     let section = byId('forecastDetail');
     if (!section) {
@@ -104,9 +89,27 @@
       const homeSection = alertCard?.parentElement;
       if (homeSection && alertCard) homeSection.insertBefore(section, alertCard);
     }
+    return section;
+  }
+
+  function render(data) {
+    const section = ensureSection();
     if (!section) return;
 
-    hideLegacyCombinedForecast();
+    const home = data?.home_summary || {};
+    const hourly = Array.isArray(home.hourly) ? home.hourly.slice(0, 8) : [];
+    const days = Array.isArray(home.days) ? home.days.slice(0, 2) : [];
+
+    if (!home.forecast_available || (!hourly.length && !days.length)) {
+      section.innerHTML = `
+        <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Aggiornata a ogni ciclo</div></div></div>
+        <div class="model-outlook unknown"><strong>Previsione temporaneamente non disponibile</strong>I dati osservativi, radar e fulminazioni restano comunque aggiornati.</div>`;
+      return;
+    }
+
+    const staleHtml = home.stale
+      ? `<div class="forecast-stale"><strong>Dato precedente.</strong> Ultima previsione valida di circa ${fmt(home.stale_age_minutes)} minuti fa; ${esc(home.stale_reason || 'fonte temporaneamente non disponibile')}.</div>`
+      : '';
 
     const hourHtml = hourly.map(h => {
       const rain = num(h.precipitation) || 0;
@@ -128,23 +131,13 @@
     </div>`).join('');
 
     const consensus = consensusHtml(home, data);
-
     section.innerHTML = `
-      <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Aggiornata a ogni ciclo · base oraria ${esc(home.source || 'modello locale')} · consenso multi-modello 3–48 h</div></div></div>
+      <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Base oraria ${esc(home.source || 'modello locale')} · consenso multi-modello 3–48 h</div></div></div>
+      ${staleHtml}
       <div class="hourly-strip" aria-label="Previsione oraria">${hourHtml}</div>
       <div class="day-grid">${dayHtml}</div>
       <div class="model-outlook ${consensus.klass}"><strong>${esc(consensus.label)}</strong>${esc(consensus.text)}${consensus.values ? `<div class="model-values">${consensus.values}</div>` : ''}</div>`;
   }
 
-  function refreshForecast() {
-    fetch(`data.json?forecast=${Date.now()}`, {cache:'no-store'})
-      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
-      .then(render)
-      .catch(() => {});
-  }
-
-  window.addEventListener('load', () => {
-    setTimeout(refreshForecast, 900);
-    setInterval(refreshForecast, 300000);
-  });
+  window.renderForecastDashboard = render;
 })();

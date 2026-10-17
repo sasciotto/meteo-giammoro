@@ -10,8 +10,11 @@ on:
     paths:
       - "index.html"
       - "forecast_dashboard.js"
+      - "site_prepare.py"
       - "collector.py"
       - "home_forecast.py"
+      - "home_forecast_v2.py"
+      - "runtime_quality.py"
       - "nowcast_engine.py"
       - "nowcast_v2.py"
       - "nowcast_v4.py"
@@ -145,7 +148,7 @@ jobs:
           import json
           from pathlib import Path
           import collector
-          import home_forecast
+          import home_forecast_v2 as home_forecast
 
           cache_path = Path('/tmp/open-meteo-model-cache.json')
           model_cache = json.loads(cache_path.read_text(encoding='utf-8')) if cache_path.exists() else {}
@@ -159,11 +162,17 @@ jobs:
               return original_fetch_json(url, params, timeout)
 
           collector.fetch_json = reuse_fetch_json
-          p=Path('data.json')
-          data=json.loads(p.read_text(encoding='utf-8'))
-          data=home_forecast.apply(data, collector)
-          p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+          p = Path('data.json')
+          previous_path = Path('/tmp/data-previous.json')
+          previous = json.loads(previous_path.read_text(encoding='utf-8')) if previous_path.exists() else {}
+          data = json.loads(p.read_text(encoding='utf-8'))
+          data = home_forecast.apply(data, collector, previous=previous)
+          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
+
+      - name: Normalizza qualità runtime e allerte
+        if: steps.freshness.outputs.should_run == 'true'
+        run: python runtime_quality.py --data data.json
 
       - name: Verifica ex-post e archivio eventi
         if: steps.freshness.outputs.should_run == 'true'
@@ -174,16 +183,8 @@ jobs:
         run: |
           rm -rf _site
           mkdir _site
-          cp index.html forecast_dashboard.js data.json history.json verification.json events.json .nojekyll _site/
-          python - <<'PY'
-          from pathlib import Path
-          p = Path('_site/index.html')
-          html = p.read_text(encoding='utf-8')
-          tag = '<script src="forecast_dashboard.js"></script>'
-          if tag not in html:
-              html = html.replace('</body>', tag + '</body>')
-          p.write_text(html, encoding='utf-8')
-          PY
+          cp forecast_dashboard.js data.json history.json verification.json events.json .nojekyll _site/
+          python site_prepare.py --source index.html --dest _site/index.html
 
       - name: Configura GitHub Pages
         if: steps.freshness.outputs.should_run == 'true'
@@ -236,10 +237,13 @@ jobs:
 # Scheduler GitHub di backup: ogni 15 minuti ai minuti :07, :22, :37 e :52.
 # La guardia iniziale evita di eseguire il collector se i dati hanno meno di 10 minuti.
 # Le risposte Open-Meteo deterministiche del collector vengono riutilizzate dalla home senza una seconda richiesta.
+# Se il modello home fallisce, viene mantenuta fino a 6 h l'ultima previsione valida, marcata come dato precedente.
+# Il collector viene marcato degraded quando la previsione modellistica home non è disponibile.
+# La pagina pubblica usa un solo fetch di data.json; forecast_dashboard.js riceve lo stesso oggetto dati.
 # Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
-# Home: sintesi deterministica backend + previsione oraria/oggi-domani + modulo forecast_dashboard.js.
+# Home: sintesi deterministica backend + previsione oraria/oggi-domani + consenso multi-modello.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
