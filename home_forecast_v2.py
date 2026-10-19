@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any
 
 import home_forecast as base
+import model_outlook
 
 STALE_MAX_MINUTES = 360
 
@@ -159,4 +160,8 @@ def apply(data: dict, collector, previous: dict | None = None) -> dict:
         data["home_summary"] = fallback or build(data, None, source, now)
         if error and fallback:
             data["home_summary"]["fallback_error"] = str(error)
+
+    # Il 3–48 h descrive una tendenza, non un rischio operativo: separa
+    # probabilità di pioggia, incertezza quantitativa e impatto modellistico.
+    model_outlook.apply(data)
     return data

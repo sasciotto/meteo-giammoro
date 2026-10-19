@@ -74,6 +74,13 @@ def transform(html: str) -> str:
     if count:
         html = html.replace('<div class="grid three section">', '<div class="grid two section">', 1)
 
+    # Il 3–48 h non è un'allerta/rischio operativo: la card espone la tendenza
+    # modellistica e mantiene l'impatto separato nei dettagli del JSON.
+    html = html.replace(
+        '<div class="k">Rischio 3–48 h</div>',
+        '<div class="k">Tendenza 3–48 h</div>',
+        1,
+    )
     html = html.replace(
         "const wx=homeWeather(m,d,tr,flashes20);",
         "const wx=d.home_summary?.current||homeWeather(m,d,tr,flashes20);",
