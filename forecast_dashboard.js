@@ -11,6 +11,10 @@
     const x = num(value);
     return x == null ? '—' : x.toLocaleString('it-IT', {minimumFractionDigits: digits, maximumFractionDigits: digits});
   };
+  const verificationMetric = (label, value, {unit = '', digits = 0, note = ''} = {}) => {
+    const rendered = num(value) == null ? '—' : fmt(value, digits);
+    return `<div class="metric"><div class="k">${esc(label)}</div><div class="mv">${rendered}${rendered === '—' ? '' : esc(unit)}</div>${note ? `<div class="ms">${esc(note)}</div>` : ''}</div>`;
+  };
 
   function ensureStyles() {
     if (byId('forecastDashboardStyles')) return;
@@ -37,7 +41,6 @@
       .day-meta{font-size:12px;color:var(--muted);margin-top:5px}
       .day-basis{font-size:10px;color:var(--muted);margin-top:7px}
       .model-outlook{margin-top:12px;padding:12px 14px;border-radius:12px;background:#f4f8fa;border:1px solid var(--line)}
-      .model-outlook strong{display:block;margin-bottom:3px}
       .model-outlook.warning{background:#fff8e9;border-color:#ead8aa;color:#654c13}
       .model-outlook.online{background:#eef8f2;border-color:#cee5d7;color:#285c3d}
       .model-outlook.unknown{background:#f4f6f7;color:#56636c}
@@ -78,6 +81,63 @@
     };
   }
 
+  function renderVerification(data) {
+    const metricsEl = byId('verificationMetrics');
+    if (!metricsEl) return;
+
+    const verification = data?.verification || {};
+    const summary = verification.summary || {};
+    const events = summary.event_metrics || {};
+    const total = num(summary.evaluable_results) || 0;
+    const binarySamples = num(events.samples) ?? total;
+    const eventSamples = num(events.event_samples) || 0;
+    const noEventSamples = num(events.no_event_samples) || 0;
+
+    const badgeEl = byId('verificationBadge');
+    if (badgeEl) {
+      const matureEvents = eventSamples >= 20;
+      badgeEl.className = `badge ${matureEvents ? 'online' : total > 0 ? 'warning' : 'unknown'}`;
+      badgeEl.textContent = total === 0
+        ? 'In raccolta'
+        : eventSamples === 0
+          ? `${fmt(binarySamples)} campioni · 0 eventi`
+          : `${fmt(eventSamples)} eventi / ${fmt(binarySamples)} campioni`;
+    }
+
+    const introEl = byId('verificationIntro');
+    if (introEl) {
+      if (total === 0) {
+        introEl.textContent = 'La raccolta è attiva. Le metriche evento saranno calcolate quando maturano i primi campioni verificabili.';
+      } else if (eventSamples === 0) {
+        introEl.textContent = `${fmt(binarySamples)} campioni binari verificati, ma nessun evento osservato finora. POD e balanced accuracy non sono ancora valutabili; l’accuracy globale descrive soprattutto i non-eventi.`;
+      } else if (eventSamples < 20) {
+        introEl.textContent = `${fmt(eventSamples)} campioni evento su ${fmt(binarySamples)} verifiche binarie: POD, FAR, CSI e balanced accuracy sono già calcolati ma il campione evento è ancora ridotto.`;
+      } else {
+        introEl.textContent = `${fmt(eventSamples)} campioni evento su ${fmt(binarySamples)} verifiche binarie. Le metriche evento sono il riferimento principale; l’accuracy globale resta secondaria.`;
+      }
+    }
+
+    metricsEl.innerHTML = [
+      verificationMetric('Campioni evento', eventSamples, {note: `${fmt(noEventSamples)} non-eventi`}),
+      verificationMetric('TP', events.true_positive, {note: 'evento previsto e osservato'}),
+      verificationMetric('FP', events.false_positive, {note: 'falso allarme'}),
+      verificationMetric('FN', events.false_negative, {note: 'evento mancato'}),
+      verificationMetric('POD', events.event_detection_percent, {unit: ' %', digits: 1, note: 'event detection / recall'}),
+      verificationMetric('FAR', events.false_alarm_ratio_percent, {unit: ' %', digits: 1, note: 'false alarm ratio'}),
+      verificationMetric('CSI', events.csi_percent, {unit: ' %', digits: 1, note: 'critical success index'}),
+      verificationMetric('Balanced accuracy', events.balanced_accuracy_percent, {unit: ' %', digits: 1}),
+      verificationMetric('Precision', events.precision_percent, {unit: ' %', digits: 1}),
+      verificationMetric('Campioni ETA', summary.eta_samples, {note: 'previsioni con ETA valutabile'}),
+      verificationMetric('Errore ETA', summary.eta_mae_minutes, {unit: ' min', digits: 1, note: 'MAE'}),
+      verificationMetric('Campioni traiettoria', summary.trajectory_samples, {note: 'track valutabili'}),
+      verificationMetric('Errore traiettoria', summary.trajectory_mae_km, {unit: ' km', digits: 1, note: 'MAE'}),
+      verificationMetric('Accuracy globale', summary.accuracy_percent, {unit: ' %', digits: 1, note: 'metrica secondaria; può essere dominata dai non-eventi'})
+    ].join('');
+
+    const confidenceEl = byId('verificationConfidence');
+    if (confidenceEl) confidenceEl.textContent = summary.note || 'Metriche sperimentali ex-post; interpretare la qualità degli eventi soprattutto tramite POD, FAR, CSI e balanced accuracy.';
+  }
+
   function ensureSection() {
     ensureStyles();
     let section = byId('forecastDetail');
@@ -93,6 +153,7 @@
   }
 
   function render(data) {
+    renderVerification(data);
     const section = ensureSection();
     if (!section) return;
 
