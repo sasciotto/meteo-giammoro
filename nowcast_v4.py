@@ -9,6 +9,7 @@ import re
 from datetime import datetime
 from pathlib import Path
 
+import approaching_cells
 import lightning_eumetsat as eum_li
 import nowcast_v2 as v2
 import quality_guard
@@ -255,6 +256,7 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     data.setdefault("meta", {})["last_check_iso"] = collector.now_local().isoformat(timespec="seconds")
     attach_hazard_cells(data)
     assess_tracking_quality(data)
+    approaching_cells.update(data, previous, rlat, rlon)
 
     lightning = eum_li.fetch_lightning(rlat, rlon)
     data["lightning"] = lightning

@@ -12,6 +12,15 @@ LEGACY_CARD = re.compile(
     r'<div class="k">OGGI E DOMANI</div>(?:(?!</article>).)*?</article>',
     flags=re.S,
 )
+APPROACH_UI_PATH = Path(__file__).with_name("approaching_cells_ui.js")
+
+
+def _dashboard_scripts() -> str:
+    forecast_tag = '<script src="forecast_dashboard.js"></script>'
+    if not APPROACH_UI_PATH.exists():
+        return forecast_tag
+    approach_js = APPROACH_UI_PATH.read_text(encoding="utf-8").strip()
+    return forecast_tag + "\n<script>\n" + approach_js + "\n</script>"
 
 
 def transform(html: str) -> str:
@@ -31,12 +40,12 @@ def transform(html: str) -> str:
         1,
     )
 
-    tag = '<script src="forecast_dashboard.js"></script>'
-    if tag not in html:
+    forecast_tag = '<script src="forecast_dashboard.js"></script>'
+    if forecast_tag not in html:
         marker = "<script>\nconst $="
         if marker not in html:
             raise RuntimeError("script principale dashboard non trovato")
-        html = html.replace(marker, tag + "\n" + marker, 1)
+        html = html.replace(marker, _dashboard_scripts() + "\n" + marker, 1)
     return html
 
 
