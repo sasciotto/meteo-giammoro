@@ -3,15 +3,7 @@
 
   const previousRender = window.renderForecastDashboard;
   const byId = id => document.getElementById(id);
-  const REF = {lat: 38.2018, lon: 15.31816};
-  const RADIUS_KM = 65;
-  const WMS = 'https://radar-geowebcache.protezionecivile.it/service/wms';
-  const PRODUCT_META = {
-    SRI: {layer: 'radar:sri', label: 'Precipitazione SRI', unit: 'mm/h', description: 'Intensità istantanea di precipitazione'},
-    VMI: {layer: 'radar:vmi', label: 'Riflettività VMI', unit: 'dBZ', description: 'Riflettività radar massima'},
-  };
-  let currentData = null;
-  let selectedProduct = 'SRI';
+  const OFFICIAL_RADAR_URL = 'https://radar.protezionecivile.it/#/pages/dashboard?zoom=6';
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = value => {
@@ -24,56 +16,6 @@
     return x == null ? '—' : x.toLocaleString('it-IT', {minimumFractionDigits: digits, maximumFractionDigits: digits});
   };
 
-  function bounds() {
-    const latDelta = RADIUS_KM / 111.32;
-    const lonDelta = RADIUS_KM / (111.32 * Math.cos(REF.lat * Math.PI / 180));
-    return {
-      left: REF.lon - lonDelta,
-      bottom: REF.lat - latDelta,
-      right: REF.lon + lonDelta,
-      top: REF.lat + latDelta,
-    };
-  }
-
-  function toWmsTime(value) {
-    if (!value) return null;
-    const d = new Date(value);
-    if (!Number.isFinite(d.getTime())) return null;
-    return d.toISOString();
-  }
-
-  function wmsUrl(layer, timestamp = null) {
-    const b = bounds();
-    const params = new URLSearchParams({
-      service: 'WMS',
-      request: 'GetMap',
-      layers: layer,
-      styles: '',
-      format: 'image/png',
-      transparent: 'true',
-      version: '1.1.1',
-      tiled: 'true',
-      width: '768',
-      height: '640',
-      srs: 'EPSG:4326',
-      bbox: `${b.left},${b.bottom},${b.right},${b.top}`,
-    });
-    const time = toWmsTime(timestamp);
-    if (time) params.set('time', time);
-    return `${WMS}?${params.toString()}`;
-  }
-
-  function position(lat, lon) {
-    const b = bounds();
-    const la = num(lat);
-    const lo = num(lon);
-    if (la == null || lo == null || lo < b.left || lo > b.right || la < b.bottom || la > b.top) return null;
-    return {
-      x: 100 * (lo - b.left) / (b.right - b.left),
-      y: 100 * (b.top - la) / (b.top - b.bottom),
-    };
-  }
-
   function ensureStyles() {
     if (byId('radarViewerStyles')) return;
     const style = document.createElement('style');
@@ -81,26 +23,23 @@
     style.textContent = `
       .radar-viewer{margin-top:14px;overflow:hidden}
       .radar-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px}
-      .radar-source{font-size:12px;color:var(--muted);margin-top:3px}
-      .radar-tabs{display:inline-flex;gap:4px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--surface2)}
-      .radar-tab{border:0;border-radius:999px;padding:7px 11px;background:transparent;color:var(--muted);font:inherit;font-size:12px;font-weight:760;cursor:pointer}
-      .radar-tab.active{background:var(--accent);color:#fff}.radar-tab:disabled{opacity:.45;cursor:not-allowed}
-      .radar-layout{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(230px,.65fr);gap:12px;align-items:start}
-      .radar-map{position:relative;overflow:hidden;min-height:360px;aspect-ratio:6/5;border:1px solid var(--line);border-radius:14px;background:#e7edf0}
-      .radar-map img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
-      .radar-map .radar-boundaries{z-index:2;pointer-events:none}
-      .radar-map .radar-product-image{z-index:1}
-      .radar-overlay{position:absolute;inset:0;z-index:3;width:100%;height:100%;pointer-events:none}
-      .radar-loading{position:absolute;left:10px;bottom:10px;z-index:4;padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.88);border:1px solid var(--line);font-size:11px;color:#40505b}
+      .radar-source{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.45}
+      .radar-layout{display:grid;grid-template-columns:minmax(0,1.75fr) minmax(250px,.65fr);gap:12px;align-items:start}
+      .radar-shot-wrap{position:relative;overflow:hidden;border:1px solid var(--line);border-radius:14px;background:var(--surface2);min-height:330px}
+      .radar-shot{width:100%;height:auto;display:block;aspect-ratio:14/9;object-fit:cover;background:#e7edf0}
+      .radar-shot-link{display:block;color:inherit;text-decoration:none}
+      .radar-shot-caption{position:absolute;left:10px;bottom:10px;padding:6px 9px;border-radius:999px;background:rgba(255,255,255,.92);border:1px solid var(--line);font-size:11px;color:#40505b;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+      .radar-shot-fallback{min-height:330px;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;color:var(--muted);line-height:1.5}
       .radar-side{display:grid;gap:9px}
       .radar-info{border:1px solid var(--line);border-radius:12px;background:var(--surface2);padding:11px}
       .radar-info strong{display:block;font-size:15px}.radar-info p{margin:4px 0 0;font-size:12px;color:var(--muted);line-height:1.45}
       .radar-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
       .radar-stat{padding:8px;border-radius:9px;background:var(--surface);border:1px solid var(--line)}
       .radar-stat b{display:block;font-size:14px}.radar-stat span{font-size:10px;color:var(--muted)}
-      .radar-legend-note{font-size:11px;color:var(--muted);line-height:1.45}
-      @media(max-width:820px){.radar-layout{grid-template-columns:1fr}.radar-map{min-height:320px}.radar-head{display:block}.radar-tabs{margin-top:9px}}
-      @media(max-width:520px){.radar-map{min-height:260px}.radar-stats{grid-template-columns:1fr 1fr 1fr}}
+      .radar-open{display:inline-flex;align-items:center;gap:5px;margin-top:9px;font-size:12px;font-weight:760}
+      .radar-note{font-size:11px;color:var(--muted);line-height:1.45}
+      @media(max-width:820px){.radar-layout{grid-template-columns:1fr}.radar-head{display:block}.radar-shot-wrap,.radar-shot-fallback{min-height:260px}}
+      @media(max-width:520px){.radar-stats{grid-template-columns:1fr 1fr 1fr}.radar-shot-wrap,.radar-shot-fallback{min-height:210px}}
     `;
     document.head.appendChild(style);
   }
@@ -128,110 +67,81 @@
     return (((data || {}).dpc_observations || {}).products || {})[key] || {};
   }
 
-  function productAvailable(data, key) {
-    return product(data, key).ok === true;
-  }
-
-  function productStats(info, unit) {
+  function statsHtml(info, unit) {
     const stats = Array.isArray(info.stats) ? info.stats : [];
-    const requested = [5, 15, 30];
-    return requested.map(radius => {
-      const row = stats.find(s => Number(s.radius_km) === radius) || {};
+    return [5, 15, 30].map(radius => {
+      const row = stats.find(item => Number(item.radius_km) === radius) || {};
       const value = num(row.max);
       return `<div class="radar-stat"><span>MAX ${radius} KM</span><b>${value == null ? '—' : `${fmt(value,1)} ${esc(unit)}`}</b></div>`;
     }).join('');
   }
 
-  function overlaySvg(data, key) {
-    const ref = position(REF.lat, REF.lon);
-    const tracking = (data || {}).nowcast_tracking || {};
-    const cell = tracking.tracked_cell || tracking.cell || {};
-    const motion = tracking.motion || {};
-    const cellPos = String(tracking.product || '').toUpperCase() === key ? position(cell.lat, cell.lon) : null;
-    const direction = num(motion.direction_deg);
-
-    let track = '';
-    if (cellPos) {
-      let arrow = '';
-      if (motion.status === 'tracked' && direction != null) {
-        const rad = direction * Math.PI / 180;
-        const length = 15;
-        const x2 = Math.max(1, Math.min(99, cellPos.x + Math.sin(rad) * length));
-        const y2 = Math.max(1, Math.min(99, cellPos.y - Math.cos(rad) * length));
-        arrow = `<line x1="${cellPos.x}" y1="${cellPos.y}" x2="${x2}" y2="${y2}" stroke="#7a1f1f" stroke-width="1.2" vector-effect="non-scaling-stroke" marker-end="url(#radarArrowHead)"/>`;
-      }
-      track = `${arrow}<circle cx="${cellPos.x}" cy="${cellPos.y}" r="2.1" fill="#fff" stroke="#7a1f1f" stroke-width="1.1" vector-effect="non-scaling-stroke"/><text x="${Math.min(94, cellPos.x + 2.8)}" y="${Math.max(5, cellPos.y - 2.2)}" font-size="3.2" font-weight="700" fill="#611818" stroke="#fff" stroke-width=".7" paint-order="stroke">Track ${esc(tracking.track_id || '')}</text>`;
-    }
-
-    return `<svg class="radar-overlay" id="radarOverlay" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      <defs><marker id="radarArrowHead" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 z" fill="#7a1f1f"/></marker></defs>
-      ${ref ? `<circle cx="${ref.x}" cy="${ref.y}" r="2.1" fill="#fff" stroke="#0f6786" stroke-width="1.2" vector-effect="non-scaling-stroke"/><circle cx="${ref.x}" cy="${ref.y}" r=".65" fill="#0f6786"/><text x="${ref.x + 2.8}" y="${ref.y - 2.2}" font-size="3.4" font-weight="800" fill="#0d4d66" stroke="#fff" stroke-width=".8" paint-order="stroke">Giammoro</text>` : ''}
-      ${track}
-    </svg>`;
+  function localProductCard(label, info, unit, description) {
+    const available = info?.ok === true;
+    const timestamp = info?.timestamp || 'timestamp non disponibile';
+    return `<div class="radar-info">
+      <strong>${esc(label)}</strong>
+      <p>${esc(description)} · ${esc(timestamp)}${info?.age_minutes == null ? '' : ` · ${fmt(info.age_minutes)} min fa`}.</p>
+      ${available ? `<div class="radar-stats">${statsHtml(info, unit)}</div>` : '<p>Prodotto non disponibile nel ciclo corrente.</p>'}
+    </div>`;
   }
 
-  function renderSelected() {
-    if (!currentData) return;
-    const section = ensureSection();
-    if (!section) return;
-
-    if (!productAvailable(currentData, selectedProduct)) {
-      selectedProduct = productAvailable(currentData, 'SRI') ? 'SRI' : productAvailable(currentData, 'VMI') ? 'VMI' : selectedProduct;
+  function trackingCard(data) {
+    const tr = data?.nowcast_tracking || {};
+    const cell = tr.tracked_cell || tr.cell || {};
+    const motion = tr.motion || {};
+    if (tr.status !== 'detected') {
+      return '<div class="radar-info"><strong>Tracking locale</strong><p>Nessuna cella radar tracciata in questo ciclo.</p></div>';
     }
-
-    const meta = PRODUCT_META[selectedProduct];
-    const info = product(currentData, selectedProduct);
-    const available = info.ok === true;
-    const timeText = info.timestamp || 'timestamp non disponibile';
-    const dataLayerUrl = available ? wmsUrl(meta.layer, info.timestamp) : '';
-    const boundaryUrl = wmsUrl('radar:regioni');
-    const tracking = currentData.nowcast_tracking || {};
-    const trackingNote = available && String(tracking.product || '').toUpperCase() === selectedProduct
-      ? `Overlay: cella tracciata ${tracking.track_id || ''}${(tracking.motion || {}).status === 'tracked' ? ` · moto ${(tracking.motion || {}).direction || '—'} ${(tracking.motion || {}).speed_kmh ?? '—'} km/h` : ''}.`
-      : 'Il tracking viene sovrapposto solo al prodotto radar usato dal tracker corrente.';
-
-    section.innerHTML = `
-      <div class="radar-head">
-        <div><h2 style="margin:0">Radar</h2><div class="radar-source">Radar-DPC · area ~${RADIUS_KM} km attorno a Giammoro · <a class="source-link" href="https://radar.protezionecivile.it/" target="_blank" rel="noopener">fonte ufficiale</a></div></div>
-        <div class="radar-tabs" role="group" aria-label="Prodotto radar">
-          ${Object.keys(PRODUCT_META).map(key => `<button type="button" class="radar-tab ${key === selectedProduct ? 'active' : ''}" data-radar-product="${key}" ${productAvailable(currentData,key) ? '' : 'disabled'}>${key}</button>`).join('')}
-        </div>
-      </div>
-      <div class="radar-layout">
-        <div class="radar-map" id="radarMap">
-          ${available ? `<img class="radar-product-image" id="radarProductImage" src="${esc(dataLayerUrl)}" alt="${esc(meta.label)} nell'area di Giammoro" loading="lazy">` : ''}
-          <img class="radar-boundaries" src="${esc(boundaryUrl)}" alt="" loading="lazy">
-          ${overlaySvg(currentData, selectedProduct)}
-          <div class="radar-loading" id="radarImageStatus">${available ? 'Caricamento radar…' : 'Prodotto non disponibile nel ciclo corrente'}</div>
-        </div>
-        <div class="radar-side">
-          <div class="radar-info"><strong>${esc(meta.label)}</strong><p>${esc(meta.description)} · ${esc(timeText)}${info.age_minutes == null ? '' : ` · ${fmt(info.age_minutes)} min fa`}.</p>${available ? `<div class="radar-stats">${productStats(info, meta.unit)}</div>` : ''}</div>
-          <div class="radar-info"><strong>Overlay locale</strong><p>${esc(trackingNote)}</p></div>
-          <div class="radar-legend-note">La mappa visualizza il layer WMS ufficiale corrispondente allo stesso timestamp analizzato dal backend. Il marker di Giammoro e la traiettoria sono overlay del progetto e non elementi del prodotto DPC.</div>
-        </div>
-      </div>`;
-
-    section.querySelectorAll('[data-radar-product]').forEach(button => {
-      button.addEventListener('click', () => {
-        selectedProduct = button.dataset.radarProduct;
-        renderSelected();
-      });
-    });
-    const image = byId('radarProductImage');
-    const status = byId('radarImageStatus');
-    if (image && status) {
-      image.addEventListener('load', () => { status.textContent = 'Radar caricato'; });
-      image.addEventListener('error', () => { status.textContent = 'Immagine radar temporaneamente non disponibile'; });
+    const parts = [`cella a ${fmt(cell.distance_km,1)} km ${esc(cell.bearing || '')}`];
+    if (motion.status === 'tracked') {
+      parts.push(`moto ${esc(motion.direction || '—')} a ${fmt(motion.speed_kmh,1)} km/h`);
+      parts.push(motion.approaching ? `avvicinamento ${fmt(motion.approach_rate_kmh,1)} km/h` : 'traiettoria non diretta verso Giammoro');
     }
+    return `<div class="radar-info"><strong>Tracking locale</strong><p>${parts.join(' · ')}.</p></div>`;
   }
 
   function render(data) {
-    currentData = data || {};
-    renderSelected();
+    const section = ensureSection();
+    if (!section) return;
+
+    const sri = product(data, 'SRI');
+    const vmi = product(data, 'VMI');
+    const version = encodeURIComponent(data?.meta?.last_check_iso || Date.now());
+
+    section.innerHTML = `
+      <div class="radar-head">
+        <div>
+          <h2 style="margin:0">Radar-DPC ufficiale</h2>
+          <div class="radar-source">Screenshot della piattaforma radar della Protezione Civile acquisito dal workflow durante l'aggiornamento. Clic sull'immagine per aprire la mappa interattiva originale.</div>
+        </div>
+        <a class="source-link" href="${OFFICIAL_RADAR_URL}" target="_blank" rel="noopener">Apri radar interattivo</a>
+      </div>
+      <div class="radar-layout">
+        <div class="radar-shot-wrap" id="radarShotWrap">
+          <a class="radar-shot-link" href="${OFFICIAL_RADAR_URL}" target="_blank" rel="noopener">
+            <img class="radar-shot" id="radarOfficialShot" src="radar-dpc.png?v=${version}" alt="Screenshot della piattaforma Radar-DPC ufficiale" loading="lazy">
+          </a>
+          <div class="radar-shot-caption">Radar-DPC · schermata reale della piattaforma ufficiale</div>
+        </div>
+        <div class="radar-side">
+          ${localProductCard('SRI · precipitazione', sri, 'mm/h', 'Massimi radar attorno a Giammoro')}
+          ${localProductCard('VMI · riflettività', vmi, 'dBZ', 'Massimi di riflettività attorno a Giammoro')}
+          ${trackingCard(data)}
+          <div class="radar-note">Lo screenshot non viene modificato né usato per calcolare il tracking. I numeri locali a destra derivano dai prodotti Radar-DPC elaborati separatamente dal backend del progetto.</div>
+        </div>
+      </div>`;
+
+    const image = byId('radarOfficialShot');
+    const wrap = byId('radarShotWrap');
+    image?.addEventListener('error', () => {
+      if (!wrap) return;
+      wrap.innerHTML = `<div class="radar-shot-fallback"><div>Anteprima Radar-DPC non disponibile in questo aggiornamento.<br><a class="source-link radar-open" href="${OFFICIAL_RADAR_URL}" target="_blank" rel="noopener">Apri la piattaforma radar ufficiale</a></div></div>`;
+    });
   }
 
   window.renderForecastDashboard = data => {
     if (typeof previousRender === 'function') previousRender(data);
-    render(data);
+    render(data || {});
   };
 })();
