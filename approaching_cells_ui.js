@@ -41,19 +41,16 @@
     let section = byId('approachingCellsSection');
     if (section) return section;
 
+    const trackingStatus = byId('trackingStatus');
+    const trackingCard = trackingStatus?.closest('.card');
+    const trackingSection = trackingCard?.parentElement;
+    const expertRoot = trackingSection?.parentElement;
+    if (!expertRoot || !trackingSection) return null;
+
     section = document.createElement('section');
     section.id = 'approachingCellsSection';
     section.className = 'section card approach-monitor';
-
-    const forecast = byId('forecastDetail');
-    if (forecast?.parentElement) {
-      forecast.parentElement.insertBefore(section, forecast);
-      return section;
-    }
-
-    const alertCard = byId('homeAlertCard');
-    const homeSection = alertCard?.parentElement;
-    if (homeSection && alertCard) homeSection.insertBefore(section, alertCard);
+    expertRoot.insertBefore(section, trackingSection);
     return section;
   }
 

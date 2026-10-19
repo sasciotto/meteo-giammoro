@@ -24,3 +24,12 @@ def test_approaching_cells_ui_distinguishes_origin_and_motion():
     assert "Da ${esc(from)} → verso ${esc(toward)}" in js
     assert "closest_approach_km" in js
     assert "eta_minutes" in js
+
+
+def test_approaching_cells_ui_is_attached_to_detailed_analysis_only():
+    js = Path("approaching_cells_ui.js").read_text(encoding="utf-8")
+
+    assert "byId('trackingStatus')" in js
+    assert "expertRoot.insertBefore(section, trackingSection)" in js
+    assert "byId('forecastDetail')" not in js
+    assert "byId('homeAlertCard')" not in js
