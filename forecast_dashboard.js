@@ -4,6 +4,7 @@
   const byId = id => document.getElementById(id);
   const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const num = value => {
+    if (value === null || value === undefined || value === '') return null;
     const x = Number(value);
     return Number.isFinite(x) ? x : null;
   };

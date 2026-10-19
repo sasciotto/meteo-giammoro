@@ -23,3 +23,10 @@ def test_verification_ui_prioritizes_event_metrics_over_global_accuracy():
     assert "metrica secondaria" in js
     assert js.index("Campioni evento") < js.index("Accuracy globale")
     assert "nessun evento osservato finora" in js
+
+
+def test_numeric_formatter_keeps_missing_values_unavailable():
+    js = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+
+    assert "value === null || value === undefined || value === ''" in js
+    assert "return null;" in js
