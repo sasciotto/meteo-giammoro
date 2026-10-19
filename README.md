@@ -1,37 +1,118 @@
 # Meteo Giammoro — Dashboard 2.1
 
-Dashboard statica + collector Python per il monitoraggio meteorologico del territorio di **Giammoro (Pace del Mela, ME)**.
+Dashboard meteorologica pubblica e automatica per **Giammoro (Pace del Mela, ME)**, circa **38.2018 N, 15.31816 E**.
 
-## Regola fondamentale
+**Modello di analisi meteo creato da Salvatore Sciotto**
 
-Il riferimento è sempre **Giammoro** (circa 38.2018 N, 15.31816 E). Le stazioni vicine restano osservazioni delle rispettive località: non vengono rinominate come Giammoro e non vengono mediate automaticamente per produrre un falso "dato locale".
+Dashboard pubblica: https://sasciotto.github.io/meteo-giammoro/
 
-La stazione **MeteoGiammoro** è configurata come `maintenance` ed è esclusa da tutti i calcoli finché non termina riparazione, test e validazione. Il rientro previsto è: `maintenance` → `test` (visibile ma esclusa) → `online` (utilizzabile dopo validazione).
+> Per riprendere lo sviluppo usare **[`PROJECT_CONTEXT.md`](PROJECT_CONTEXT.md)** come fonte operativa principale e più aggiornata. Questo README descrive l'architettura corrente a livello sintetico.
 
-## Dove avviene il ragionamento
+## Principi del progetto
 
-`index.html` non effettua inferenze meteorologiche. Visualizza soltanto `data.json`.
+- Il riferimento territoriale è sempre **Giammoro**.
+- Le stazioni vicine sono solo supporto e validazione: mantengono identità geografica e rete originaria; non vengono rinominate come Giammoro e non vengono mediate per creare un falso dato locale.
+- Un dato assente resta `null` / non disponibile: non viene inventato.
+- Nel nowcasting 0–3 h le osservazioni hanno priorità sui modelli.
+- Le allerte ufficiali prevalgono sull'interpretazione locale.
+- Il progetto deve restare a **costo monetario zero**: GitHub Actions, GitHub Pages e fonti gratuite.
+- La modalità **Meteo** deve restare semplice; **Analisi dettagliata** espone le informazioni tecniche.
 
-Pipeline:
+## Stato della stazione MeteoGiammoro
 
-1. `collector.py` acquisisce le fonti.
-2. normalizza timestamp, unità e qualità dei dati;
-3. valuta il territorio di Giammoro e non la media delle stazioni;
-4. nel 0–3 h dà priorità ai prodotti osservativi Radar-DPC quando disponibili;
-5. confronta i modelli deterministici per 3–48 h;
-6. legge media/spread ensemble per 2–7 giorni;
-7. controlla le allerte ufficiali;
-8. confronta il risultato con il controllo precedente e registra solo variazioni significative;
-9. scrive `data.json` e `history.json`;
-10. la dashboard visualizza il risultato.
+La stazione primaria **MeteoGiammoro** è attualmente configurata come `maintenance` ed esclusa dai calcoli.
 
-La parte deterministica è già nel repository. Un eventuale livello AI/esperto va eseguito **server-side**, dopo la raccolta, e deve scrivere un output strutturato con evidenze; non va messo nel JavaScript del browser e non deve contenere credenziali lato client.
+Il rientro previsto è:
 
-## Fonti già collegate nel collector
+`maintenance` → `test` (visibile ma ancora esclusa) → `online` solo dopo validazione.
 
-### Stazioni locali
+Non va riattivata automaticamente come fonte primaria.
 
-Il collector usa il database stazioni live del Centro Meteorologico Siciliano come indice/aggregatore e conserva sempre la **rete originaria** dichiarata (es. DRPC, SIAS, LineaMeteo). Sono configurati gruppi per:
+## Pipeline attiva
+
+```text
+collector.py
+  ↓
+nowcast_v4.py
+  ↓
+home_forecast_v2.py
+  ↓
+runtime_quality.py
+  ↓
+verification_engine_v2.py
+  ↓
+site_prepare.py
+  ↓
+GitHub Pages artifact/deploy
+  ↓
+persistenza JSON su main
+```
+
+### Collector
+
+`collector.py` acquisisce e normalizza:
+
+- stazioni locali e di supporto;
+- modelli deterministici;
+- ensemble;
+- radar e satellite DPC;
+- allerte ufficiali;
+- dati necessari alla prima valutazione territoriale.
+
+Lo stato corrente è scritto in `data.json` con **schema 2.1**.
+
+### Nowcasting 0–3 h
+
+Entry point attivo: **`nowcast_v4.py`**.
+
+La catena mantiene `nowcast_engine.py` e `nowcast_v2.py` come base/legacy. La v4 aggiunge e coordina:
+
+- tracking multi-cella e multi-frame;
+- separazione tra `tracked_cell` e `hazard_cell`;
+- quality score del tracking (`good`, `degraded`, `suspect`, `unavailable`);
+- rimozione di ETA/closest approach quando l'associazione temporale è sospetta;
+- EUMETSAT MTG Lightning Imager;
+- quality guard;
+- trend di pressione modellistico;
+- protezioni sui dati incoerenti, incluso il dew point.
+
+Ordine di priorità indicativo nel nowcasting:
+
+1. Radar-DPC;
+2. fulminazioni EUMETSAT MTG-LI;
+3. osservazioni/stazioni affidabili;
+4. modelli sul punto come supporto.
+
+### Previsione breve e 3–48 h
+
+Entry point attivo: **`home_forecast_v2.py`**; `home_forecast.py` resta motore base.
+
+La home usa ICON-2I come base oraria principale quando disponibile e mostra separatamente il consenso multi-modello 3–48 h tra:
+
+- ItaliaMeteo / ARPAE ICON-2I;
+- DWD ICON;
+- ECMWF IFS;
+- NOAA GFS.
+
+Il consenso espone numero di modelli con precipitazione significativa, range, mediana e accordo/dispersione.
+
+Se la previsione home fallisce temporaneamente, la v2 può riusare l'ultima previsione valida fino a **6 ore**, marcandola esplicitamente come **Dato precedente** e impostando il collector come `degraded`.
+
+### Ensemble 2–7+ giorni
+
+Sono collegati:
+
+- ECMWF ENS;
+- ICON EPS;
+- GEFS.
+
+Vanno letti come spread/incertezza, non come singola previsione deterministica.
+
+## Fonti osservative
+
+### Stazioni
+
+Il collector usa il database live del Centro Meteorologico Siciliano come aggregatore e conserva la rete originaria. Le aree di supporto configurate includono:
 
 - Pace del Mela / area Giammoro;
 - Milazzo;
@@ -41,100 +122,174 @@ Il collector usa il database stazioni live del Centro Meteorologico Siciliano co
 - Monforte San Giorgio;
 - Barcellona Pozzo di Gotto;
 - Messina;
-- supporto aggiuntivo: Venetico, San Pier Marina, San Pier Niceto.
+- Venetico;
+- San Pier Marina;
+- San Pier Niceto.
 
-Uno stato viene classificato `online`, `dato vecchio`, `offline/obsoleto` in base al timestamp. Un valore mancante resta `null`: non viene inventato.
+### Radar e satellite DPC
 
-### Radar-DPC / Protezione Civile
+Prodotti usati:
 
-Tramite le REST API Radar-DPC il collector prova a scaricare e campionare sulle coordinate di Giammoro:
-
-- `SRI` — intensità di pioggia al suolo;
+- `SRI` — intensità di pioggia;
 - `VMI` — riflettività massima;
-- `SRT1` — cumulata dell'ultima ora;
+- `SRT1` — cumulata ultima ora;
 - `CUM24` — cumulata 24 h;
-- `TEMP` — temperatura interpolata dalla rete termometrica;
-- `IR_108` — prodotto satellitare infrarosso.
+- `TEMP` — temperatura interpolata rete termometrica;
+- `IR_108` — satellite infrarosso.
 
-Per SRI/VMI/SRT1 vengono calcolate statistiche in intorni di 5, 15 e 30 km. Il nowcasting usa queste osservazioni prima del segnale modellistico. **Non viene dedotta automaticamente una traiettoria** della cella: per quello serve una futura integrazione HRD/animazione o un livello di analisi dedicato.
+Quando applicabile vengono calcolate statistiche locali in intorni di 5/15/30 km.
 
-Il prodotto satellitare raw viene acquisito ma non convertito arbitrariamente in percentuale di copertura nuvolosa.
+### Fulminazioni
 
-### Modelli sul punto di Giammoro
+Fonte automatica attiva:
 
-Via Open-Meteo vengono interrogati:
+**EUMETSAT MTG Lightning Imager L2 Lightning Flashes**.
 
-- ItaliaMeteo / ARPAE ICON-2I;
-- DWD ICON;
-- ECMWF IFS;
-- NOAA GFS.
+Le credenziali sono fornite esclusivamente tramite GitHub Secrets:
 
-Per 2–7 giorni vengono interrogati anche:
+- `EUMETSAT_CONSUMER_KEY`
+- `EUMETSAT_CONSUMER_SECRET`
 
-- ECMWF ENS (media/spread);
-- ICON EPS (media/spread);
-- GEFS (media/spread).
+Non devono mai essere pubblicate nel frontend o nei file statici.
 
-La stima principale sul punto preferisce ICON-2I quando disponibile. Se Radar-DPC fornisce `TEMP`, `SRT1` e `CUM24`, questi valori osservativi/interpolati ufficiali possono sostituire rispettivamente temperatura e precipitazioni modellistiche nella scheda territoriale, mantenendo la fonte indicata per ogni metrica.
+## Allerte ufficiali
 
-### Allerte
+Fonti:
 
-Il collector individua l'ultimo avviso del **CFD/DRPC Sicilia**. Poiché il codice colore nel PDF regionale è spesso rappresentato come mappa, la validazione automatica del livello usa anche il **Bollettino nazionale di criticità/allerta DPC**, cercando esplicitamente la zona:
+- CFD/DRPC Sicilia — avviso regionale/PDF;
+- Dipartimento Protezione Civile nazionale — bollettino di criticità/allerta per cross-validation.
+
+Zona DPC di riferimento:
 
 `Nord-Orientale, versante tirrenico e isole Eolie`
 
-che corrisponde al settore di interesse per Giammoro. L'avviso regionale resta la fonte di dettaglio; la sintesi nazionale evita di inferire colori da immagini in modo fragile.
+L'avviso regionale resta la fonte di dettaglio; il bollettino nazionale viene usato per validare automaticamente il livello quando possibile. Se la validazione non è sicura, il quality guard evita di presentare come certo un colore estratto euristicamente.
 
-`config/overrides.json` esiste solo come correzione manuale temporanea e non va usato per lasciare un'allerta fissa.
+`config/overrides.json` va usato solo per override manuali temporanei e tracciabili, mai per lasciare un livello di allerta fisso.
 
-## Cosa non è ancora automatico
+## Frontend e deploy
 
-- fulminazioni LTG puntuali/area (il prodotto è disponibile sulla piattaforma DPC ma non è incluso negli endpoint REST documentati usati qui);
-- traiettoria HRD delle celle;
-- analisi sinottica/mesoscalare qualitativa avanzata (convergenze, outflow, orografia) con un modello AI;
-- notifiche push dal sito.
+File sorgente principali:
 
-La dashboard dichiara esplicitamente queste assenze invece di inventare dati.
+- `index.html`
+- `forecast_dashboard.js`
 
-## File
+La pagina pubblicata viene preparata da `site_prepare.py`, che attualmente corregge ancora alcuni elementi legacy del markup sorgente. In particolare:
 
-- `index.html` — dashboard responsive;
-- `data.json` — stato corrente letto dal browser;
-- `history.json` — storico sintetico delle variazioni significative;
-- `collector.py` — raccolta, normalizzazione e regole deterministiche;
-- `config/stations.json` — coordinate e selezione stazioni;
-- `config/overrides.json` — override manuali temporanei;
-- `tests/test_collector.py` — test unitari;
-- `.github/workflows/update-weather.yml` — aggiornamento automatico ogni 30 minuti;
-- `requirements.txt` — dipendenze Python.
+- rimuove la vecchia card combinata OGGI E DOMANI;
+- collega la home a `data.home_summary.current` quando disponibile;
+- integra `forecast_dashboard.js` nel medesimo flusso dati;
+- mantiene **un solo fetch di `data.json`** per ciclo frontend;
+- gestisce il fallback “Previsione temporaneamente non disponibile” e il badge “Dato precedente”.
 
-## Esecuzione locale
+Una futura semplificazione deve rendere `index.html` già coerente con l'HTML finale e ridurre il ruolo correttivo di `site_prepare.py`.
+
+## Verifica ex-post
+
+Entry point attivo: **`verification_engine_v2.py`**; `verification_engine.py` resta base.
+
+Orizzonti:
+
+- 30 min;
+- 60 min;
+- 120 min.
+
+La v2 separa hazard locale e track radar e calcola metriche evento/non-evento:
+
+- TP / TN / FP / FN;
+- POD / event detection;
+- precision;
+- false alarm ratio;
+- specificity;
+- balanced accuracy;
+- CSI.
+
+`accuracy_percent` resta disponibile per compatibilità ma non deve essere usata come metrica principale quando i campioni sono dominati dai non-eventi.
+
+## Automazione e scheduling
+
+Workflow principale: `.github/workflows/update-weather.yml`.
+
+Trigger principali:
+
+- `workflow_dispatch`;
+- push sui file di codice/configurazione rilevanti;
+- cron di backup: `7,22,37,52 * * * *`.
+
+Una freshness guard può evitare cicli duplicati se `data.json` è molto recente.
+
+Il deploy Pages avviene **prima** della persistenza JSON su `main`, così un eventuale conflitto Git non rende obsoleta la pagina pubblica. La persistenza usa fetch/rebase/retry fino a 3 tentativi.
+
+Heartbeat: `.github/workflows/weather-heartbeat.yml`.
+
+Il sistema è self-relaying:
+
+1. dispatch di `update-weather.yml`;
+2. attesa circa 15 minuti;
+3. nuovo dispatch dell'heartbeat;
+4. retry in caso di errori.
+
+Il cron del workflow principale resta un backup opportunistico. `cron-job.org` e Render non sono parte dell'infrastruttura corrente.
+
+## File principali
+
+### Core
+
+- `collector.py`
+- `nowcast_engine.py` — base/legacy
+- `nowcast_v2.py` — tracking base e logiche legacy
+- `nowcast_v4.py` — entry point nowcast attivo
+- `lightning_eumetsat.py`
+- `quality_guard.py`
+- `home_forecast.py` — motore base
+- `home_forecast_v2.py` — entry point home attivo
+- `runtime_quality.py`
+- `verification_engine.py` — base
+- `verification_engine_v2.py` — entry point verifica attivo
+- `site_prepare.py`
+
+### Stato persistente
+
+- `data.json`
+- `history.json`
+- `verification.json`
+- `events.json`
+
+### Configurazione
+
+- `config/stations.json`
+- `config/overrides.json`
+
+### CI/CD
+
+- `.github/workflows/update-weather.yml`
+- `.github/workflows/weather-heartbeat.yml`
+
+## Esecuzione locale e test
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python -m pytest -q
-python collector.py
 ```
 
-Per validare la pipeline senza rete:
+Per le modifiche al progetto, `python -m pytest -q` deve essere eseguito prima di considerare valida la modifica.
 
-```bash
-python collector.py --offline --stdout
-```
+## Debito tecnico / priorità correnti
 
-## Pubblicazione con GitHub Pages
+Le priorità operative sono mantenute in `PROJECT_CONTEXT.md`. In sintesi:
 
-1. creare un repository, ad esempio `meteo-giammoro`;
-2. caricare tutti i file, inclusa `.github/workflows/update-weather.yml`;
-3. in **Settings → Actions → General**, consentire al workflow i permessi di scrittura se richiesto;
-4. in **Settings → Pages**, scegliere `Deploy from a branch`, branch `main`, cartella `/ (root)`;
-5. eseguire una volta manualmente il workflow **Aggiorna Meteo Giammoro**;
-6. verificare `data.json` e poi la pagina pubblicata.
-
-Il workflow gira ai minuti 07 e 37 di ogni ora e committa solo quando `data.json`/`history.json` cambiano.
+1. eliminare i testi LTG/LAMPINET legacy residui in `nowcast_v2.py`;
+2. valorizzare POD/FAR/CSI/balanced accuracy/event samples nella UI tecnica;
+3. rifinire il fallback stale quando attraversa ore o cambio data;
+4. ridurre il debito frontend e la necessità di patch in `site_prepare.py`;
+5. irrobustire il parser dell'allerta regionale con fixture PDF reali;
+6. raccogliere eventi reali sufficienti per validare ETA, traiettoria e metriche evento;
+7. validare MeteoGiammoro in modalità `test` prima di qualunque rientro `online`.
 
 ## Sicurezza e limiti
 
-La pagina ha finalità informative. Per allerte e comportamenti di protezione civile fanno fede esclusivamente le autorità competenti. Le fonti real-time possono avere ritardi, manutenzioni o anomalie; il collector conserva stato/età del dato e deve preferire l'assenza del dato a una stima non dichiarata.
+La dashboard ha finalità informative. Per allerte e comportamenti di protezione civile fanno fede esclusivamente le autorità competenti.
+
+Le fonti real-time possono avere ritardi, manutenzioni o anomalie: il sistema conserva stato/età del dato e deve preferire l'assenza del dato a una stima non dichiarata.
