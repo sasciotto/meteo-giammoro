@@ -374,10 +374,9 @@ def lightning_summary(l: dict) -> str:
         if l.get("activity"):
             return f"LTG/LAMPINET: attività visibile nel layer ufficiale, punto renderizzato più vicino ~{l.get('nearest_km')} km; il fallback grafico non viene trasformato in numero di fulmini."
         return "LTG/LAMPINET: nessuna attività visibile nel layer ufficiale nell'area analizzata."
-    source=str(l.get("source") or "").strip()
     if _is_eumetsat_lightning(l):
         return "Fulminazioni EUMETSAT MTG-LI non disponibili in questo ciclo; nessun dato viene inventato."
-    return f"{source or 'Fulminazioni'} non disponibile in questo ciclo; nessun dato di fulminazione viene inventato."
+    return "LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato."
 
 
 def enhanced_confidence(data: dict, tr: dict, lightning: dict) -> dict:

@@ -1,4 +1,4 @@
-from nowcast_v2 import choose_candidate, regression_motion, _raster_values, significant_lightning_change
+from nowcast_v2 import choose_candidate, regression_motion, _raster_values, significant_lightning_change, lightning_summary
 import numpy as np
 from rasterio.io import MemoryFile
 from rasterio.transform import from_bounds
@@ -135,3 +135,11 @@ def test_significant_lightning_change_does_not_compare_different_sources():
 
     assert data["latest_change"]==unchanged
     assert data["history"]==[]
+
+
+def test_legacy_unavailable_summary_keeps_v4_cleanup_marker():
+    text=lightning_summary({
+        "status":"unavailable",
+        "source":"Radar-DPC LTG / LAMPINET",
+    })
+    assert text=="LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato."
