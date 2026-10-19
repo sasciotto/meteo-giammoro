@@ -13,14 +13,15 @@ LEGACY_CARD = re.compile(
     flags=re.S,
 )
 APPROACH_UI_PATH = Path(__file__).with_name("approaching_cells_ui.js")
+QUALITY_UI_PATH = Path(__file__).with_name("analysis_quality_ui.js")
 
 
 def _dashboard_scripts() -> str:
-    forecast_tag = '<script src="forecast_dashboard.js"></script>'
-    if not APPROACH_UI_PATH.exists():
-        return forecast_tag
-    approach_js = APPROACH_UI_PATH.read_text(encoding="utf-8").strip()
-    return forecast_tag + "\n<script>\n" + approach_js + "\n</script>"
+    scripts = ['<script src="forecast_dashboard.js"></script>']
+    for path in (APPROACH_UI_PATH, QUALITY_UI_PATH):
+        if path.exists():
+            scripts.append("<script>\n" + path.read_text(encoding="utf-8").strip() + "\n</script>")
+    return "\n".join(scripts)
 
 
 def transform(html: str) -> str:

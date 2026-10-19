@@ -10,6 +10,7 @@ import verification_engine as base
 
 _ORIGINAL_UPDATE_EVENTS = base.update_events
 _ORIGINAL_BUILD_SUMMARY = base.build_summary
+_ORIGINAL_MAKE_SNAPSHOT = base.make_snapshot
 
 
 def observation(data: dict) -> dict[str, Any]:
@@ -59,19 +60,33 @@ def observation(data: dict) -> dict[str, Any]:
     }
 
 
+def make_snapshot(data: dict, issued_at):
+    """Archivia qualità tecnica separatamente; non la usa come confidenza probabilistica."""
+    snapshot = _ORIGINAL_MAKE_SNAPSHOT(data, issued_at)
+    prediction = snapshot.setdefault("prediction", {})
+    quality = data.get("analysis_quality", {}) or {}
+    trajectory = data.get("trajectory_reliability", {}) or {}
+    predictive = data.get("predictive_confidence", {}) or {}
+    prediction["data_quality_score"] = base.num(quality.get("score"))
+    prediction["trajectory_reliability_score"] = base.num(trajectory.get("score"))
+    prediction["predictive_confidence_status"] = predictive.get("status") or "uncalibrated"
+    prediction["confidence_score"] = None
+    prediction["confidence_label"] = "Non calibrata"
+    return snapshot
+
+
 def update_events(events_doc: dict, current: dict, now):
-    """Archivia distanza/picco del fenomeno localmente più rilevante."""
+    """Archivia hazard locale senza riusare la qualità dati come confidenza previsionale."""
     tr = current.get("nowcast_tracking", {}) or {}
     hazard = tr.get("hazard_cell", {}) or tr.get("cell", {}) or {}
-    if hazard is tr.get("cell") or not hazard:
-        return _ORIGINAL_UPDATE_EVENTS(events_doc, current, now)
-
     adapted = dict(current)
-    adapted_tr = dict(tr)
-    adapted_tr["cell"] = dict(hazard)
-    if hazard.get("peak_value") is not None:
-        adapted_tr["peak_value"] = hazard.get("peak_value")
-    adapted["nowcast_tracking"] = adapted_tr
+    adapted["analysis_confidence"] = {"score": None, "label": "Non calibrata"}
+    if hazard and hazard is not tr.get("cell"):
+        adapted_tr = dict(tr)
+        adapted_tr["cell"] = dict(hazard)
+        if hazard.get("peak_value") is not None:
+            adapted_tr["peak_value"] = hazard.get("peak_value")
+        adapted["nowcast_tracking"] = adapted_tr
     return _ORIGINAL_UPDATE_EVENTS(events_doc, adapted, now)
 
 
@@ -80,7 +95,7 @@ def _pct(numerator: int, denominator: int) -> float | None:
 
 
 def build_summary(results: list[dict]) -> dict[str, Any]:
-    """Aggiunge metriche event-sensitive alla sintesi storica."""
+    """Aggiunge metriche event-sensitive e disattiva la pseudo-calibrazione sui punteggi qualità."""
     summary = _ORIGINAL_BUILD_SUMMARY(results)
     binary = [
         row for row in results
@@ -118,16 +133,22 @@ def build_summary(results: list[dict]) -> dict[str, Any]:
         "balanced_accuracy_percent": balanced,
         "csi_percent": csi,
     }
+    summary["by_confidence"] = {
+        "status": "disabled_until_probabilistic_calibration",
+        "note": "I vecchi punteggi di qualità tecnica non vengono più trattati come confidenza probabilistica.",
+    }
     summary["note"] = (
         "Metriche sperimentali ex-post. L'accuracy globale è mantenuta per compatibilità "
         "ma può essere dominata dai casi senza evento; per la qualità degli eventi usare "
-        "POD/event detection, false alarm ratio, CSI e balanced accuracy."
+        "POD/event detection, false alarm ratio, CSI e balanced accuracy. La confidenza probabilistica "
+        "resta non calibrata finché non esiste un campione evento sufficiente e una procedura dedicata."
     )
     return summary
 
 
 def install() -> None:
     base.observation = observation
+    base.make_snapshot = make_snapshot
     base.update_events = update_events
     base.build_summary = build_summary
 

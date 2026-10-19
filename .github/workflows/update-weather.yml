@@ -11,6 +11,9 @@ on:
       - "index.html"
       - "forecast_dashboard.js"
       - "approaching_cells_ui.js"
+      - "analysis_quality.py"
+      - "analysis_quality_update.py"
+      - "analysis_quality_ui.js"
       - "site_prepare.py"
       - "collector.py"
       - "home_forecast.py"
@@ -143,6 +146,10 @@ jobs:
         if: steps.freshness.outputs.should_run == 'true'
         run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
 
+      - name: Separa qualità dati e affidabilità traiettoria
+        if: steps.freshness.outputs.should_run == 'true'
+        run: python analysis_quality_update.py --data data.json
+
       - name: Sintesi home e previsione breve
         if: steps.freshness.outputs.should_run == 'true'
         run: |
@@ -179,6 +186,10 @@ jobs:
       - name: Verifica ex-post e archivio eventi
         if: steps.freshness.outputs.should_run == 'true'
         run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
+
+      - name: Aggiorna stato calibrazione previsionale
+        if: steps.freshness.outputs.should_run == 'true'
+        run: python analysis_quality_update.py --data data.json
 
       - name: Prepara sito con previsione
         if: steps.freshness.outputs.should_run == 'true'
@@ -247,6 +258,6 @@ jobs:
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
 # Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
+# Qualità tecnica e affidabilità traiettoria sono separate dalla confidenza probabilistica, che resta non calibrata.
 # Home: sintesi deterministica backend + previsione oraria/oggi-domani + consenso multi-modello.
-# Tracking: il track multi-frame è autoritativo; celle secondarie richiedono tre scansioni coerenti.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
