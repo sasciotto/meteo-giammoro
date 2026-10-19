@@ -14,11 +14,12 @@ LEGACY_CARD = re.compile(
 )
 APPROACH_UI_PATH = Path(__file__).with_name("approaching_cells_ui.js")
 QUALITY_UI_PATH = Path(__file__).with_name("analysis_quality_ui.js")
+RADAR_UI_PATH = Path(__file__).with_name("radar_ui.js")
 
 
 def _dashboard_scripts() -> str:
     scripts = ['<script src="forecast_dashboard.js"></script>']
-    for path in (APPROACH_UI_PATH, QUALITY_UI_PATH):
+    for path in (APPROACH_UI_PATH, QUALITY_UI_PATH, RADAR_UI_PATH):
         if path.exists():
             scripts.append("<script>\n" + path.read_text(encoding="utf-8").strip() + "\n</script>")
     return "\n".join(scripts)
