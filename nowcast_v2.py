@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Nowcasting v2 Meteo Giammoro: associazione multi-cella, tracking multi-frame e fulminazioni DPC LTG."""
+"""Nowcasting v2 Meteo Giammoro: associazione multi-cella, tracking multi-frame e fulminazioni con sorgente esplicita."""
 from __future__ import annotations
 
 import argparse
@@ -342,7 +342,29 @@ def fetch_lightning(collector, rlat: float, rlon: float) -> dict:
     return fallback
 
 
+def _is_eumetsat_lightning(l: dict) -> bool:
+    source=str(l.get("source") or "")
+    return "EUMETSAT" in source.upper() or "LIGHTNING IMAGER" in source.upper()
+
+
+def _lightning_10km_value(l: dict) -> tuple[float, str]:
+    bucket=l.get("radii",{}).get("10",{}) or {}
+    if bucket.get("flash_count") is not None:
+        return f(bucket.get("flash_count")) or 0, "flash osservati"
+    return f(bucket.get("frequency_sum")) or 0, "attività aggregata"
+
+
 def lightning_summary(l: dict) -> str:
+    if l.get("status")=="ok" and _is_eumetsat_lightning(l):
+        radii=l.get("radii",{})
+        c5=int(f(radii.get("5",{}).get("flash_count")) or 0)
+        c10=int(f(radii.get("10",{}).get("flash_count")) or 0)
+        c20=int(f(radii.get("20",{}).get("flash_count")) or 0)
+        c30=int(f(radii.get("30",{}).get("flash_count")) or 0)
+        nearest=l.get("nearest_km")
+        if c30>0:
+            return f"EUMETSAT MTG-LI: flash osservati entro 5/10/20/30 km = {c5}/{c10}/{c20}/{c30}; flash più vicino ~{nearest} km."
+        return "EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile."
     if l.get("status")=="ok":
         r5=l.get("radii",{}).get("5",{}).get("frequency_sum",0); r10=l.get("radii",{}).get("10",{}).get("frequency_sum",0); r20=l.get("radii",{}).get("20",{}).get("frequency_sum",0); nearest=l.get("nearest_km")
         if r20>0:
@@ -352,7 +374,10 @@ def lightning_summary(l: dict) -> str:
         if l.get("activity"):
             return f"LTG/LAMPINET: attività visibile nel layer ufficiale, punto renderizzato più vicino ~{l.get('nearest_km')} km; il fallback grafico non viene trasformato in numero di fulmini."
         return "LTG/LAMPINET: nessuna attività visibile nel layer ufficiale nell'area analizzata."
-    return "LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato."
+    source=str(l.get("source") or "").strip()
+    if _is_eumetsat_lightning(l):
+        return "Fulminazioni EUMETSAT MTG-LI non disponibili in questo ciclo; nessun dato viene inventato."
+    return f"{source or 'Fulminazioni'} non disponibile in questo ciclo; nessun dato di fulminazione viene inventato."
 
 
 def enhanced_confidence(data: dict, tr: dict, lightning: dict) -> dict:
@@ -363,19 +388,25 @@ def enhanced_confidence(data: dict, tr: dict, lightning: dict) -> dict:
         pts=4
     c["components"]["lightning_support"]=pts; c["score"]=min(100,c["score"]+pts)
     c["label"]="Bassa" if c["score"]<40 else "Media" if c["score"]<65 else "Alta" if c["score"]<85 else "Molto alta"
-    c["note"]="Confidenza nowcasting da radar, associazione multi-cella, tracking multi-frame, LTG/LAMPINET, stazioni affidabili e modelli."
+    c["note"]="Confidenza nowcasting da radar, associazione multi-cella, tracking multi-frame, fulminazioni dalla sorgente disponibile, stazioni affidabili e modelli."
     return c
 
 
 def significant_lightning_change(data: dict, previous: dict, lightning: dict) -> None:
     if lightning.get("status")!="ok" or not previous:
         return
-    cur10=f(lightning.get("radii",{}).get("10",{}).get("frequency_sum")) or 0
-    prev=previous.get("lightning",{}); prev10=f(prev.get("radii",{}).get("10",{}).get("frequency_sum")) or 0
+    prev=previous.get("lightning",{}) or {}
+    source=str(lightning.get("source") or "Fulminazioni").strip()
+    previous_source=str(prev.get("source") or "").strip()
+    if previous_source and source and previous_source!=source:
+        return
+    cur10,measure=_lightning_10km_value(lightning)
+    prev10,_=_lightning_10km_value(prev)
     if cur10<=0 or cur10<=prev10 or data.get("latest_change")!=previous.get("latest_change"):
         return
     stamp=str(data.get("meta",{}).get("last_check","—")).rsplit(" ",1)[0]; nearest=lightning.get("nearest_km")
-    ch={"time":stamp,"title":"Aumento dell'attività elettrica vicino a Giammoro","text":lightning_summary(lightning),"window":"prossime 0–3 ore","confidence":data.get("analysis_confidence",{}).get("label","—").lower(),"evidence":f"Radar-DPC LTG/LAMPINET: frequenza aggregata entro 10 km {prev10:g} → {cur10:g}; punto attivo più vicino ~{nearest} km."}
+    nearest_text=f"; punto attivo più vicino ~{nearest} km" if nearest is not None else ""
+    ch={"time":stamp,"title":"Aumento dell'attività elettrica vicino a Giammoro","text":lightning_summary(lightning),"window":"prossime 0–3 ore","confidence":data.get("analysis_confidence",{}).get("label","—").lower(),"evidence":f"{source}: {measure} entro 10 km {prev10:g} → {cur10:g}{nearest_text}."}
     data["latest_change"]=ch; data["history"]=([{"time":stamp,"text":ch["title"]}]+data.get("history",[]))[:50]
 
 
@@ -417,7 +448,7 @@ def run(data_path: Path, previous_path: Path|None=None, history_path: Path|None=
 def main():
     p=argparse.ArgumentParser(); p.add_argument("--data",default="data.json"); p.add_argument("--previous"); p.add_argument("--history",default="history.json"); a=p.parse_args()
     run(Path(a.data),Path(a.previous) if a.previous else None,Path(a.history) if a.history else None)
-    print("Nowcast v2 multi-cella + LTG aggiornato"); return 0
+    print("Nowcast v2 multi-cella + fulminazioni aggiornato"); return 0
 
 
 if __name__=="__main__":

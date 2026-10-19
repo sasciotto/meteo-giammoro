@@ -1,4 +1,4 @@
-from nowcast_v2 import choose_candidate, regression_motion, _raster_values
+from nowcast_v2 import choose_candidate, regression_motion, _raster_values, significant_lightning_change
 import numpy as np
 from rasterio.io import MemoryFile
 from rasterio.transform import from_bounds
@@ -61,3 +61,77 @@ def test_ltg_raw_raster_sampling_counts_positive_frequency():
     assert out["positive_cells"]==2
     assert out["nearest_km"] is not None
     assert out["radii"]["20"]["frequency_sum"]==3.0
+
+
+def test_significant_lightning_change_uses_eumetsat_source_and_flash_counts():
+    source="EUMETSAT MTG Lightning Imager L2 Lightning Flashes"
+    unchanged={"time":"precedente","title":"Situazione invariata"}
+    previous={
+        "latest_change":unchanged.copy(),
+        "lightning":{
+            "status":"ok",
+            "source":source,
+            "nearest_km":8.0,
+            "radii":{
+                "5":{"flash_count":0,"frequency_sum":0.0},
+                "10":{"flash_count":1,"frequency_sum":1.0},
+                "20":{"flash_count":1,"frequency_sum":1.0},
+                "30":{"flash_count":1,"frequency_sum":1.0},
+            },
+        },
+    }
+    data={
+        "meta":{"last_check":"18/10/2026 14:46 CEST"},
+        "latest_change":unchanged.copy(),
+        "analysis_confidence":{"label":"Alta"},
+        "history":[],
+    }
+    lightning={
+        "status":"ok",
+        "source":source,
+        "nearest_km":3.2,
+        "radii":{
+            "5":{"flash_count":1,"frequency_sum":1.0},
+            "10":{"flash_count":4,"frequency_sum":4.0},
+            "20":{"flash_count":5,"frequency_sum":5.0},
+            "30":{"flash_count":6,"frequency_sum":6.0},
+        },
+    }
+
+    significant_lightning_change(data,previous,lightning)
+
+    change=data["latest_change"]
+    assert change["title"]=="Aumento dell'attività elettrica vicino a Giammoro"
+    assert "EUMETSAT MTG Lightning Imager" in change["evidence"]
+    assert "flash osservati entro 10 km 1 → 4" in change["evidence"]
+    assert "LAMPINET" not in change["evidence"]
+    assert change["text"].startswith("EUMETSAT MTG-LI")
+
+
+def test_significant_lightning_change_does_not_compare_different_sources():
+    unchanged={"time":"precedente","title":"Situazione invariata"}
+    previous={
+        "latest_change":unchanged.copy(),
+        "lightning":{
+            "status":"ok",
+            "source":"Radar-DPC LTG / LAMPINET",
+            "radii":{"10":{"frequency_sum":1.0}},
+        },
+    }
+    data={
+        "meta":{"last_check":"18/10/2026 14:46 CEST"},
+        "latest_change":unchanged.copy(),
+        "analysis_confidence":{"label":"Alta"},
+        "history":[],
+    }
+    lightning={
+        "status":"ok",
+        "source":"EUMETSAT MTG Lightning Imager L2 Lightning Flashes",
+        "nearest_km":2.0,
+        "radii":{"10":{"flash_count":8,"frequency_sum":8.0}},
+    }
+
+    significant_lightning_change(data,previous,lightning)
+
+    assert data["latest_change"]==unchanged
+    assert data["history"]==[]
