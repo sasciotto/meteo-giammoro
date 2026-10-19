@@ -55,10 +55,16 @@
   }
 
   function confidenceLabel(value) {
-    if (value === 'high') return 'associazione alta';
-    if (value === 'medium') return 'associazione media';
-    if (value === 'low') return 'associazione bassa';
+    if (value === 'high') return 'coerenza alta';
+    if (value === 'medium') return 'coerenza media';
+    if (value === 'low') return 'coerenza bassa';
     return 'qualità in valutazione';
+  }
+
+  function trajectoryLabel(source) {
+    if (source === 'main_track_multi_frame') return 'tracking multi-frame';
+    if (source === 'secondary_three_frame_confirmation') return '3 scansioni coerenti';
+    return '';
   }
 
   function render(data) {
@@ -74,9 +80,11 @@
       ? `${cells.length} ${cells.length === 1 ? 'cella' : 'celle'} · da ${esc(dominant || 'settore non definito')}`
       : status === 'insufficient_history'
         ? 'Traiettoria in acquisizione'
-        : status === 'none'
-          ? 'Nessuna in avvicinamento'
-          : 'Dato non disponibile';
+        : status === 'unconfirmed'
+          ? 'Traiettoria da confermare'
+          : status === 'none'
+            ? 'Nessuna in avvicinamento'
+            : 'Dato non disponibile';
 
     const cellHtml = cells.map(cell => {
       const from = cell.approach_from_label || cell.approach_from || 'settore non definito';
@@ -85,6 +93,7 @@
       const eta = num(cell.eta_minutes);
       const peak = num(cell.peak_value);
       const unit = monitor.unit || '';
+      const method = trajectoryLabel(cell.trajectory_source);
       const projection = closest == null
         ? 'Minima distanza non ancora stimabile.'
         : `Minima distanza proiettata ~${fmt(closest,1)} km${eta == null ? '' : ` · ingresso entro 5 km ~${fmt(eta)} min`}.`;
@@ -92,7 +101,7 @@
         <div class="approach-route">Da ${esc(from)} → verso ${esc(toward)}</div>
         <div class="approach-meta">Distanza ${fmt(cell.distance_km,1)} km · velocità ${fmt(cell.speed_kmh,1)} km/h · avvicinamento ${fmt(cell.approach_rate_kmh,1)} km/h${peak == null ? '' : ` · picco ${fmt(peak,1)} ${esc(unit)}`}</div>
         <div class="approach-projection">${esc(projection)}</div>
-        <div class="approach-confidence">${esc(confidenceLabel(cell.confidence))}</div>
+        <div class="approach-confidence">${esc(confidenceLabel(cell.confidence))}${method ? ` · ${esc(method)}` : ''}</div>
       </div>`;
     }).join('');
 
@@ -105,7 +114,7 @@
     section.innerHTML = `
       <div class="approach-head">
         <div>
-          <div class="section-title"><div><h2>Celle in avvicinamento</h2><div class="forecast-source">Radar-DPC · confronto tra scansioni successive</div></div></div>
+          <div class="section-title"><div><h2>Celle in avvicinamento</h2><div class="forecast-source">Radar-DPC · tracking multi-frame e conferma multi-scansione</div></div></div>
           <div class="approach-summary">${esc(summary)}</div>
         </div>
         <div class="approach-badge ${active ? 'active' : ''}">${badge}</div>

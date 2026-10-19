@@ -18,12 +18,15 @@ const $=id=>document.getElementById(id);
     assert "movement_toward_label" in out
 
 
-def test_approaching_cells_ui_distinguishes_origin_and_motion():
+def test_approaching_cells_ui_distinguishes_origin_motion_and_trajectory_source():
     js = Path("approaching_cells_ui.js").read_text(encoding="utf-8")
 
     assert "Da ${esc(from)} → verso ${esc(toward)}" in js
     assert "closest_approach_km" in js
     assert "eta_minutes" in js
+    assert "main_track_multi_frame" in js
+    assert "secondary_three_frame_confirmation" in js
+    assert "Traiettoria da confermare" in js
 
 
 def test_approaching_cells_ui_is_attached_to_detailed_analysis_only():
