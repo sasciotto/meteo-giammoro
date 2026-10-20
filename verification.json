@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-10-20T23:35:42+00:00",
+  "updated_at": "2026-10-20T23:50:45+00:00",
   "horizons_minutes": [
     30,
     60,
@@ -16,8 +16,8 @@
     "accuracy_percent": 89.7,
     "eta_samples": 0,
     "eta_mae_minutes": null,
-    "trajectory_samples": 103,
-    "trajectory_mae_km": 15.8,
+    "trajectory_samples": 106,
+    "trajectory_mae_km": 16.3,
     "by_confidence": {
       "status": "disabled_until_probabilistic_calibration",
       "note": "I vecchi punteggi di qualità tecnica non vengono più trattati come confidenza probabilistica."
@@ -40,43 +40,6 @@
     }
   },
   "pending": [
-    {
-      "id": "20261020T214946Z",
-      "issued_at": "2026-10-20T21:49:46+00:00",
-      "prediction": {
-        "nowcast_level": "elevato",
-        "nowcast_label": "Moderato–elevato (osservato)",
-        "confidence_score": null,
-        "confidence_label": "Non calibrata",
-        "radar": {
-          "track_id": "SRI-202610201535-S46",
-          "status": "detected",
-          "lat": 37.93998,
-          "lon": 15.39559,
-          "distance_km": 29.9,
-          "speed_kmh": 11.4,
-          "direction_deg": 22.1,
-          "approaching": true,
-          "closest_approach_km": 17.2,
-          "closest_approach_minutes": 128.0,
-          "eta_minutes": null
-        },
-        "lightning": {
-          "status": "ok",
-          "count_20km": 6,
-          "count_30km": 13
-        },
-        "risk_48h": "moderato",
-        "data_quality_score": 80.0,
-        "trajectory_reliability_score": 100.0,
-        "predictive_confidence_status": "uncalibrated"
-      },
-      "evaluated_horizons": [
-        30,
-        60
-      ],
-      "first_observed_event_minutes": 30
-    },
     {
       "id": "20261020T220451Z",
       "issued_at": "2026-10-20T22:04:51+00:00",
@@ -220,7 +183,8 @@
         "predictive_confidence_status": "uncalibrated"
       },
       "evaluated_horizons": [
-        30
+        30,
+        60
       ],
       "first_observed_event_minutes": null
     },
@@ -291,7 +255,9 @@
         "trajectory_reliability_score": 94.0,
         "predictive_confidence_status": "uncalibrated"
       },
-      "evaluated_horizons": [],
+      "evaluated_horizons": [
+        30
+      ],
       "first_observed_event_minutes": null
     },
     {
@@ -327,9 +293,133 @@
       },
       "evaluated_horizons": [],
       "first_observed_event_minutes": null
+    },
+    {
+      "id": "20261020T235045Z",
+      "issued_at": "2026-10-20T23:50:45+00:00",
+      "prediction": {
+        "nowcast_level": "low",
+        "nowcast_label": "Basso (radar)",
+        "confidence_score": null,
+        "confidence_label": "Non calibrata",
+        "radar": {
+          "track_id": "SRI-202610201535-S46",
+          "status": "detected",
+          "lat": 38.21381,
+          "lon": 15.83126,
+          "distance_km": 44.9,
+          "speed_kmh": 50.5,
+          "direction_deg": 59.1,
+          "approaching": false,
+          "closest_approach_km": null,
+          "closest_approach_minutes": null,
+          "eta_minutes": null
+        },
+        "lightning": {
+          "status": "ok",
+          "count_20km": 0,
+          "count_30km": 0
+        },
+        "risk_48h": "moderato",
+        "data_quality_score": 80.0,
+        "trajectory_reliability_score": null,
+        "predictive_confidence_status": "uncalibrated"
+      },
+      "evaluated_horizons": [],
+      "first_observed_event_minutes": null
     }
   ],
   "results": [
+    {
+      "snapshot_id": "20261020T214946Z",
+      "issued_at": "2026-10-20T21:49:46+00:00",
+      "verified_at": "2026-10-20T23:50:45+00:00",
+      "horizon_minutes": 120,
+      "outcome": "correct",
+      "predicted_event": false,
+      "observed_event": false,
+      "nearby_signal": false,
+      "prediction_reasons": [],
+      "confidence_score": null,
+      "eta_predicted_minutes": null,
+      "eta_error_minutes": null,
+      "trajectory_error_km": 31.0,
+      "observation": {
+        "evaluable": true,
+        "event": false,
+        "nearby_signal": false,
+        "radar_distance_km": 44.9,
+        "radar_fresh": true,
+        "rain_1h_mm": 0.0,
+        "lightning_20km": 0,
+        "lightning_30km": 0,
+        "lightning_fresh": true,
+        "track_id": "SRI-202610201535-S46",
+        "cell_lat": 38.21381,
+        "cell_lon": 15.83126,
+        "cell_role": "hazard_cell"
+      }
+    },
+    {
+      "snapshot_id": "20261020T225128Z",
+      "issued_at": "2026-10-20T22:51:28+00:00",
+      "verified_at": "2026-10-20T23:50:45+00:00",
+      "horizon_minutes": 60,
+      "outcome": "correct",
+      "predicted_event": false,
+      "observed_event": false,
+      "nearby_signal": false,
+      "prediction_reasons": [],
+      "confidence_score": null,
+      "eta_predicted_minutes": null,
+      "eta_error_minutes": null,
+      "trajectory_error_km": 35.9,
+      "observation": {
+        "evaluable": true,
+        "event": false,
+        "nearby_signal": false,
+        "radar_distance_km": 44.9,
+        "radar_fresh": true,
+        "rain_1h_mm": 0.0,
+        "lightning_20km": 0,
+        "lightning_30km": 0,
+        "lightning_fresh": true,
+        "track_id": "SRI-202610201535-S46",
+        "cell_lat": 38.21381,
+        "cell_lon": 15.83126,
+        "cell_role": "hazard_cell"
+      }
+    },
+    {
+      "snapshot_id": "20261020T232033Z",
+      "issued_at": "2026-10-20T23:20:33+00:00",
+      "verified_at": "2026-10-20T23:50:45+00:00",
+      "horizon_minutes": 30,
+      "outcome": "correct",
+      "predicted_event": false,
+      "observed_event": false,
+      "nearby_signal": false,
+      "prediction_reasons": [],
+      "confidence_score": null,
+      "eta_predicted_minutes": null,
+      "eta_error_minutes": null,
+      "trajectory_error_km": 26.3,
+      "observation": {
+        "evaluable": true,
+        "event": false,
+        "nearby_signal": false,
+        "radar_distance_km": 44.9,
+        "radar_fresh": true,
+        "rain_1h_mm": 0.0,
+        "lightning_20km": 0,
+        "lightning_30km": 0,
+        "lightning_fresh": true,
+        "track_id": "SRI-202610201535-S46",
+        "cell_lat": 38.21381,
+        "cell_lon": 15.83126,
+        "cell_role": "hazard_cell"
+      }
+    },
     {
       "snapshot_id": "20261020T213448Z",
       "issued_at": "2026-10-20T21:34:48+00:00",
@@ -9246,96 +9336,6 @@
       "snapshot_id": "20261019T222117Z",
       "issued_at": "2026-10-19T22:21:17+00:00",
       "verified_at": "2026-10-19T22:51:45+00:00",
-      "horizon_minutes": 30,
-      "outcome": "correct",
-      "predicted_event": false,
-      "observed_event": false,
-      "nearby_signal": false,
-      "prediction_reasons": [],
-      "confidence_score": null,
-      "eta_predicted_minutes": null,
-      "eta_error_minutes": null,
-      "trajectory_error_km": null,
-      "observation": {
-        "evaluable": true,
-        "event": false,
-        "nearby_signal": false,
-        "radar_distance_km": null,
-        "radar_fresh": false,
-        "rain_1h_mm": 0.0,
-        "lightning_20km": 0,
-        "lightning_30km": 0,
-        "lightning_fresh": true,
-        "track_id": null,
-        "cell_lat": null,
-        "cell_lon": null,
-        "cell_role": "cell"
-      }
-    },
-    {
-      "snapshot_id": "20261019T203533Z",
-      "issued_at": "2026-10-19T20:35:33+00:00",
-      "verified_at": "2026-10-19T22:36:21+00:00",
-      "horizon_minutes": 120,
-      "outcome": "correct",
-      "predicted_event": false,
-      "observed_event": false,
-      "nearby_signal": false,
-      "prediction_reasons": [],
-      "confidence_score": null,
-      "eta_predicted_minutes": null,
-      "eta_error_minutes": null,
-      "trajectory_error_km": null,
-      "observation": {
-        "evaluable": true,
-        "event": false,
-        "nearby_signal": false,
-        "radar_distance_km": null,
-        "radar_fresh": false,
-        "rain_1h_mm": 0.0,
-        "lightning_20km": 0,
-        "lightning_30km": 0,
-        "lightning_fresh": true,
-        "track_id": null,
-        "cell_lat": null,
-        "cell_lon": null,
-        "cell_role": "cell"
-      }
-    },
-    {
-      "snapshot_id": "20261019T213550Z",
-      "issued_at": "2026-10-19T21:35:50+00:00",
-      "verified_at": "2026-10-19T22:36:21+00:00",
-      "horizon_minutes": 60,
-      "outcome": "correct",
-      "predicted_event": false,
-      "observed_event": false,
-      "nearby_signal": false,
-      "prediction_reasons": [],
-      "confidence_score": null,
-      "eta_predicted_minutes": null,
-      "eta_error_minutes": null,
-      "trajectory_error_km": null,
-      "observation": {
-        "evaluable": true,
-        "event": false,
-        "nearby_signal": false,
-        "radar_distance_km": null,
-        "radar_fresh": false,
-        "rain_1h_mm": 0.0,
-        "lightning_20km": 0,
-        "lightning_30km": 0,
-        "lightning_fresh": true,
-        "track_id": null,
-        "cell_lat": null,
-        "cell_lon": null,
-        "cell_role": "cell"
-      }
-    },
-    {
-      "snapshot_id": "20261019T220612Z",
-      "issued_at": "2026-10-19T22:06:12+00:00",
-      "verified_at": "2026-10-19T22:36:21+00:00",
       "horizon_minutes": 30,
       "outcome": "correct",
       "predicted_event": false,
