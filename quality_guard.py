@@ -89,34 +89,59 @@ def guard_alert_quality(data: dict) -> None:
 
 
 def _false_unvalidated_alert_change(change: dict, alert: dict) -> bool:
+    """Riconosce qualsiasi variazione dichiarata ufficiale quando il nuovo livello non è validato."""
     title = str((change or {}).get("title") or "")
     regional = (alert or {}).get("regional_candidate", {}) or {}
     return bool(
-        title.startswith("Variazione allerta ufficiale: Da verificare →")
+        title.startswith("Variazione allerta ufficiale:")
         and regional.get("status") == "unvalidated"
     )
 
 
+def _unvalidated_alert_notice(change: dict, alert: dict, data: dict) -> dict:
+    meta = data.get("meta", {}) or {}
+    stamp = change.get("time") or str(meta.get("last_check") or "—").replace(" CEST", "").replace(" CET", "")
+    validity = alert.get("validity") or "Validità/orari da verificare nel PDF ufficiale."
+    source = alert.get("source") or "fonte ufficiale"
+    title = "Nuovo avviso ufficiale pubblicato — livello in verifica"
+    return {
+        "time": stamp,
+        "title": title,
+        "text": (
+            "È disponibile un avviso ufficiale aggiornato, ma il livello per la zona di Giammoro "
+            "non è stato validato automaticamente. Consultare la fonte ufficiale prima di considerarlo definitivo."
+        ),
+        "window": validity,
+        "confidence": "da verificare",
+        "evidence": f"{source}; validazione automatica del livello non disponibile.",
+        "event_type": "official_alert_validation",
+        "status": "unvalidated",
+    }
+
+
 def sanitize_latest_change(data: dict, previous: dict | None = None) -> None:
-    """Ripulisce cambiamenti obsoleti e sopprime falsi cambi allerta."""
+    """Ripulisce cambiamenti obsoleti e sostituisce falsi cambi allerta con un avviso di verifica."""
     previous = previous or {}
     change = data.get("latest_change", {}) or {}
     alert = data.get("alert", {}) or {}
 
     if _false_unvalidated_alert_change(change, alert):
-        prev_change = previous.get("latest_change", {}) or {}
-        if prev_change and not _false_unvalidated_alert_change(prev_change, previous.get("alert", {}) or {}):
-            data["latest_change"] = prev_change
-        else:
-            data["latest_change"] = {}
-
+        notice = _unvalidated_alert_notice(change, alert, data)
+        candidate = str(((alert.get("regional_candidate", {}) or {}).get("level_label") or "")).strip()
         cleaned_history = []
         for item in data.get("history", []) or []:
             text = str((item or {}).get("text") or "")
-            if text.startswith("Variazione allerta ufficiale: Da verificare →"):
+            false_candidate_change = (
+                text.startswith("Variazione allerta ufficiale:")
+                and (not candidate or f"→ {candidate}" in text)
+            )
+            if false_candidate_change:
                 continue
             cleaned_history.append(item)
+        if not cleaned_history or str(cleaned_history[0].get("text") or "") != notice["title"]:
+            cleaned_history.insert(0, {"time": notice["time"], "text": notice["title"]})
         data["history"] = cleaned_history[:50]
+        data["latest_change"] = notice
         return
 
     if str(change.get("title") or "").startswith("Variazione allerta ufficiale:"):

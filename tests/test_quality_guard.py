@@ -62,9 +62,11 @@ def test_unvalidated_alert_does_not_create_fake_change_loop():
         },
     }
     data = {
+        "meta": {"last_check": "16/10/2026 10:00 CEST"},
         "alert": {
             "level_label": "Da verificare",
             "validity": "Validità avviso: 15–16/10/2026; orari da verificare nel PDF ufficiale.",
+            "source": "CFD/DRPC Sicilia + DPC nazionale",
             "regional_candidate": {"level_label": "Verde", "status": "unvalidated"},
         },
         "latest_change": {
@@ -77,9 +79,39 @@ def test_unvalidated_alert_does_not_create_fake_change_loop():
         ],
     }
     quality_guard.sanitize_latest_change(data, previous)
-    assert data["latest_change"] == {}
-    assert len(data["history"]) == 1
-    assert data["history"][0]["text"].startswith("Nucleo radar")
+    change = data["latest_change"]
+    assert change["title"] == "Nuovo avviso ufficiale pubblicato — livello in verifica"
+    assert change["status"] == "unvalidated"
+    assert change["event_type"] == "official_alert_validation"
+    assert data["history"][0]["text"] == change["title"]
+    assert all("Da verificare → Verde" not in row["text"] for row in data["history"])
+
+
+def test_unvalidated_candidate_is_not_announced_as_official_level_change():
+    data = {
+        "meta": {"last_check": "21/10/2026 15:48 CEST"},
+        "alert": {
+            "level_label": "Da verificare",
+            "validity": "Validità avviso: 20–21/10/2026; orari da verificare nel PDF ufficiale.",
+            "source": "CFD/DRPC Sicilia + DPC nazionale",
+            "regional_candidate": {"level_label": "Verde", "level_class": "low", "status": "unvalidated"},
+        },
+        "latest_change": {
+            "time": "21/10/2026 15:44",
+            "title": "Variazione allerta ufficiale: Gialla (20/10) → Verde",
+            "confidence": "alta",
+        },
+        "history": [
+            {"time": "21/10/2026 15:44", "text": "Variazione allerta ufficiale: Gialla (20/10) → Verde"},
+            {"time": "21/10/2026 13:57", "text": "Traiettoria radar verso Giammoro non confermata"},
+        ],
+    }
+    quality_guard.sanitize_latest_change(data)
+    change = data["latest_change"]
+    assert change["title"] == "Nuovo avviso ufficiale pubblicato — livello in verifica"
+    assert change["confidence"] == "da verificare"
+    assert "non è stato validato automaticamente" in change["text"]
+    assert all("Gialla (20/10) → Verde" not in row["text"] for row in data["history"])
 
 
 def test_real_alert_change_gets_clean_validity_window():
