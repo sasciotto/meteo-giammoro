@@ -11,8 +11,12 @@ def base_data():
         "meta": {"collector_status": "ok", "collector_errors": []},
         "territory": {"metrics": {}},
         "nowcast": {"level": "low"},
-        "nowcast_tracking": {"status": "no_cell", "motion": {"status": "unavailable"}},
-        "lightning": {"status": "ok", "radii": {"20": {"flash_count": 0}}},
+        "nowcast_tracking": {"status": "no_cell", "age_minutes": 5, "motion": {"status": "unavailable"}},
+        "lightning": {
+            "status": "ok",
+            "age_minutes": 5,
+            "radii": {"20": {"flash_count": 0}, "30": {"flash_count": 0}},
+        },
         "model_details": [],
     }
 
@@ -67,6 +71,7 @@ def test_apply_reuses_recent_previous_forecast_and_marks_degraded():
     assert out["home_summary"]["stale_age_minutes"] == 25
     assert out["home_summary"]["current"]["condition_available"] is False
     assert out["home_summary"]["hourly"][0]["label_time"] == "01:00"
+    assert out["home_summary"]["nowcast_simple"]["title"] == "Tranquillo"
 
 
 def test_fallback_filters_elapsed_hours_and_relabels_across_midnight():
@@ -129,3 +134,68 @@ def test_build_keeps_extended_hourly_horizon_for_safe_fallback():
     }}
     out = h.build(base_data(), raw, "ItaliaMeteo ICON-2I", now)
     assert len(out["hourly"]) == 36
+
+
+def test_simple_nowcast_is_calm_when_radar_and_lightning_are_quiet():
+    data = base_data()
+    data["territory"]["metrics"]["rain_1h"] = {"value": 0.0}
+    out = h.simple_nowcast(data)
+    assert out["status"] == "calm"
+    assert out["title"] == "Tranquillo"
+    assert "non mostrano fenomeni rilevanti" in out["text"]
+
+
+def test_simple_nowcast_uses_nearest_radar_candidate_for_watch_state():
+    data = base_data()
+    data["nowcast"] = {"level": "moderato"}
+    data["territory"]["metrics"]["rain_1h"] = {"value": 0.0}
+    data["nowcast_tracking"] = {
+        "status": "detected",
+        "age_minutes": 8,
+        "candidates": [
+            {"distance_km": 41.6},
+            {"distance_km": 24.1},
+        ],
+        "motion": {"status": "tracked", "approaching": False},
+    }
+    out = h.simple_nowcast(data)
+    assert out["status"] == "watch"
+    assert out["title"] == "Da monitorare"
+    assert out["nearest_signal_km"] == 24.1
+    assert "24 km" in out["detail"]
+    assert "non è confermato un arrivo" in out["text"]
+
+
+def test_simple_nowcast_marks_reliable_local_approach_as_incoming():
+    data = base_data()
+    data["territory"]["metrics"]["rain_1h"] = {"value": 0.0}
+    data["nowcast_tracking"] = {
+        "status": "detected",
+        "age_minutes": 6,
+        "candidates": [{"distance_km": 28.0}],
+        "motion": {
+            "status": "tracked",
+            "frames": 4,
+            "approaching": True,
+            "closest_approach_km": 7.0,
+            "closest_approach_minutes": 95,
+            "eta_minutes": None,
+        },
+        "track_quality": {"status": "good"},
+    }
+    data["trajectory_reliability"] = {"score": 88, "status": "good"}
+    out = h.simple_nowcast(data)
+    assert out["status"] == "incoming"
+    assert out["title"] == "Possibili fenomeni in arrivo"
+    assert "prossime 3 ore" in out["text"]
+
+
+def test_simple_nowcast_marks_lightning_within_20km_as_active():
+    data = base_data()
+    data["territory"]["metrics"]["rain_1h"] = {"value": 0.0}
+    data["lightning"]["radii"]["20"]["flash_count"] = 3
+    data["lightning"]["radii"]["30"]["flash_count"] = 4
+    out = h.simple_nowcast(data)
+    assert out["status"] == "active"
+    assert out["title"] == "Fenomeni vicini o in corso"
+    assert "Fulmini rilevati entro 20 km" in out["detail"]

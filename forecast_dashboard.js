@@ -26,6 +26,15 @@
       .forecast-detail .section-title{margin-bottom:13px}
       .forecast-source{font-size:12px;color:var(--muted)}
       .forecast-stale{margin:0 0 12px;padding:10px 12px;border:1px solid #ead8aa;border-radius:11px;background:#fff8e9;color:#654c13;font-size:12px}
+      .home-nowcast{margin:0 0 14px;padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface2)}
+      .home-nowcast.calm{background:#eef8f2;border-color:#cee5d7;color:#285c3d}
+      .home-nowcast.watch{background:#fff8e9;border-color:#ead8aa;color:#654c13}
+      .home-nowcast.incoming{background:#fff4e8;border-color:#e9cfaa;color:#6b4814}
+      .home-nowcast.active{background:#fff0f0;border-color:#e8c4c4;color:#702929}
+      .home-nowcast-k{font-size:10px;font-weight:800;letter-spacing:.08em;opacity:.72;text-transform:uppercase}
+      .home-nowcast-title{font-size:20px;font-weight:800;line-height:1.2;margin-top:3px}
+      .home-nowcast-text{font-size:13px;line-height:1.5;margin-top:5px}
+      .home-nowcast-detail{font-size:11px;font-weight:700;margin-top:8px;opacity:.82}
       .hourly-strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(128px,1fr);gap:9px;overflow-x:auto;padding-bottom:5px;scroll-snap-type:x proximity}
       .hour-cell{scroll-snap-align:start;background:var(--surface2);border:1px solid var(--line);border-radius:13px;padding:12px;min-height:142px}
       .hour-time{font-size:12px;font-weight:760;color:var(--muted)}
@@ -46,7 +55,7 @@
       .model-outlook.online{background:#eef8f2;border-color:#cee5d7;color:#285c3d}
       .model-outlook.unknown{background:#f4f6f7;color:#56636c}
       .model-values{font-size:11px;margin-top:6px;opacity:.85}
-      @media(max-width:650px){.day-grid{grid-template-columns:1fr}.hourly-strip{grid-auto-columns:minmax(122px,42vw)}}
+      @media(max-width:650px){.day-grid{grid-template-columns:1fr}.hourly-strip{grid-auto-columns:minmax(122px,42vw)}.home-nowcast-title{font-size:18px}}
     `;
     document.head.appendChild(style);
   }
@@ -80,6 +89,19 @@
       text: modelRow.note || modelRow.signal || 'Confronto multi-modello temporaneamente non disponibile.',
       values: modelRow.signal || ''
     };
+  }
+
+  function simpleNowcastHtml(home) {
+    const row = home?.nowcast_simple || {};
+    if (!row.title || !row.text) return '';
+    const allowed = new Set(['calm', 'watch', 'incoming', 'active']);
+    const status = allowed.has(String(row.status || '')) ? row.status : 'watch';
+    return `<div class="home-nowcast ${status}" id="homeNowcastSimple" aria-label="Nowcasting semplificato prossime 3 ore">
+      <div class="home-nowcast-k">Prossime 3 ore</div>
+      <div class="home-nowcast-title">${esc(row.title)}</div>
+      <div class="home-nowcast-text">${esc(row.text)}</div>
+      ${row.detail ? `<div class="home-nowcast-detail">${esc(row.detail)}</div>` : ''}
+    </div>`;
   }
 
   function renderVerification(data) {
@@ -161,10 +183,12 @@
     const home = data?.home_summary || {};
     const hourly = Array.isArray(home.hourly) ? home.hourly.slice(0, 8) : [];
     const days = Array.isArray(home.days) ? home.days.slice(0, 2) : [];
+    const nowcastHtml = simpleNowcastHtml(home);
 
     if (!home.forecast_available || (!hourly.length && !days.length)) {
       section.innerHTML = `
         <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Aggiornata a ogni ciclo</div></div></div>
+        ${nowcastHtml}
         <div class="model-outlook unknown"><strong>Previsione temporaneamente non disponibile</strong>I dati osservativi, radar e fulminazioni restano comunque aggiornati.</div>`;
       return;
     }
@@ -195,6 +219,7 @@
     const consensus = consensusHtml(home, data);
     section.innerHTML = `
       <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Base oraria ${esc(home.source || 'modello locale')} · consenso multi-modello 3–48 h</div></div></div>
+      ${nowcastHtml}
       ${staleHtml}
       <div class="hourly-strip" aria-label="Previsione oraria">${hourHtml}</div>
       <div class="day-grid">${dayHtml}</div>

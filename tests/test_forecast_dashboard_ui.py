@@ -30,3 +30,16 @@ def test_numeric_formatter_keeps_missing_values_unavailable():
 
     assert "value === null || value === undefined || value === ''" in js
     assert "return null;" in js
+
+
+def test_home_shows_simple_nowcast_before_hourly_forecast():
+    js = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+
+    assert "nowcast_simple" in js
+    assert "Prossime 3 ore" in js
+    assert "homeNowcastSimple" in js
+    assert "home-nowcast-title" in js
+    assert "home-nowcast-text" in js
+    assert "home-nowcast-detail" in js
+    assert "${nowcastHtml}\n      ${staleHtml}\n      <div class=\"hourly-strip\"" in js
+    assert "${nowcastHtml}\n        <div class=\"model-outlook unknown\"" in js
