@@ -111,6 +111,69 @@ def _incoming_within_three_hours(data: dict) -> bool:
     return False
 
 
+def _simple_indicators(
+    data: dict,
+    *,
+    radar_fresh: bool,
+    lightning_fresh: bool,
+    nearest_radar: float | None,
+    flashes20: int | None,
+    flashes30: int | None,
+    incoming: bool,
+) -> dict[str, str | None]:
+    tracking = data.get("nowcast_tracking", {}) or {}
+    motion = tracking.get("motion", {}) or {}
+    candidates = [c for c in tracking.get("candidates", []) or [] if isinstance(c, dict)]
+
+    if not radar_fresh:
+        radar = "Dato non disponibile"
+    elif tracking.get("status") == "no_cell":
+        radar = "Nessun nucleo rilevante"
+    elif nearest_radar is not None and nearest_radar <= 15:
+        radar = "Fenomeno molto vicino"
+    elif nearest_radar is not None and nearest_radar <= 30:
+        radar = "Piogge nei dintorni"
+    elif tracking.get("status") == "detected":
+        radar = "Fenomeni più lontani"
+    else:
+        radar = "Nessun segnale rilevante"
+
+    if incoming:
+        trajectory = "Possibile arrivo"
+    elif tracking.get("status") != "detected":
+        trajectory = "Non applicabile"
+    elif (
+        len(candidates) == 1
+        and motion.get("status") == "tracked"
+        and motion.get("approaching") is False
+    ):
+        trajectory = "Non diretta verso Giammoro"
+    elif motion.get("status") == "tracked":
+        trajectory = "Nessun arrivo confermato"
+    else:
+        trajectory = "Non definita"
+
+    if not lightning_fresh:
+        lightning = "Dato non disponibile"
+    elif flashes20 is not None and flashes20 > 0:
+        lightning = "Presenti entro 20 km"
+    elif flashes30 is not None and flashes30 > 0:
+        lightning = "Presenti entro 30 km"
+    else:
+        lightning = "Assenti entro 30 km"
+
+    distance = None
+    if nearest_radar is not None and nearest_radar <= 50:
+        distance = f"~{nearest_radar:.0f} km"
+
+    return {
+        "radar": radar,
+        "trajectory": trajectory,
+        "lightning": lightning,
+        "distance": distance,
+    }
+
+
 def simple_nowcast(data: dict) -> dict[str, Any]:
     """Traduce il nowcasting tecnico 0–3 h in quattro stati leggibili dalla home."""
     tracking = data.get("nowcast_tracking", {}) or {}
@@ -128,6 +191,16 @@ def simple_nowcast(data: dict) -> dict[str, Any]:
     flashes20 = _lightning_count(data, 20) if lightning_fresh else None
     flashes30 = _lightning_count(data, 30) if lightning_fresh else None
     technical_level = str((data.get("nowcast", {}) or {}).get("level") or "").lower()
+    incoming = _incoming_within_three_hours(data)
+    indicators = _simple_indicators(
+        data,
+        radar_fresh=radar_fresh,
+        lightning_fresh=lightning_fresh,
+        nearest_radar=nearest_radar,
+        flashes20=flashes20,
+        flashes30=flashes30,
+        incoming=incoming,
+    )
 
     detail = None
     if nearest_radar is not None and nearest_radar <= 30:
@@ -143,80 +216,62 @@ def simple_nowcast(data: dict) -> dict[str, Any]:
         or (flashes20 is not None and flashes20 > 0)
     ):
         if rain_available and rain_1h >= 0.5:
-            text = "Pioggia è già rilevata nell'area di Giammoro. Segui l'evoluzione nelle prossime ore."
+            text = "Pioggia già rilevata nell'area di Giammoro. Segui l'evoluzione nelle prossime ore."
         elif flashes20 is not None and flashes20 > 0:
-            text = "Attività temporalesca è molto vicina a Giammoro. Segui l'evoluzione nelle prossime ore."
+            text = "Attività temporalesca molto vicina a Giammoro. Segui l'evoluzione nelle prossime ore."
         else:
             text = "Piogge o temporali sono molto vicini a Giammoro. Segui l'evoluzione nelle prossime ore."
-        return {
-            "window": "0–3 h",
-            "status": "active",
-            "title": "Fenomeni vicini o in corso",
-            "text": text,
-            "detail": detail,
-            "nearest_signal_km": round(nearest_radar, 1) if nearest_radar is not None and nearest_radar <= 30 else None,
-        }
-
-    if _incoming_within_three_hours(data):
-        return {
-            "window": "0–3 h",
-            "status": "incoming",
-            "title": "Possibili fenomeni in arrivo",
-            "text": "Una zona di pioggia o temporale potrebbe avvicinarsi a Giammoro nelle prossime 3 ore.",
-            "detail": detail,
-            "nearest_signal_km": round(nearest_radar, 1) if nearest_radar is not None and nearest_radar <= 30 else None,
-        }
-
-    nearby = bool(
-        (nearest_radar is not None and nearest_radar <= 30)
-        or (flashes30 is not None and flashes30 > 0)
-        or technical_level not in {"", "low", "basso"}
-    )
-    if nearby:
-        candidates = [c for c in tracking.get("candidates", []) or [] if isinstance(c, dict)]
-        motion = tracking.get("motion", {}) or {}
-        single_moving_away = (
-            len(candidates) == 1
-            and motion.get("status") == "tracked"
-            and motion.get("approaching") is False
-        )
-        text = (
-            "Piogge o temporali sono presenti nei dintorni, ma al momento non risultano diretti verso Giammoro."
-            if single_moving_away
-            else "Piogge o temporali sono presenti nei dintorni. Al momento non è confermato un arrivo su Giammoro."
-        )
-        return {
-            "window": "0–3 h",
-            "status": "watch",
-            "title": "Da monitorare",
-            "text": text,
-            "detail": detail,
-            "nearest_signal_km": round(nearest_radar, 1) if nearest_radar is not None and nearest_radar <= 30 else None,
-        }
-
-    if not radar_fresh and not lightning_fresh:
-        return {
-            "window": "0–3 h",
-            "status": "watch",
-            "title": "Da monitorare",
-            "text": "I principali dati osservativi sono temporaneamente incompleti. La situazione resta da monitorare.",
-            "detail": None,
-            "nearest_signal_km": None,
-        }
-
-    if radar_fresh and lightning_fresh:
-        text = "Al momento radar e fulmini non mostrano fenomeni rilevanti vicino a Giammoro."
-    elif radar_fresh:
-        text = "Il radar non mostra fenomeni rilevanti vicino a Giammoro; i dati sui fulmini sono temporaneamente non disponibili."
+        status = "active"
+        title = "Fenomeni vicini o in corso"
+    elif incoming:
+        phenomenon = "Una zona di pioggia o temporale" if flashes30 is not None and flashes30 > 0 else "Una zona di pioggia"
+        text = f"{phenomenon} potrebbe avvicinarsi a Giammoro nelle prossime 3 ore."
+        status = "incoming"
+        title = "Possibili fenomeni in arrivo"
     else:
-        text = "Non risultano fulmini vicini a Giammoro; i dati radar sono temporaneamente non disponibili."
+        nearby = bool(
+            (nearest_radar is not None and nearest_radar <= 30)
+            or (flashes30 is not None and flashes30 > 0)
+            or technical_level not in {"", "low", "basso"}
+        )
+        if nearby:
+            candidates = [c for c in tracking.get("candidates", []) or [] if isinstance(c, dict)]
+            motion = tracking.get("motion", {}) or {}
+            single_moving_away = (
+                len(candidates) == 1
+                and motion.get("status") == "tracked"
+                and motion.get("approaching") is False
+            )
+            phenomenon = "Piogge o temporali" if flashes30 is not None and flashes30 > 0 else "Aree di pioggia"
+            text = (
+                f"{phenomenon} sono presenti nei dintorni, ma la traiettoria osservata non è diretta verso Giammoro."
+                if single_moving_away
+                else f"{phenomenon} sono presenti nei dintorni. Al momento non è confermato un arrivo su Giammoro."
+            )
+            status = "watch"
+            title = "Da monitorare"
+        elif not radar_fresh and not lightning_fresh:
+            text = "I principali dati osservativi sono temporaneamente incompleti. La situazione resta da monitorare."
+            status = "watch"
+            title = "Da monitorare"
+        else:
+            if radar_fresh and lightning_fresh:
+                text = "Al momento radar e fulmini non mostrano fenomeni rilevanti vicino a Giammoro."
+            elif radar_fresh:
+                text = "Il radar non mostra fenomeni rilevanti vicino a Giammoro; i dati sui fulmini sono temporaneamente non disponibili."
+            else:
+                text = "Non risultano fulmini vicini a Giammoro; i dati radar sono temporaneamente non disponibili."
+            status = "calm"
+            title = "Tranquillo"
+
     return {
         "window": "0–3 h",
-        "status": "calm",
-        "title": "Tranquillo",
+        "status": status,
+        "title": title,
         "text": text,
-        "detail": None,
-        "nearest_signal_km": None,
+        "detail": detail,
+        "nearest_signal_km": round(nearest_radar, 1) if nearest_radar is not None and nearest_radar <= 30 else None,
+        "indicators": indicators,
     }
 
 

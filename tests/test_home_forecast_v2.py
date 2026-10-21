@@ -143,6 +143,12 @@ def test_simple_nowcast_is_calm_when_radar_and_lightning_are_quiet():
     assert out["status"] == "calm"
     assert out["title"] == "Tranquillo"
     assert "non mostrano fenomeni rilevanti" in out["text"]
+    assert out["indicators"] == {
+        "radar": "Nessun nucleo rilevante",
+        "trajectory": "Non applicabile",
+        "lightning": "Assenti entro 30 km",
+        "distance": None,
+    }
 
 
 def test_simple_nowcast_uses_nearest_radar_candidate_for_watch_state():
@@ -162,8 +168,27 @@ def test_simple_nowcast_uses_nearest_radar_candidate_for_watch_state():
     assert out["status"] == "watch"
     assert out["title"] == "Da monitorare"
     assert out["nearest_signal_km"] == 24.1
-    assert "24 km" in out["detail"]
+    assert out["indicators"]["radar"] == "Piogge nei dintorni"
+    assert out["indicators"]["trajectory"] == "Nessun arrivo confermato"
+    assert out["indicators"]["lightning"] == "Assenti entro 30 km"
+    assert out["indicators"]["distance"] == "~24 km"
     assert "non è confermato un arrivo" in out["text"]
+
+
+def test_simple_nowcast_marks_single_cell_moving_away_as_non_direct():
+    data = base_data()
+    data["nowcast"] = {"level": "moderato"}
+    data["territory"]["metrics"]["rain_1h"] = {"value": 0.0}
+    data["nowcast_tracking"] = {
+        "status": "detected",
+        "age_minutes": 5,
+        "candidates": [{"distance_km": 22.0}],
+        "motion": {"status": "tracked", "approaching": False},
+    }
+    out = h.simple_nowcast(data)
+    assert out["status"] == "watch"
+    assert out["indicators"]["trajectory"] == "Non diretta verso Giammoro"
+    assert "non è diretta verso Giammoro" in out["text"]
 
 
 def test_simple_nowcast_marks_reliable_local_approach_as_incoming():
@@ -188,6 +213,9 @@ def test_simple_nowcast_marks_reliable_local_approach_as_incoming():
     assert out["status"] == "incoming"
     assert out["title"] == "Possibili fenomeni in arrivo"
     assert "prossime 3 ore" in out["text"]
+    assert out["indicators"]["radar"] == "Piogge nei dintorni"
+    assert out["indicators"]["trajectory"] == "Possibile arrivo"
+    assert out["indicators"]["distance"] == "~28 km"
 
 
 def test_simple_nowcast_marks_lightning_within_20km_as_active():
@@ -198,4 +226,4 @@ def test_simple_nowcast_marks_lightning_within_20km_as_active():
     out = h.simple_nowcast(data)
     assert out["status"] == "active"
     assert out["title"] == "Fenomeni vicini o in corso"
-    assert "Fulmini rilevati entro 20 km" in out["detail"]
+    assert out["indicators"]["lightning"] == "Presenti entro 20 km"

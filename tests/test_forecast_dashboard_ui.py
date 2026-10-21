@@ -32,7 +32,7 @@ def test_numeric_formatter_keeps_missing_values_unavailable():
     assert "return null;" in js
 
 
-def test_home_shows_simple_nowcast_before_hourly_forecast():
+def test_home_shows_simple_nowcast_before_hourly_forecast_with_indicators():
     js = Path("forecast_dashboard.js").read_text(encoding="utf-8")
 
     assert "nowcast_simple" in js
@@ -40,6 +40,28 @@ def test_home_shows_simple_nowcast_before_hourly_forecast():
     assert "homeNowcastSimple" in js
     assert "home-nowcast-title" in js
     assert "home-nowcast-text" in js
-    assert "home-nowcast-detail" in js
+    assert "home-nowcast-signals" in js
+    assert "home-nowcast-signal" in js
+    for label in ("Radar", "Traiettoria", "Fulmini", "Distanza"):
+        assert f"['{label}'," in js
     assert "${nowcastHtml}\n      ${staleHtml}\n      <div class=\"hourly-strip\"" in js
-    assert "${nowcastHtml}\n        <div class=\"model-outlook unknown\"" in js
+    assert "${nowcastHtml}\n        <div class=\"forecast-unavailable\"" in js
+
+
+def test_home_does_not_render_technical_multi_model_consensus_block():
+    js = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+
+    assert "consensusHtml" not in js
+    assert "consenso multi-modello 3–48 h" not in js
+    assert "modelli indicano pioggia ≥0,5 mm" not in js
+    assert "model-values" not in js
+    assert "home?.multi_model" not in js
+
+
+def test_detailed_analysis_keeps_multi_model_technical_section():
+    html = Path("index.html").read_text(encoding="utf-8")
+
+    assert "Previsione multi-modello" in html
+    assert 'id="models"' in html
+    assert 'id="riskNote"' in html
+    assert "3–48 h e 2–7+ giorni" in html
