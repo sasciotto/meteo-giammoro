@@ -73,6 +73,14 @@ def transform(html: str) -> str:
     html, count = LEGACY_CARD.subn(placeholder, html, count=1)
     if count:
         html = html.replace('<div class="grid three section">', '<div class="grid two section">', 1)
+        # Le vecchie card PROSSIME ORE / PIOGGIA E TEMPORALI restano solo come
+        # compatibilità per lo script storico ma non sono più visibili: la home usa
+        # esclusivamente home_summary.nowcast_simple + previsione oraria/oggi-domani.
+        html = html.replace(
+            '<div class="grid two section">',
+            '<div class="grid two section" id="legacyHomeSummary" hidden>',
+            1,
+        )
 
     # Il 3–48 h non è un'allerta/rischio operativo: la card espone la tendenza
     # modellistica e mantiene l'impatto separato nei dettagli del JSON.
