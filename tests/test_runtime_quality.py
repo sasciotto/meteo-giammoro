@@ -100,3 +100,81 @@ def test_home_radar_indicator_distinguishes_area_echo_from_trackable_cell():
     indicators = data["home_summary"]["nowcast_simple"]["indicators"]
     assert indicators["radar"] == "Pioggia rilevata entro ~30 km"
     assert indicators["distance"] == "Nucleo tracciabile ~37 km"
+
+
+def local_product(point=0.0, p90_1=0.0, mean_1=0.0, max_1=0.0, p90_3=0.0, mean_3=0.0, max_3=0.0):
+    return {
+        "ok": True,
+        "timestamp": "2026-10-22T16:00+02:00",
+        "age_minutes": 5,
+        "stats": [
+            {"radius_km": 1, "point": point, "p90": p90_1, "mean": mean_1, "max": max_1},
+            {"radius_km": 3, "point": point, "p90": p90_3, "mean": mean_3, "max": max_3},
+            {"radius_km": 5, "point": point, "p90": p90_3, "mean": mean_3, "max": max_3},
+        ],
+    }
+
+
+def test_local_radar_area_can_detect_rain_without_claiming_point_accumulation(monkeypatch):
+    sri = local_product(point=0.0, p90_1=0.4, mean_1=0.2, max_1=0.9)
+    srt = local_product(point=0.0, p90_1=0.2, mean_1=0.1, max_1=0.4)
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (sri if name == "SRI" else srt, None))
+    data = {
+        "nowcast": {"level": "low"},
+        "model_details": [],
+        "home_summary": {"nowcast_simple": {"status": "calm", "title": "Tranquillo", "text": "", "indicators": {}}},
+    }
+    q.update_local_precipitation(data, previous={}, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
+    local = data["local_precipitation"]
+    assert local["status"] == "active"
+    assert local["area_values_are_not_point_measurements"] is True
+    assert local["radar"]["sri"]["1"]["point"] == 0.0
+    assert "entro ~1 km" in local["current_detection_basis"]
+    assert data["home_summary"]["nowcast_simple"]["status"] == "active"
+
+
+def test_recent_local_rain_is_kept_after_current_radar_turns_dry(monkeypatch):
+    dry = local_product()
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (dry, None))
+    previous = {
+        "local_precipitation": {
+            "history": [
+                {
+                    "timestamp": "2026-10-22T15:30:00+02:00",
+                    "rain_detected": True,
+                    "recent_accumulation": True,
+                    "basis": "segnale radar coerente entro ~1 km",
+                }
+            ]
+        }
+    }
+    data = {
+        "nowcast": {"level": "low"},
+        "model_details": [],
+        "home_summary": {"nowcast_simple": {"status": "calm", "title": "Tranquillo", "text": "", "indicators": {}}},
+    }
+    q.update_local_precipitation(data, previous=previous, now=datetime(2026, 10, 22, 16, 10, tzinfo=TZ))
+    assert data["local_precipitation"]["status"] == "recent"
+    assert data["home_summary"]["nowcast_simple"]["status"] == "watch"
+    assert "recentemente" in data["home_summary"]["nowcast_simple"]["text"].lower()
+
+
+def test_weak_model_rain_signal_is_separate_from_impact_level(monkeypatch):
+    dry = local_product()
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (dry, None))
+    data = {
+        "nowcast": {"level": "low"},
+        "model_details": [
+            {"label": "ICON-2I", "ok": True, "next_0_3h": {"precip_sum": 0.0}},
+            {"label": "ICON", "ok": True, "next_0_3h": {"precip_sum": 0.0}},
+            {"label": "ECMWF", "ok": True, "next_0_3h": {"precip_sum": 0.1}},
+            {"label": "GFS", "ok": True, "next_0_3h": {"precip_sum": 0.9}},
+        ],
+        "home_summary": {"nowcast_simple": {"status": "calm", "title": "Tranquillo", "text": "", "indicators": {}}},
+    }
+    q.update_local_precipitation(data, previous={}, now=datetime(2026, 10, 22, 16, 10, tzinfo=TZ))
+    local = data["local_precipitation"]
+    assert local["forecast_0_3h"]["status"] == "weak"
+    assert local["impact_level"] == "low"
+    assert data["home_summary"]["nowcast_simple"]["status"] == "watch"
+    assert "piovaschi" in data["home_summary"]["nowcast_simple"]["text"].lower()
