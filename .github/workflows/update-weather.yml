@@ -14,6 +14,8 @@ on:
       - "analysis_quality.py"
       - "analysis_quality_update.py"
       - "analysis_quality_ui.js"
+      - "verification_history.py"
+      - "verification_history_ui.js"
       - "radar_ui.js"
       - "site_prepare.py"
       - "collector.py"
@@ -189,6 +191,10 @@ jobs:
         if: steps.freshness.outputs.should_run == 'true'
         run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
 
+      - name: Conserva metriche cumulative verifica
+        if: steps.freshness.outputs.should_run == 'true'
+        run: python verification_history.py --data data.json --verification verification.json --events events.json
+
       - name: Aggiorna stato calibrazione previsionale
         if: steps.freshness.outputs.should_run == 'true'
         run: python analysis_quality_update.py --data data.json
@@ -259,7 +265,8 @@ jobs:
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
-# Verifica ex-post: orizzonti 30/60/120 min; hazard locale separato dal track radar.
+# Verifica ex-post: orizzonti 30/60/120 min; impatto locale separato dal track radar e metriche cumulative v2 persistenti.
+# La baseline v1 resta separata dalla metrica v2 e non viene sommata dopo il cambio semantico.
 # Qualità tecnica e affidabilità traiettoria sono separate dalla confidenza probabilistica, che resta non calibrata.
 # Home: nowcasting 0–3 h semplificato dal backend + previsione oraria e Oggi/Domani; il consenso multi-modello resta nell'analisi dettagliata.
 # LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
