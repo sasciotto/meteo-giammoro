@@ -16,6 +16,7 @@ on:
       - "analysis_quality_ui.js"
       - "verification_history.py"
       - "verification_history_ui.js"
+      - "station_fallback.py"
       - "radar_ui.js"
       - "site_prepare.py"
       - "collector.py"
@@ -125,9 +126,12 @@ jobs:
           import json
           from pathlib import Path
           import collector
+          import station_fallback
 
           original_fetch_json = collector.fetch_json
+          original_fetch_stations = collector.fetch_stations
           model_cache = {}
+          station_feed_failure = {}
 
           def caching_fetch_json(url, params, timeout=30):
               raw = original_fetch_json(url, params, timeout)
@@ -136,8 +140,41 @@ jobs:
                   model_cache[model_id] = raw
               return raw
 
+          def guarded_fetch_stations():
+              try:
+                  return original_fetch_stations()
+              except Exception as exc:
+                  reason = str(exc)
+                  now = collector.now_local()
+                  previous = collector.load_previous()
+                  station_feed_failure['reason'] = reason
+                  station_feed_failure['metadata'] = station_fallback.metadata(reason, now)
+                  stations = station_fallback.previous_cycle_stations(previous, now, reason)
+                  return stations, station_feed_failure['metadata']
+
           collector.fetch_json = caching_fetch_json
+          collector.fetch_stations = guarded_fetch_stations
           rc = collector.main()
+
+          if station_feed_failure:
+              data_path = Path('data.json')
+              data = json.loads(data_path.read_text(encoding='utf-8'))
+              reason = station_feed_failure['reason']
+              message = f"stazioni: {reason}"
+              meta = data.setdefault('meta', {})
+              errors = [str(x) for x in (meta.get('collector_errors') or [])]
+              if message not in errors:
+                  errors.append(message)
+              meta['collector_errors'] = errors
+              meta['collector_status'] = 'degraded'
+              data['station_feed'] = station_feed_failure['metadata']
+              data.setdefault('nowcast_evidence', {})['rain_gauges'] = (
+                  "Feed stazioni non disponibile nel ciclo corrente; l'ultimo dato noto resta visibile "
+                  "solo per riferimento ed è escluso dall'analisi."
+              )
+              data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+              print(f"Fallback stazioni attivo: {reason}")
+
           Path('/tmp/open-meteo-model-cache.json').write_text(
               json.dumps(model_cache, ensure_ascii=False), encoding='utf-8'
           )
@@ -258,8 +295,9 @@ jobs:
 # Scheduler GitHub di backup: ogni 15 minuti ai minuti :07, :22, :37 e :52.
 # La guardia iniziale evita di eseguire il collector se i dati hanno meno di 10 minuti.
 # Le risposte Open-Meteo deterministiche del collector vengono riutilizzate dalla home senza una seconda richiesta.
+# Se il feed stazioni fallisce, l'ultimo ciclo valido resta consultabile ma è marcato precedente ed escluso dall'analisi.
 # Se il modello home fallisce, viene mantenuta fino a 6 h l'ultima previsione valida, marcata come dato precedente.
-# Il collector viene marcato degraded quando la previsione modellistica home non è disponibile.
+# Il collector viene marcato degraded quando la previsione modellistica home o il feed stazioni non sono disponibili.
 # La pagina pubblica usa un solo fetch di data.json; forecast_dashboard.js riceve lo stesso oggetto dati.
 # Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
