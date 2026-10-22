@@ -18,6 +18,7 @@ def test_previous_station_values_are_kept_but_excluded_from_analysis():
             },
             {
                 "name": "Santa Lucia del Mela (DRPC)",
+                "display_name": "Santa Lucia del Mela",
                 "source_quality": "official",
                 "status": "online",
                 "status_label": "Online",
@@ -55,6 +56,7 @@ def test_repeated_fallback_keeps_original_observation_timestamp():
         "stations": [
             {
                 "name": "Venetico (DRPC)",
+                "display_name": "Venetico (DRPC)",
                 "status": "unknown",
                 "status_label": "Dato precedente · feed non disponibile",
                 "temperature": 22.0,
@@ -72,12 +74,58 @@ def test_repeated_fallback_keeps_original_observation_timestamp():
     assert station["note"].count("Feed stazioni non disponibile nel ciclo corrente") == 1
 
 
+def test_migrates_legacy_fallback_using_last_live_reference():
+    previous = {
+        "meta": {"last_check_iso": "2026-10-22T16:14:49+02:00"},
+        "stations": [
+            {
+                "name": "Santa Lucia del Mela (DRPC)",
+                "display_name": "Santa Lucia del Mela",
+                "status": "unknown",
+                "updated": "ultimo ciclo valido · 14 min fa",
+                "temperature": 21.4,
+                "excluded_from_analysis": True,
+                "data_freshness": "previous_cycle",
+                "last_valid_cycle_iso": "2026-10-22T16:00:24+02:00",
+                "fallback_age_minutes": 14,
+            }
+        ],
+    }
+    reference = {
+        "meta": {"last_check_iso": "2026-10-22T16:00:24+02:00"},
+        "stations": [
+            {
+                "name": "Santa Lucia del Mela (DRPC)",
+                "display_name": "Santa Lucia del Mela",
+                "status": "online",
+                "updated": "15:30 · 30 min fa",
+                "temperature": 21.4,
+                "excluded_from_analysis": False,
+            }
+        ],
+    }
+    now = datetime(2026, 10, 22, 16, 20, tzinfo=TZ)
+    assert fallback.needs_reference_recovery(previous) is True
+    assert fallback.is_live_reference(reference) is True
+
+    station = fallback.previous_cycle_stations(
+        previous,
+        now,
+        "403 Forbidden",
+        reference_previous=reference,
+    )[0]
+    assert station["last_valid_observation_iso"] == "2026-10-22T15:30:00+02:00"
+    assert station["fallback_age_minutes"] == 50
+    assert "last_valid_cycle_iso" not in station
+
+
 def test_observation_time_handles_midnight_rollover():
     previous = {
         "meta": {"last_check_iso": "2026-10-22T00:05:00+02:00"},
         "stations": [
             {
                 "name": "Messina (SIAS)",
+                "display_name": "Messina",
                 "status": "online",
                 "updated": "23:55 · 10 min fa",
                 "temperature": 19.5,

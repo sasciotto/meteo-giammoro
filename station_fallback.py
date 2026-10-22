@@ -2,7 +2,9 @@
 from __future__ import annotations
 
 import copy
+import json
 import re
+import subprocess
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -14,11 +16,14 @@ def _parse_iso(value: Any) -> datetime | None:
         return None
 
 
-def _observation_time(station: dict, previous_check: datetime | None) -> datetime | None:
-    explicit = _parse_iso(
-        station.get("last_valid_observation_iso")
-        or station.get("last_valid_cycle_iso")
-    )
+def _station_key(station: dict) -> tuple[str, str]:
+    return (str(station.get("name") or ""), str(station.get("display_name") or ""))
+
+
+def _observation_time(station: dict, previous_check: datetime | None, *, allow_legacy_cycle: bool = True) -> datetime | None:
+    explicit = _parse_iso(station.get("last_valid_observation_iso"))
+    if explicit is None and allow_legacy_cycle:
+        explicit = _parse_iso(station.get("last_valid_cycle_iso"))
     if explicit is not None:
         if explicit.tzinfo is None and previous_check is not None and previous_check.tzinfo is not None:
             explicit = explicit.replace(tzinfo=previous_check.tzinfo)
@@ -39,12 +44,43 @@ def _observation_time(station: dict, previous_check: datetime | None) -> datetim
     return observed
 
 
-def previous_cycle_stations(previous: dict, now: datetime, reason: str | None = None) -> list[dict]:
-    """Conserva l'ultimo valore noto solo per consultazione, mai come osservazione corrente."""
+def _reference_observation_times(reference_previous: dict | None) -> dict[tuple[str, str], datetime]:
+    if not reference_previous:
+        return {}
+    check_raw = (reference_previous.get("meta", {}) or {}).get("last_check_iso")
+    check = _parse_iso(check_raw)
+    out: dict[tuple[str, str], datetime] = {}
+    for station in reference_previous.get("stations", []) or []:
+        if not isinstance(station, dict):
+            continue
+        if station.get("data_freshness") == "previous_cycle":
+            continue
+        observed = _observation_time(station, check, allow_legacy_cycle=False)
+        if observed is not None:
+            out[_station_key(station)] = observed
+    return out
+
+
+def previous_cycle_stations(
+    previous: dict,
+    now: datetime,
+    reason: str | None = None,
+    reference_previous: dict | None = None,
+) -> list[dict]:
+    """Conserva l'ultimo valore noto solo per consultazione, mai come osservazione corrente.
+
+    ``reference_previous`` può contenere l'ultimo data.json precedente al fallback. Serve
+    per migrare in modo corretto i cicli prodotti dalla prima versione del fallback, che
+    conservava l'orario del collector invece dell'orario reale dell'osservazione.
+    """
     previous_check_raw = (previous.get("meta", {}) or {}).get("last_check_iso")
     previous_check = _parse_iso(previous_check_raw)
     if previous_check is not None and previous_check.tzinfo is None and now.tzinfo is not None:
         previous_check = previous_check.replace(tzinfo=now.tzinfo)
+
+    if reference_previous is None and needs_reference_recovery(previous):
+        reference_previous = load_live_reference_from_git()
+    reference_times = _reference_observation_times(reference_previous)
 
     out: list[dict] = []
     for station in previous.get("stations", []) or []:
@@ -60,9 +96,17 @@ def previous_cycle_stations(previous: dict, now: datetime, reason: str | None = 
             out.append(item)
             continue
 
-        last_valid = _observation_time(item, previous_check)
+        last_valid = _parse_iso(item.get("last_valid_observation_iso"))
+        if last_valid is None and item.get("data_freshness") == "previous_cycle":
+            # Migrazione dalla prima versione: il vecchio last_valid_cycle_iso era
+            # l'orario del collector, non quello della stazione. Se possibile usa il
+            # vero HH:MM recuperato dall'ultimo data.json non-fallback.
+            last_valid = reference_times.get(_station_key(item))
+        if last_valid is None:
+            last_valid = _observation_time(item, previous_check)
         if last_valid is not None and last_valid.tzinfo is None and now.tzinfo is not None:
             last_valid = last_valid.replace(tzinfo=now.tzinfo)
+
         age_minutes = None
         if last_valid is not None:
             try:
@@ -83,8 +127,10 @@ def previous_cycle_stations(previous: dict, now: datetime, reason: str | None = 
             else "ultimo dato noto · età non disponibile"
         )
         original_note = str(item.get("note") or "").strip()
-        repeated_note = "Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi."
-        # Evita di accodare la stessa nota a ogni ciclo consecutivo di fallback.
+        repeated_note = (
+            "Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento "
+            "ed escluso dall'analisi."
+        )
         if repeated_note in original_note:
             note = original_note
         else:
@@ -94,6 +140,57 @@ def previous_cycle_stations(previous: dict, now: datetime, reason: str | None = 
         item["note"] = note
         out.append(item)
     return out
+
+
+def needs_reference_recovery(previous: dict) -> bool:
+    """Indica se sono presenti righe create dal vecchio fallback senza timestamp osservativo."""
+    return any(
+        isinstance(station, dict)
+        and station.get("data_freshness") == "previous_cycle"
+        and not station.get("last_valid_observation_iso")
+        and bool(station.get("last_valid_cycle_iso"))
+        for station in (previous.get("stations", []) or [])
+    )
+
+
+def is_live_reference(data: dict) -> bool:
+    """Riconosce un data.json con almeno una vera etichetta HH:MM non-fallback."""
+    for station in data.get("stations", []) or []:
+        if not isinstance(station, dict) or station.get("data_freshness") == "previous_cycle":
+            continue
+        if re.match(r"^\s*\d{1,2}:\d{2}\b", str(station.get("updated") or "")):
+            return True
+    return False
+
+
+def load_live_reference_from_git(max_commits: int = 24) -> dict:
+    """Recupera dall'history Git l'ultimo data.json con stazioni ancora etichettate HH:MM.
+
+    È usato solo per migrare il primo fallback imperfetto; in assenza di Git/history
+    restituisce un dizionario vuoto e il chiamante resta comunque in modalità degradata.
+    """
+    try:
+        raw = subprocess.check_output(
+            ["git", "rev-list", f"--max-count={max_commits}", "HEAD", "--", "data.json"],
+            text=True,
+            stderr=subprocess.DEVNULL,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return {}
+
+    for sha in [line.strip() for line in raw.splitlines() if line.strip()]:
+        try:
+            payload = subprocess.check_output(
+                ["git", "show", f"{sha}:data.json"],
+                text=True,
+                stderr=subprocess.DEVNULL,
+            )
+            data = json.loads(payload)
+        except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+            continue
+        if is_live_reference(data):
+            return data
+    return {}
 
 
 def metadata(reason: str, now: datetime) -> dict[str, Any]:
