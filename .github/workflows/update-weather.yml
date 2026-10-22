@@ -16,6 +16,7 @@ on:
       - "analysis_quality_ui.js"
       - "verification_history.py"
       - "verification_history_ui.js"
+      - "precipitation_verification.py"
       - "station_fallback.py"
       - "radar_ui.js"
       - "site_prepare.py"
@@ -220,9 +221,9 @@ jobs:
           p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
-      - name: Normalizza qualità runtime e allerte
+      - name: Normalizza qualità runtime, allerte e pioggia locale
         if: steps.freshness.outputs.should_run == 'true'
-        run: python runtime_quality.py --data data.json
+        run: python runtime_quality.py --data data.json --previous /tmp/data-previous.json
 
       - name: Verifica ex-post e archivio eventi
         if: steps.freshness.outputs.should_run == 'true'
@@ -231,6 +232,10 @@ jobs:
       - name: Conserva metriche cumulative verifica
         if: steps.freshness.outputs.should_run == 'true'
         run: python verification_history.py --data data.json --verification verification.json --events events.json
+
+      - name: Verifica presenza pioggia locale
+        if: steps.freshness.outputs.should_run == 'true'
+        run: python precipitation_verification.py --data data.json --verification verification.json --events events.json
 
       - name: Aggiorna stato calibrazione previsionale
         if: steps.freshness.outputs.should_run == 'true'
@@ -303,7 +308,9 @@ jobs:
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
-# Verifica ex-post: orizzonti 30/60/120 min; impatto locale separato dal track radar e metriche cumulative v2 persistenti.
+# Verifica ex-post eventi: orizzonti 30/60/120 min; impatto locale separato dal track radar e metriche cumulative v2 persistenti.
+# Verifica pioggia: metrica separata 30/60/120 min per presenza di precipitazione locale, non severità.
+# Pioggia locale: contesto radar 1/3/5 km + persistenza; i massimi areali non sono presentati come accumuli puntuali.
 # La baseline v1 resta separata dalla metrica v2 e non viene sommata dopo il cambio semantico.
 # Qualità tecnica e affidabilità traiettoria sono separate dalla confidenza probabilistica, che resta non calibrata.
 # Home: nowcasting 0–3 h semplificato dal backend + previsione oraria e Oggi/Domani; il consenso multi-modello resta nell'analisi dettagliata.
