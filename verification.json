@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "updated_at": "2026-10-22T18:45:40+00:00",
+  "updated_at": "2026-10-22T18:49:00+00:00",
   "horizons_minutes": [
     30,
     60,
@@ -201,7 +201,66 @@
       },
       "note": "Baseline storica reale precedente al cambio semantico del 22/10/2026. Non viene combinata con la metrica v2 perché la v2 usa la cella radar significativa più vicina per l'impatto locale e richiede un timestamp fulmini valido."
     },
-    "retention_note": "Le metriche cumulative v2 sono conservate separatamente dal rolling window di 300 risultati. La baseline v1 resta visibile ma non viene sommata perché usa una definizione precedente dell'evento locale."
+    "retention_note": "Le metriche cumulative v2 sono conservate separatamente dal rolling window di 300 risultati. La baseline v1 resta visibile ma non viene sommata perché usa una definizione precedente dell'evento locale.",
+    "precipitation_presence": {
+      "metric_version": "local-precipitation-v1",
+      "semantic": "rain_presence_not_severity",
+      "cumulative": {
+        "samples": 0,
+        "true_positive": 0,
+        "true_negative": 0,
+        "false_positive": 0,
+        "false_negative": 0,
+        "rain_samples": 0,
+        "dry_samples": 0,
+        "rain_detection_percent": null,
+        "precision_percent": null,
+        "false_alarm_ratio_percent": null,
+        "accuracy_percent": null
+      },
+      "by_horizon": {
+        "30": {
+          "samples": 0,
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "rain_samples": 0,
+          "dry_samples": 0,
+          "rain_detection_percent": null,
+          "precision_percent": null,
+          "false_alarm_ratio_percent": null,
+          "accuracy_percent": null
+        },
+        "60": {
+          "samples": 0,
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "rain_samples": 0,
+          "dry_samples": 0,
+          "rain_detection_percent": null,
+          "precision_percent": null,
+          "false_alarm_ratio_percent": null,
+          "accuracy_percent": null
+        },
+        "120": {
+          "samples": 0,
+          "true_positive": 0,
+          "true_negative": 0,
+          "false_positive": 0,
+          "false_negative": 0,
+          "rain_samples": 0,
+          "dry_samples": 0,
+          "rain_detection_percent": null,
+          "precision_percent": null,
+          "false_alarm_ratio_percent": null,
+          "accuracy_percent": null
+        }
+      },
+      "note": "Metrica separata dagli eventi significativi: misura la presenza di pioggia locale a 30/60/120 min. Il rilevamento osservato usa la persistenza radar multi-raggio e non trasforma i massimi areali in accumuli puntuali."
+    }
   },
   "pending": [
     {
@@ -543,6 +602,46 @@
     {
       "id": "20261022T184540Z",
       "issued_at": "2026-10-22T18:45:40+00:00",
+      "prediction": {
+        "nowcast_level": "low",
+        "nowcast_label": "Basso (radar)",
+        "confidence_score": null,
+        "confidence_label": "Non calibrata",
+        "radar": {
+          "track_id": null,
+          "status": "no_cell",
+          "lat": null,
+          "lon": null,
+          "distance_km": null,
+          "speed_kmh": null,
+          "direction_deg": null,
+          "approaching": false,
+          "closest_approach_km": null,
+          "closest_approach_minutes": null,
+          "eta_minutes": null,
+          "local_nearest_distance_km": null,
+          "local_nearest_lat": null,
+          "local_nearest_lon": null,
+          "local_nearest_peak_value": null,
+          "local_candidate_count": 0
+        },
+        "lightning": {
+          "status": "ok",
+          "count_20km": 0,
+          "count_30km": 0
+        },
+        "risk_48h": "moderato",
+        "data_quality_score": 80.0,
+        "trajectory_reliability_score": null,
+        "predictive_confidence_status": "uncalibrated",
+        "watch_status": "calm"
+      },
+      "evaluated_horizons": [],
+      "first_observed_event_minutes": null
+    },
+    {
+      "id": "20261022T184900Z",
+      "issued_at": "2026-10-22T18:49:00+00:00",
       "prediction": {
         "nowcast_level": "low",
         "nowcast_label": "Basso (radar)",
