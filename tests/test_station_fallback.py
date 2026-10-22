@@ -42,13 +42,14 @@ def test_previous_station_values_are_kept_but_excluded_from_analysis():
     assert station["status_label"] == "Dato precedente · feed non disponibile"
     assert station["excluded_from_analysis"] is True
     assert station["data_freshness"] == "previous_cycle"
-    assert station["fallback_age_minutes"] == 15
-    assert station["updated"] == "ultimo ciclo valido · 15 min fa"
+    assert station["last_valid_observation_iso"] == "2026-10-22T15:40:00+02:00"
+    assert station["fallback_age_minutes"] == 20
+    assert station["updated"] == "ultimo dato noto · 20 min fa"
     assert station["fallback_reason"] == "403 Forbidden"
     assert "escluso dall'analisi" in station["note"]
 
 
-def test_repeated_fallback_keeps_original_last_valid_cycle():
+def test_repeated_fallback_keeps_original_observation_timestamp():
     previous = {
         "meta": {"last_check_iso": "2026-10-22T16:00:00+02:00"},
         "stations": [
@@ -59,14 +60,35 @@ def test_repeated_fallback_keeps_original_last_valid_cycle():
                 "temperature": 22.0,
                 "excluded_from_analysis": True,
                 "data_freshness": "previous_cycle",
-                "last_valid_cycle_iso": "2026-10-22T15:30:00+02:00",
+                "last_valid_observation_iso": "2026-10-22T15:30:00+02:00",
+                "note": "Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
             }
         ],
     }
     now = datetime(2026, 10, 22, 16, 15, tzinfo=TZ)
     station = fallback.previous_cycle_stations(previous, now, "ancora non disponibile")[0]
-    assert station["last_valid_cycle_iso"] == "2026-10-22T15:30:00+02:00"
+    assert station["last_valid_observation_iso"] == "2026-10-22T15:30:00+02:00"
     assert station["fallback_age_minutes"] == 45
+    assert station["note"].count("Feed stazioni non disponibile nel ciclo corrente") == 1
+
+
+def test_observation_time_handles_midnight_rollover():
+    previous = {
+        "meta": {"last_check_iso": "2026-10-22T00:05:00+02:00"},
+        "stations": [
+            {
+                "name": "Messina (SIAS)",
+                "status": "online",
+                "updated": "23:55 · 10 min fa",
+                "temperature": 19.5,
+                "excluded_from_analysis": False,
+            }
+        ],
+    }
+    now = datetime(2026, 10, 22, 0, 20, tzinfo=TZ)
+    station = fallback.previous_cycle_stations(previous, now, "feed indisponibile")[0]
+    assert station["last_valid_observation_iso"] == "2026-10-21T23:55:00+02:00"
+    assert station["fallback_age_minutes"] == 25
 
 
 def test_metadata_marks_feed_as_degraded():
@@ -76,3 +98,4 @@ def test_metadata_marks_feed_as_degraded():
     assert meta["status"] == "degraded"
     assert meta["rows"] == 0
     assert meta["reason"] == "403 Forbidden"
+    assert meta["source"] == "fallback ultimo dato noto"

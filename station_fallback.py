@@ -2,7 +2,8 @@
 from __future__ import annotations
 
 import copy
-from datetime import datetime
+import re
+from datetime import datetime, timedelta
 from typing import Any
 
 
@@ -11,6 +12,31 @@ def _parse_iso(value: Any) -> datetime | None:
         return datetime.fromisoformat(str(value)) if value else None
     except (TypeError, ValueError):
         return None
+
+
+def _observation_time(station: dict, previous_check: datetime | None) -> datetime | None:
+    explicit = _parse_iso(
+        station.get("last_valid_observation_iso")
+        or station.get("last_valid_cycle_iso")
+    )
+    if explicit is not None:
+        if explicit.tzinfo is None and previous_check is not None and previous_check.tzinfo is not None:
+            explicit = explicit.replace(tzinfo=previous_check.tzinfo)
+        return explicit
+
+    if previous_check is None:
+        return None
+    match = re.match(r"^\s*(\d{1,2}):(\d{2})\b", str(station.get("updated") or ""))
+    if not match:
+        return previous_check
+    hour, minute = map(int, match.groups())
+    try:
+        observed = previous_check.replace(hour=hour, minute=minute, second=0, microsecond=0)
+    except ValueError:
+        return previous_check
+    if observed > previous_check + timedelta(minutes=10):
+        observed -= timedelta(days=1)
+    return observed
 
 
 def previous_cycle_stations(previous: dict, now: datetime, reason: str | None = None) -> list[dict]:
@@ -34,8 +60,7 @@ def previous_cycle_stations(previous: dict, now: datetime, reason: str | None = 
             out.append(item)
             continue
 
-        last_valid_raw = item.get("last_valid_cycle_iso") or previous_check_raw
-        last_valid = _parse_iso(last_valid_raw)
+        last_valid = _observation_time(item, previous_check)
         if last_valid is not None and last_valid.tzinfo is None and now.tzinfo is not None:
             last_valid = last_valid.replace(tzinfo=now.tzinfo)
         age_minutes = None
@@ -49,28 +74,31 @@ def previous_cycle_stations(previous: dict, now: datetime, reason: str | None = 
         item["status_label"] = "Dato precedente · feed non disponibile"
         item["excluded_from_analysis"] = True
         item["data_freshness"] = "previous_cycle"
-        item["last_valid_cycle_iso"] = last_valid.isoformat(timespec="seconds") if last_valid else last_valid_raw
+        item.pop("last_valid_cycle_iso", None)
+        item["last_valid_observation_iso"] = last_valid.isoformat(timespec="seconds") if last_valid else None
         item["fallback_age_minutes"] = age_minutes
         item["updated"] = (
-            f"ultimo ciclo valido · {age_minutes} min fa"
+            f"ultimo dato noto · {age_minutes} min fa"
             if age_minutes is not None
-            else "ultimo ciclo valido · età non disponibile"
+            else "ultimo dato noto · età non disponibile"
         )
         original_note = str(item.get("note") or "").strip()
-        fallback_note = (
-            "Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento "
-            "ed escluso dall'analisi."
-        )
+        repeated_note = "Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi."
+        # Evita di accodare la stessa nota a ogni ciclo consecutivo di fallback.
+        if repeated_note in original_note:
+            note = original_note
+        else:
+            note = f"{original_note} {repeated_note}".strip()
         if reason:
             item["fallback_reason"] = reason
-        item["note"] = f"{original_note} {fallback_note}".strip()
+        item["note"] = note
         out.append(item)
     return out
 
 
 def metadata(reason: str, now: datetime) -> dict[str, Any]:
     return {
-        "source": "fallback ultimo ciclo valido",
+        "source": "fallback ultimo dato noto",
         "rows": 0,
         "status": "degraded",
         "fallback": True,
