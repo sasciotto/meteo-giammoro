@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Correzioni runtime conservative per testi relativi e stato dati."""
+"""Correzioni runtime conservative per testi relativi, stato dati e pioggia locale."""
 from __future__ import annotations
 
 import argparse
@@ -9,7 +9,19 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
+import collector
+
 TZ = ZoneInfo("Europe/Rome")
+PREVIOUS_PATH = Path("/tmp/data-previous.json")
+LOCAL_HISTORY_MINUTES = 180
+
+
+def _num(value) -> float | None:
+    try:
+        number = float(value)
+        return number if number == number else None
+    except (TypeError, ValueError):
+        return None
 
 
 def _title_dates(title: str) -> tuple[date, date] | None:
@@ -149,8 +161,7 @@ def _radar_stat_max(data: dict, product: str, radius: int) -> float | None:
         try:
             if int(stat.get("radius_km", -1)) != radius:
                 continue
-            value = float(stat.get("max"))
-            return value if value == value else None
+            return _num(stat.get("max"))
         except (TypeError, ValueError):
             continue
     return None
@@ -180,10 +191,9 @@ def refine_home_nowcast_radar(data: dict) -> None:
     for candidate in tracking.get("candidates", []) or []:
         if not isinstance(candidate, dict):
             continue
-        try:
-            distances.append(float(candidate.get("distance_km")))
-        except (TypeError, ValueError):
-            pass
+        value = _num(candidate.get("distance_km"))
+        if value is not None:
+            distances.append(value)
     if distances:
         nearest_trackable = min(distances)
         if nearest_trackable <= 50:
@@ -193,21 +203,253 @@ def refine_home_nowcast_radar(data: dict) -> None:
     data.setdefault("home_summary", {})["nowcast_simple"] = simple
 
 
-def apply(data: dict, now: datetime | None = None) -> dict:
+def _load_previous(path: Path = PREVIOUS_PATH) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _stat(product: dict, radius: int) -> dict:
+    if not isinstance(product, dict) or not product.get("ok"):
+        return {}
+    for row in product.get("stats", []) or []:
+        try:
+            if int(row.get("radius_km", -1)) == radius:
+                return row if isinstance(row, dict) else {}
+        except (TypeError, ValueError):
+            continue
+    return {}
+
+
+def _compact_radar_context(product: dict) -> dict:
+    out = {"timestamp": product.get("timestamp"), "age_minutes": product.get("age_minutes")}
+    for radius in (1, 3, 5):
+        row = _stat(product, radius)
+        out[str(radius)] = {
+            "point": _num(row.get("point")),
+            "max": _num(row.get("max")),
+            "mean": _num(row.get("mean")),
+            "p90": _num(row.get("p90")),
+        }
+    return out
+
+
+def _fetch_local_product(data: dict, product_name: str) -> tuple[dict, str | None]:
+    try:
+        return collector.fetch_dpc_product_point(product_name, (1, 3, 5)), None
+    except Exception as exc:
+        fallback = (((data.get("dpc_observations", {}) or {}).get("products", {}) or {}).get(product_name, {}) or {})
+        return fallback, str(exc)
+
+
+def _model_precipitation_signal(data: dict) -> dict:
+    amounts: list[tuple[str, float]] = []
+    for row in data.get("model_details", []) or []:
+        if not isinstance(row, dict) or not row.get("ok"):
+            continue
+        amount = _num(((row.get("next_0_3h", {}) or {}).get("precip_sum")))
+        if amount is not None:
+            amounts.append((str(row.get("label") or "modello"), amount))
+
+    wet = [(label, amount) for label, amount in amounts if amount >= 0.2]
+    notable = [(label, amount) for label, amount in amounts if amount >= 0.5]
+    if len(wet) >= 3:
+        status = "supported"
+        label = "Pioggia possibile"
+    elif notable or len(wet) >= 2:
+        status = "weak"
+        label = "Possibili piovaschi"
+    else:
+        status = "low"
+        label = "Segnale modellistico basso"
+
+    return {
+        "status": status,
+        "label": label,
+        "available_models": len(amounts),
+        "wet_models": len(wet),
+        "notable_models": len(notable),
+        "max_precip_0_3h_mm": round(max((amount for _, amount in amounts), default=0.0), 1),
+        "signals": [{"model": model, "precip_0_3h_mm": round(amount, 1)} for model, amount in wet],
+        "semantic": "precipitation_presence_not_impact",
+    }
+
+
+def _radar_local_detected(sri: dict) -> tuple[bool, str]:
+    r1 = _stat(sri, 1)
+    r3 = _stat(sri, 3)
+    point = _num(r1.get("point"))
+    p90_1 = _num(r1.get("p90")) or 0.0
+    mean_1 = _num(r1.get("mean")) or 0.0
+    max_1 = _num(r1.get("max")) or 0.0
+    p90_3 = _num(r3.get("p90")) or 0.0
+    mean_3 = _num(r3.get("mean")) or 0.0
+    max_3 = _num(r3.get("max")) or 0.0
+
+    if point is not None and point >= 0.2:
+        return True, "pixel radar sul punto"
+    if p90_1 >= 0.2 or (mean_1 >= 0.1 and max_1 >= 0.5):
+        return True, "segnale radar coerente entro ~1 km"
+    if p90_3 >= 0.5 and mean_3 >= 0.1 and max_3 >= 1.0:
+        return True, "segnale radar diffuso entro ~3 km"
+    return False, "nessun segnale radar locale coerente"
+
+
+def _recent_accumulation_signal(srt1: dict) -> bool:
+    r1 = _stat(srt1, 1)
+    r3 = _stat(srt1, 3)
+    point = _num(r1.get("point"))
+    if point is not None and point >= 0.2:
+        return True
+    p90_1 = _num(r1.get("p90")) or 0.0
+    mean_1 = _num(r1.get("mean")) or 0.0
+    max_1 = _num(r1.get("max")) or 0.0
+    p90_3 = _num(r3.get("p90")) or 0.0
+    mean_3 = _num(r3.get("mean")) or 0.0
+    max_3 = _num(r3.get("max")) or 0.0
+    return bool(
+        p90_1 >= 0.1
+        or (mean_1 >= 0.05 and max_1 >= 0.2)
+        or (p90_3 >= 0.2 and mean_3 >= 0.05 and max_3 >= 0.5)
+    )
+
+
+def _merge_local_history(previous: dict, snapshot: dict, now: datetime) -> list[dict]:
+    old = (((previous.get("local_precipitation", {}) or {}).get("history", [])) or [])
+    rows = [row for row in old if isinstance(row, dict)]
+    rows.append(snapshot)
+    cutoff = now - timedelta(minutes=LOCAL_HISTORY_MINUTES)
+    merged: dict[str, dict] = {}
+    for row in rows:
+        stamp = _parse_datetime(row.get("timestamp"))
+        if stamp is None:
+            continue
+        if stamp.tzinfo is None:
+            stamp = stamp.replace(tzinfo=TZ)
+        if stamp < cutoff:
+            continue
+        merged[stamp.isoformat(timespec="minutes")] = row
+    return [merged[key] for key in sorted(merged)]
+
+
+def update_local_precipitation(data: dict, previous: dict | None = None, now: datetime | None = None) -> None:
+    """Costruisce un contesto pioggia locale multi-raggio senza spacciare l'area per misura sul punto."""
+    now = now or datetime.now(TZ)
+    previous = previous or {}
+    sri, sri_error = _fetch_local_product(data, "SRI")
+    srt1, srt_error = _fetch_local_product(data, "SRT1")
+    detected, detection_basis = _radar_local_detected(sri)
+    recent_accumulation = _recent_accumulation_signal(srt1)
+
+    snapshot = {
+        "timestamp": now.isoformat(timespec="minutes"),
+        "rain_detected": detected,
+        "recent_accumulation": recent_accumulation,
+        "basis": detection_basis,
+        "sri": _compact_radar_context(sri),
+        "srt1": _compact_radar_context(srt1),
+    }
+    history = _merge_local_history(previous, snapshot, now)
+    recent_detected_rows = []
+    for row in history:
+        stamp = _parse_datetime(row.get("timestamp"))
+        if stamp is None:
+            continue
+        if stamp.tzinfo is None:
+            stamp = stamp.replace(tzinfo=TZ)
+        if now - stamp <= timedelta(minutes=75) and bool(row.get("rain_detected")):
+            recent_detected_rows.append(row)
+
+    if detected:
+        observation_status = "active"
+        observation_label = "Pioggia rilevata nell'area di Giammoro"
+    elif recent_detected_rows or recent_accumulation:
+        observation_status = "recent"
+        observation_label = "Pioggia rilevata recentemente nell'area"
+    else:
+        observation_status = "dry"
+        observation_label = "Nessuna pioggia locale rilevata ora"
+
+    last_detected_at = None
+    if recent_detected_rows:
+        last_detected_at = recent_detected_rows[-1].get("timestamp")
+    elif detected:
+        last_detected_at = snapshot["timestamp"]
+
+    model_signal = _model_precipitation_signal(data)
+    data["local_precipitation"] = {
+        "generated_at": now.isoformat(timespec="seconds"),
+        "status": observation_status,
+        "label": observation_label,
+        "observation_basis": "Radar-DPC multi-raggio 1/3/5 km + persistenza temporale",
+        "point_measurement_available": bool(_num(_stat(srt1, 1).get("point")) is not None),
+        "area_values_are_not_point_measurements": True,
+        "last_detected_at": last_detected_at,
+        "current_detection_basis": detection_basis,
+        "recent_accumulation_signal": recent_accumulation,
+        "radar": {"sri": _compact_radar_context(sri), "srt1": _compact_radar_context(srt1)},
+        "forecast_0_3h": model_signal,
+        "impact_level": (data.get("nowcast", {}) or {}).get("level"),
+        "history": history,
+        "errors": [item for item in (sri_error, srt_error) if item],
+        "note": (
+            "La presenza di pioggia e l'impatto sono separati. I valori areali entro 1/3/5 km servono a riconoscere "
+            "rovesci locali che possono sfuggire al singolo pixel e non vengono presentati come accumulo esatto su Giammoro."
+        ),
+    }
+
+    simple = ((data.get("home_summary", {}) or {}).get("nowcast_simple", {}) or {})
+    if not simple:
+        return
+    indicators = simple.setdefault("indicators", {})
+    if observation_status == "active":
+        simple["status"] = "active"
+        simple["title"] = "Fenomeni vicini o in corso"
+        simple["text"] = "Pioggia rilevata nell'area di Giammoro. Il segnale radar locale ha priorità sui modelli nel brevissimo termine."
+        simple["detail"] = "Rilevamento areale entro pochi chilometri; non è una misura pluviometrica puntuale."
+        indicators["radar"] = "Pioggia locale rilevata"
+    elif observation_status == "recent":
+        simple["status"] = "watch"
+        simple["title"] = "Da monitorare"
+        simple["text"] = "Pioggia rilevata recentemente nell'area di Giammoro; al momento il segnale radar locale è cessato o attenuato."
+        if model_signal["status"] in {"weak", "supported"}:
+            simple["text"] += " Restano possibili altri piovaschi nelle prossime 3 ore."
+        indicators["radar"] = "Pioggia recente nell'area"
+    elif model_signal["status"] in {"weak", "supported"} and simple.get("status") == "calm":
+        simple["status"] = "watch"
+        simple["title"] = "Da monitorare"
+        simple["text"] = "Il radar è attualmente asciutto, ma i modelli mostrano un segnale di possibili piovaschi nelle prossime 3 ore."
+        simple["detail"] = (
+            f"Segnale modellistico di presenza: {model_signal['wet_models']}/{model_signal['available_models']} modelli; "
+            "impatto previsto basso se non emergono nuovi segnali osservativi."
+        )
+
+    indicators["pioggia_locale"] = observation_label
+    indicators["modelli_0_3h"] = model_signal["label"]
+    simple["indicators"] = indicators
+    data.setdefault("home_summary", {})["nowcast_simple"] = simple
+
+
+def apply(data: dict, now: datetime | None = None, previous: dict | None = None, update_local: bool = True) -> dict:
     now = now or datetime.now(TZ)
     normalize_alert_relative_day(data, now)
     expire_stale_radar_change(data, now)
     refine_home_nowcast_radar(data)
+    if update_local:
+        update_local_precipitation(data, previous=previous or {}, now=now)
     return data
 
 
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--data", default="data.json")
+    p.add_argument("--previous", default=str(PREVIOUS_PATH))
     args = p.parse_args()
     path = Path(args.data)
     data = json.loads(path.read_text(encoding="utf-8"))
-    apply(data)
+    previous = _load_previous(Path(args.previous))
+    apply(data, previous=previous)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return 0
 
