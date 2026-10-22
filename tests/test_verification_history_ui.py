@@ -10,8 +10,9 @@ def test_verification_history_ui_uses_cumulative_v2_metrics_and_keeps_legacy_sep
     assert "cumulative_by_horizon" in js
     assert "legacy_baseline" in js
     assert "non indica un miglioramento dimostrato" in js
-    for label in ("POD 30 min", "POD 60 min", "POD 120 min", "FN 30 min", "FN 60 min", "FN 120 min"):
-        assert label in js
+    assert "[30, 60, 120]" in js
+    assert "`POD ${horizon} min`" in js
+    assert "`FN ${horizon} min`" in js
 
 
 def test_site_prepare_embeds_verification_history_enhancer():
