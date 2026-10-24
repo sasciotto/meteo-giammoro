@@ -170,7 +170,7 @@
     media.src = media.dataset.radarSrc;
   }
 
-  function selectSource(sourceId) {
+  function selectSource(sourceId, shouldLoad = true) {
     const valid = SOURCES.some(source => source.id === sourceId) ? sourceId : SOURCES[0].id;
     document.querySelectorAll('.radar-source-tab').forEach(button => {
       const active = button.dataset.radarSource === valid;
@@ -180,7 +180,7 @@
     document.querySelectorAll('.radar-source-panel').forEach(panel => {
       panel.classList.toggle('active', panel.id === `radarPanel-${valid}`);
     });
-    loadSource(valid);
+    if (shouldLoad) loadSource(valid);
   }
 
   function activateRadarMode() {
@@ -188,7 +188,7 @@
     byId('homeBtn')?.classList.remove('active');
     byId('expertBtn')?.classList.remove('active');
     byId('radarBtn')?.classList.add('active');
-    selectSource(document.querySelector('.radar-source-tab.active')?.dataset.radarSource || SOURCES[0].id);
+    selectSource(document.querySelector('.radar-source-tab.active')?.dataset.radarSource || SOURCES[0].id, true);
   }
 
   const created = ensureView();
@@ -198,7 +198,7 @@
   byId('homeBtn')?.addEventListener('click', () => created.radarBtn.classList.remove('active'));
   byId('expertBtn')?.addEventListener('click', () => created.radarBtn.classList.remove('active'));
   document.querySelectorAll('.radar-source-tab').forEach(button => {
-    button.addEventListener('click', () => selectSource(button.dataset.radarSource));
+    button.addEventListener('click', () => selectSource(button.dataset.radarSource, true));
   });
-  selectSource(SOURCES[0].id);
+  selectSource(SOURCES[0].id, false);
 })();
