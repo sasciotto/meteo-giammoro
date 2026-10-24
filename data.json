@@ -1,7 +1,7 @@
 {
   "meta": {
     "schema_version": "2.1",
-    "last_check": "24/10/2026 04:15 CEST",
+    "last_check": "24/10/2026 04:30 CEST",
     "analysis_engine": "collector Python + regole deterministiche",
     "reference_area": "Giammoro, Pace del Mela (ME)",
     "coordinates": [
@@ -10,7 +10,7 @@
     ],
     "collector_status": "ok",
     "collector_errors": [],
-    "last_check_iso": "2026-10-24T04:15:34+02:00"
+    "last_check_iso": "2026-10-24T04:30:33+02:00"
   },
   "primary_station": {
     "name": "MeteoGiammoro",
@@ -20,25 +20,25 @@
     "note": "Stazione esclusa dai calcoli perché in manutenzione, risoluzione guasto e test. Rientro previsto prima in TEST e poi ONLINE dopo validazione."
   },
   "nowcast": {
-    "label": "Basso–moderato",
-    "level": "moderato",
-    "note": "Segnale radar debole o periferico nell'area vasta: SRI max 5 km 0.0 mm/h, SRI max 15 km 0.0 mm/h, SRI max 30 km 0.0 mm/h, SRT1 max 5 km 0.0 mm.  Nessun nucleo radar sufficientemente definito per il tracking nel raggio analizzato. EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile."
+    "label": "Basso (radar)",
+    "level": "low",
+    "note": "Radar-DPC senza segnali precipitativi rilevanti entro ~30 km; Nessun segnale modellistico rilevante nel brevissimo termine 0–3 h.  Nessun nucleo radar sufficientemente definito per il tracking nel raggio analizzato. EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile."
   },
   "risk_48h": {
     "label": "Pioggia probabile",
     "level": "moderato",
-    "note": "3/4 modelli indicano pioggia ≥0,5 mm nelle 3–48 h. Quantità incerta: 0,3–11,4 mm; mediana 6,6 mm. Impatto modellistico: Moderato (modellistico). Segnali d'impatto: pioggia intensa 2/4, raffiche ≥50 km/h 1/4, instabilità convettiva accompagnata da precipitazione/temporale 0/4.",
+    "note": "4/4 modelli indicano pioggia ≥0,5 mm nelle 3–48 h. Quantità incerta: 2,7–11,4 mm; mediana 8,5 mm. Impatto modellistico: Moderato (modellistico). Segnali d'impatto: pioggia intensa 3/4, raffiche ≥50 km/h 0/4, instabilità convettiva accompagnata da precipitazione/temporale 0/4.",
     "semantic": "model_precipitation_tendency",
     "models_count": 4,
-    "wet_models": 3,
-    "precip_min_mm": 0.3,
+    "wet_models": 4,
+    "precip_min_mm": 2.7,
     "precip_max_mm": 11.4,
-    "precip_median_mm": 6.6,
+    "precip_median_mm": 8.5,
     "quantity_uncertainty": "elevata",
     "quantity_uncertainty_label": "quantità incerta",
     "impact_label": "Moderato (modellistico)",
     "impact_level": "moderato",
-    "impact_note": "pioggia intensa 2/4, raffiche ≥50 km/h 1/4, instabilità convettiva accompagnata da precipitazione/temporale 0/4",
+    "impact_note": "pioggia intensa 3/4, raffiche ≥50 km/h 0/4, instabilità convettiva accompagnata da precipitazione/temporale 0/4",
     "impact_moderate_models": 3,
     "impact_severe_models": 0
   },
@@ -49,7 +49,7 @@
     "basis": "Valori riferiti alle coordinate di Giammoro da ItaliaMeteo ICON-2I; le stazioni circostanti sono usate separatamente per controllo e contesto, non come sostituzione diretta.",
     "metrics": {
       "temperature": {
-        "value": 15.03,
+        "value": 15.58,
         "unit": " °C",
         "quality": "Radar-DPC TEMP (rete termometrica interpolata)"
       },
@@ -59,23 +59,23 @@
         "quality": "non disponibile: temperatura e umidità da fonti diverse"
       },
       "humidity": {
-        "value": 81.0,
+        "value": 80.0,
         "unit": " %",
         "quality": "ItaliaMeteo ICON-2I"
       },
       "pressure": {
-        "value": 1019.8,
+        "value": 1020.1,
         "unit": " hPa",
-        "trend": "stabile · Δ1h -0.4 hPa · Δ3h -1.2 hPa",
+        "trend": "stabile · Δ1h +0.0 hPa · Δ3h -0.9 hPa",
         "trend_quality": "trend modellistico sul punto"
       },
       "wind": {
-        "value": 5.8,
+        "value": 5.0,
         "unit": " km/h",
-        "direction": 181
+        "direction": 174
       },
       "gust": {
-        "value": 13.7,
+        "value": 11.9,
         "unit": " km/h"
       },
       "rain_1h": {
@@ -104,7 +104,7 @@
     "source": "CFD/DRPC Sicilia + DPC nazionale",
     "url": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/26296_AVVISO%20DRPC_2026_10_23_49761.pdf",
     "parser_note": "livello zona A validato dal bollettino nazionale DPC; avviso regionale mantenuto come fonte primaria di dettaglio",
-    "retrieved_at": "2026-10-24T04:15+02:00",
+    "retrieved_at": "2026-10-24T04:30+02:00",
     "national_validation": {
       "level_class": "warning",
       "level_label": "Gialla (oggi 24/10)",
@@ -175,12 +175,12 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:54 · 21 min fa",
-      "temperature": 18.0,
-      "dew_point": 12.7,
-      "humidity": 71.0,
-      "pressure": 1023.0,
-      "wind": 2.7,
+      "updated": "04:14 · 16 min fa",
+      "temperature": 18.4,
+      "dew_point": 12.6,
+      "humidity": 69.0,
+      "pressure": 1022.8,
+      "wind": 0.0,
       "gust": 11.2,
       "wind_direction": null,
       "rain_1h": null,
@@ -219,12 +219,12 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:54 · 21 min fa",
-      "temperature": 17.8,
-      "dew_point": 12.7,
-      "humidity": 72.0,
-      "pressure": 1023.0,
-      "wind": 3.2,
+      "updated": "04:14 · 16 min fa",
+      "temperature": 18.0,
+      "dew_point": 12.4,
+      "humidity": 70.0,
+      "pressure": 1022.0,
+      "wind": 4.3,
       "gust": 11.4,
       "wind_direction": null,
       "rain_1h": null,
@@ -242,7 +242,7 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:40 · 35 min fa",
+      "updated": "03:40 · 50 min fa",
       "temperature": 16.3,
       "dew_point": 10.6,
       "humidity": 69.0,
@@ -286,7 +286,7 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:40 · 35 min fa",
+      "updated": "03:40 · 50 min fa",
       "temperature": 16.2,
       "dew_point": 12.2,
       "humidity": 77.0,
@@ -309,7 +309,7 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:40 · 35 min fa",
+      "updated": "03:40 · 50 min fa",
       "temperature": 18.8,
       "dew_point": 11.6,
       "humidity": 63.0,
@@ -332,7 +332,7 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:50 · 25 min fa",
+      "updated": "03:50 · 40 min fa",
       "temperature": 16.0,
       "dew_point": 12.7,
       "humidity": 81.0,
@@ -355,7 +355,7 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:40 · 35 min fa",
+      "updated": "03:40 · 50 min fa",
       "temperature": 16.1,
       "dew_point": 13.2,
       "humidity": 83.0,
@@ -378,11 +378,11 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "04:10 · 5 min fa",
-      "temperature": 16.3,
-      "dew_point": 12.5,
-      "humidity": 78.0,
-      "pressure": 1020.4,
+      "updated": "04:25 · 5 min fa",
+      "temperature": 16.1,
+      "dew_point": 12.6,
+      "humidity": 80.0,
+      "pressure": 1020.1,
       "wind": 0.0,
       "gust": 0.0,
       "wind_direction": null,
@@ -401,7 +401,7 @@
       "source_quality_label": "Fonte da classificare",
       "status": "online",
       "status_label": "Online",
-      "updated": "03:50 · 25 min fa",
+      "updated": "03:50 · 40 min fa",
       "temperature": 13.4,
       "dew_point": 9.1,
       "humidity": 75.0,
@@ -422,7 +422,7 @@
       "SRI": {
         "product": "SRI",
         "ok": true,
-        "timestamp": "2026-10-24T04:05+02:00",
+        "timestamp": "2026-10-24T04:20+02:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
@@ -455,7 +455,7 @@
       "SRT1": {
         "product": "SRT1",
         "ok": true,
-        "timestamp": "2026-10-24T04:05+02:00",
+        "timestamp": "2026-10-24T04:20+02:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
@@ -488,8 +488,8 @@
       "CUM24": {
         "product": "CUM24",
         "ok": true,
-        "timestamp": "2026-10-24T03:30+02:00",
-        "age_minutes": 45,
+        "timestamp": "2026-10-24T04:00+02:00",
+        "age_minutes": 30,
         "period": "PT30M",
         "stats": [
           {
@@ -505,24 +505,24 @@
       "TEMP": {
         "product": "TEMP",
         "ok": true,
-        "timestamp": "2026-10-24T03:00+02:00",
-        "age_minutes": 75,
+        "timestamp": "2026-10-24T04:00+02:00",
+        "age_minutes": 30,
         "period": "PT1H",
         "stats": [
           {
             "radius_km": 5,
             "count": 20,
-            "point": 15.03,
-            "max": 15.35,
-            "mean": 11.1,
-            "p90": 15.21
+            "point": 15.58,
+            "max": 16.0,
+            "mean": 11.54,
+            "p90": 15.83
           }
         ]
       },
       "VMI": {
         "product": "VMI",
         "ok": true,
-        "timestamp": "2026-10-24T04:05+02:00",
+        "timestamp": "2026-10-24T04:20+02:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
@@ -544,28 +544,28 @@
           },
           {
             "radius_km": 30,
-            "count": 62,
+            "count": 19,
             "point": null,
-            "max": 23.0,
-            "mean": 14.58,
-            "p90": 18.0
+            "max": 13.5,
+            "mean": 11.29,
+            "p90": 13.1
           }
         ]
       },
       "IR_108": {
         "product": "IR_108",
         "ok": true,
-        "timestamp": "2026-10-24T04:05+02:00",
+        "timestamp": "2026-10-24T04:20+02:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
           {
             "radius_km": 5,
             "count": 100,
-            "point": 0.0,
-            "max": 10.0,
-            "mean": 2.8,
-            "p90": 8.5
+            "point": 9.0,
+            "max": 12.0,
+            "mean": 7.47,
+            "p90": 9.0
           }
         ]
       }
@@ -574,11 +574,11 @@
     "source": "Radar-DPC / Dipartimento Protezione Civile"
   },
   "nowcast_evidence": {
-    "radar": "Radar-DPC: SRI max 5 km: 0 mm/h; SRI max 15 km: 0 mm/h; SRI max 30 km: 0 mm/h; SRT1 max 5 km: 0 mm · aggiornamento 2026-10-24T04:05+02:00",
-    "rain_gauges": "Stazioni/pluviometri raccolti dal feed locale: 556 righe disponibili; vengono mostrate solo le stazioni selezionate e la rete originaria.",
+    "radar": "Radar-DPC: SRI max 5 km: 0 mm/h; SRI max 15 km: 0 mm/h; SRI max 30 km: 0 mm/h; SRT1 max 5 km: 0 mm · aggiornamento 2026-10-24T04:20+02:00",
+    "rain_gauges": "Stazioni/pluviometri raccolti dal feed locale: 566 righe disponibili; vengono mostrate solo le stazioni selezionate e la rete originaria.",
     "lightning": "EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile.",
-    "satellite": "Prodotto satellitare DPC IR10.8 disponibile · aggiornamento 2026-10-24T04:05+02:00. Il valore raw non viene trasformato in copertura percentuale senza una conversione validata.",
-    "wind_pressure": "Pressione sul punto: stabile; Δ1h -0.4 hPa; Δ3h -1.2 hPa. Trend modellistico, non misura barometrica locale.",
+    "satellite": "Prodotto satellitare DPC IR10.8 disponibile · aggiornamento 2026-10-24T04:20+02:00. Il valore raw non viene trasformato in copertura percentuale senza una conversione validata.",
+    "wind_pressure": "Pressione sul punto: stabile; Δ1h +0.0 hPa; Δ3h -0.9 hPa. Trend modellistico, non misura barometrica locale.",
     "local_effects": "Giammoro viene valutata come area costiera della Valle del Mela, con possibili differenze rispetto a Milazzo, rilievi di Santa Lucia/Monforte e Stretto di Messina.",
     "tracking_quality": "Tracking radar non disponibile: nessuna cella tracciabile.",
     "approaching_cells": "Nessuna cella radar significativa rilevata nell'area di monitoraggio."
@@ -594,9 +594,9 @@
     {
       "horizon": "3–48 h",
       "models": "ICON-2I · ICON · ECMWF IFS · GFS",
-      "signal": "ItaliaMeteo ICON-2I: pioggia 0.3 mm, raff 53 km/h | DWD ICON: pioggia 2.7 mm, raff 42 km/h | ECMWF IFS: pioggia 11.4 mm, raff 49 km/h | NOAA GFS: pioggia 10.4 mm, raff 50 km/h",
+      "signal": "ItaliaMeteo ICON-2I: pioggia 6.6 mm, raff 48 km/h | DWD ICON: pioggia 2.7 mm, raff 42 km/h | ECMWF IFS: pioggia 11.4 mm, raff 49 km/h | NOAA GFS: pioggia 10.4 mm, raff 50 km/h",
       "agreement": "quantità incerta",
-      "note": "Tendenza: Pioggia probabile. Impatto: Moderato (modellistico). Accumuli 0,3–11,4 mm; mediana 6,6 mm."
+      "note": "Tendenza: Pioggia probabile. Impatto: Moderato (modellistico). Accumuli 2,7–11,4 mm; mediana 8,5 mm."
     },
     {
       "horizon": "2–7 giorni",
@@ -612,46 +612,46 @@
       "id": "italia_meteo_arpae_icon_2i",
       "ok": true,
       "current": {
-        "time": "2026-10-24T04:15",
+        "time": "2026-10-24T04:30",
         "interval": 900,
-        "temperature_2m": 16.8,
-        "relative_humidity_2m": 81,
+        "temperature_2m": 16.5,
+        "relative_humidity_2m": 80,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
         "cloud_cover": 100,
-        "pressure_msl": 1019.8,
-        "wind_speed_10m": 5.8,
-        "wind_direction_10m": 181,
-        "wind_gusts_10m": 13.7
+        "pressure_msl": 1020.1,
+        "wind_speed_10m": 5.0,
+        "wind_direction_10m": 174,
+        "wind_gusts_10m": 11.9
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 15.1,
-        "cape_max": 20.0,
+        "gust_max": 11.9,
+        "cape_max": 10.0,
         "thunder_signal": false,
-        "temp_min": 16.6,
-        "temp_max": 18.3
+        "temp_min": 16.5,
+        "temp_max": 17.1
       },
       "next_3_48h": {
-        "precip_sum": 0.3,
-        "precip_max_h": 0.3,
-        "gust_max": 52.9,
-        "cape_max": 410.0,
+        "precip_sum": 6.6,
+        "precip_max_h": 5.7,
+        "gust_max": 47.9,
+        "cape_max": 620.0,
         "thunder_signal": false,
-        "temp_min": 15.0,
-        "temp_max": 21.7
+        "temp_min": 14.1,
+        "temp_max": 22.2
       },
       "days_2_7": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 26.3,
-        "cape_max": 10.0,
+        "gust_max": 26.6,
+        "cape_max": 40.0,
         "thunder_signal": false,
-        "temp_min": 14.0,
-        "temp_max": 22.1
+        "temp_min": 15.1,
+        "temp_max": 21.8
       },
       "grid": {
         "latitude": 38.2,
@@ -664,28 +664,28 @@
       "id": "dwd_icon_seamless",
       "ok": true,
       "current": {
-        "time": "2026-10-24T04:15",
+        "time": "2026-10-24T04:30",
         "interval": 900,
-        "temperature_2m": 16.9,
-        "relative_humidity_2m": 75,
+        "temperature_2m": 16.8,
+        "relative_humidity_2m": 76,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
         "cloud_cover": 100,
-        "pressure_msl": 1020.2,
-        "wind_speed_10m": 5.9,
-        "wind_direction_10m": 169,
+        "pressure_msl": 1020.1,
+        "wind_speed_10m": 6.2,
+        "wind_direction_10m": 173,
         "wind_gusts_10m": 8.6
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 10.1,
+        "gust_max": 12.2,
         "cape_max": 0.0,
         "thunder_signal": false,
         "temp_min": 16.6,
-        "temp_max": 16.9
+        "temp_max": 16.7
       },
       "next_3_48h": {
         "precip_sum": 2.7,
@@ -716,7 +716,7 @@
       "id": "ecmwf_ifs",
       "ok": true,
       "current": {
-        "time": "2026-10-24T04:15",
+        "time": "2026-10-24T04:30",
         "interval": 900,
         "temperature_2m": 19.8,
         "relative_humidity_2m": 69,
@@ -724,20 +724,20 @@
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
-        "cloud_cover": 91,
-        "pressure_msl": 1020.1,
-        "wind_speed_10m": 11.9,
+        "cloud_cover": 86,
+        "pressure_msl": 1020.0,
+        "wind_speed_10m": 11.4,
         "wind_direction_10m": 245,
-        "wind_gusts_10m": 20.9
+        "wind_gusts_10m": 20.2
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 22.0,
+        "gust_max": 25.9,
         "cape_max": 20.0,
         "thunder_signal": false,
         "temp_min": 19.8,
-        "temp_max": 20.1
+        "temp_max": 20.2
       },
       "next_3_48h": {
         "precip_sum": 11.4,
@@ -768,19 +768,19 @@
       "id": "ncep_gfs_seamless",
       "ok": true,
       "current": {
-        "time": "2026-10-24T04:15",
+        "time": "2026-10-24T04:30",
         "interval": 900,
-        "temperature_2m": 15.9,
-        "relative_humidity_2m": 90,
+        "temperature_2m": 15.8,
+        "relative_humidity_2m": 91,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
         "cloud_cover": 100,
         "pressure_msl": 1019.5,
-        "wind_speed_10m": 6.5,
-        "wind_direction_10m": 289,
-        "wind_gusts_10m": 16.6
+        "wind_speed_10m": 6.0,
+        "wind_direction_10m": 287,
+        "wind_gusts_10m": 16.2
       },
       "next_0_3h": {
         "precip_sum": 0.0,
@@ -789,7 +789,7 @@
         "cape_max": 30.0,
         "thunder_signal": false,
         "temp_min": 15.8,
-        "temp_max": 16.4
+        "temp_max": 17.6
       },
       "next_3_48h": {
         "precip_sum": 10.4,
@@ -1077,7 +1077,7 @@
     "unit": "mm/h",
     "peak_value": 0.0,
     "candidates": [],
-    "timestamp": "2026-10-24T04:05+02:00",
+    "timestamp": "2026-10-24T04:20+02:00",
     "age_minutes": 10,
     "motion": {
       "status": "unavailable"
@@ -1114,12 +1114,12 @@
     "source": "EUMETSAT MTG Lightning Imager L2 Lightning Flashes",
     "collection": "EO:EUM:DAT:0691",
     "quality": "satellite_observation",
-    "timestamp": "2026-10-24T02:10+00:00",
-    "age_minutes": 5,
-    "product_id": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--x-x--ARC-x_C_EUMT_20261024021022_L2PF_OPE_20261024020009_20261024021009_N__O_0013_0000",
-    "entry": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--CHK-BODY--ARC-NC4E_C_EUMT_20261024021019_L2PF_OPE_20261024020009_20261024021009_N__O_0013_0001.nc",
-    "flash_count_total": 5656,
-    "nearest_km": 381.0,
+    "timestamp": "2026-10-24T02:30+00:00",
+    "age_minutes": 0,
+    "product_id": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--x-x--ARC-x_C_EUMT_20261024023022_L2PF_OPE_20261024022009_20261024023009_N__O_0015_0000",
+    "entry": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--CHK-BODY--ARC-NC4E_C_EUMT_20261024023019_L2PF_OPE_20261024022009_20261024023009_N__O_0015_0001.nc",
+    "flash_count_total": 5540,
+    "nearest_km": 381.6,
     "radii": {
       "5": {
         "flash_count": 0,
@@ -1145,7 +1145,7 @@
   },
   "approaching_cells": {
     "status": "none",
-    "timestamp": "2026-10-24T04:05+02:00",
+    "timestamp": "2026-10-24T04:20+02:00",
     "product": "SRI",
     "unit": "mm/h",
     "reference": "Giammoro, Pace del Mela (ME)",
@@ -1162,10 +1162,6 @@
     "summary": "Nessuna cella radar significativa rilevata nell'area di monitoraggio."
   },
   "pressure_history": [
-    {
-      "timestamp": "2026-10-23T22:27:41+02:00",
-      "hpa": 1021.6
-    },
     {
       "timestamp": "2026-10-23T22:58:00+02:00",
       "hpa": 1021.5
@@ -1253,13 +1249,17 @@
     {
       "timestamp": "2026-10-24T04:15:34+02:00",
       "hpa": 1019.8
+    },
+    {
+      "timestamp": "2026-10-24T04:30:33+02:00",
+      "hpa": 1020.1
     }
   ],
   "pressure_trend": {
     "status": "ready",
     "tendency": "stabile",
-    "delta_1h_hpa": -0.4,
-    "delta_3h_hpa": -1.2,
+    "delta_1h_hpa": 0.0,
+    "delta_3h_hpa": -0.9,
     "samples": 23,
     "source": "pressione sul punto da modello; non misura barometrica locale"
   },
@@ -1296,18 +1296,18 @@
     "note": "Confidenza previsionale non espressa in percentuale: il progetto non dispone ancora di una calibrazione probabilistica affidabile. Campioni evento disponibili: 0/20 come soglia minima di studio."
   },
   "home_summary": {
-    "generated_at": "2026-10-24T04:15:49+02:00",
+    "generated_at": "2026-10-24T04:30:53+02:00",
     "source": "ItaliaMeteo ICON-2I",
     "current": {
       "icon": "☁",
       "kind": "cloudy",
       "label": "Cielo molto nuvoloso",
-      "status_label": "Da monitorare",
-      "status_class": "moderato",
+      "status_label": "Tranquillo",
+      "status_class": "low",
       "short_term": {
-        "title": "Situazione da monitorare",
-        "text": "Sono presenti segnali di instabilità nell'area, senza un impatto diretto certo su Giammoro.",
-        "icon": "◷"
+        "title": "Nessun fenomeno rilevante",
+        "text": "Non emergono segnali importanti a brevissimo termine.",
+        "icon": "✓"
       },
       "storm": {
         "title": "Nessun temporale vicino",
@@ -1321,10 +1321,10 @@
       {
         "time": "2026-10-24T04:00+02:00",
         "label_time": "04:00",
-        "temperature": 16.6,
+        "temperature": 16.4,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 6.1,
+        "wind_kmh": 5.8,
         "gust_kmh": 14.0,
         "weather_code": 3,
         "icon": "☁",
@@ -1334,11 +1334,11 @@
       {
         "time": "2026-10-24T05:00+02:00",
         "label_time": "05:00",
-        "temperature": 17.7,
+        "temperature": 16.5,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 4.3,
-        "gust_kmh": 11.5,
+        "wind_kmh": 4.7,
+        "gust_kmh": 9.7,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1347,11 +1347,11 @@
       {
         "time": "2026-10-24T06:00+02:00",
         "label_time": "06:00",
-        "temperature": 18.1,
+        "temperature": 17.1,
         "precipitation": 0.0,
-        "cloud_cover": 100.0,
-        "wind_kmh": 6.1,
-        "gust_kmh": 12.2,
+        "cloud_cover": 96.0,
+        "wind_kmh": 5.4,
+        "gust_kmh": 10.1,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1360,11 +1360,11 @@
       {
         "time": "2026-10-24T07:00+02:00",
         "label_time": "07:00",
-        "temperature": 18.3,
+        "temperature": 16.8,
         "precipitation": 0.0,
-        "cloud_cover": 100.0,
-        "wind_kmh": 8.6,
-        "gust_kmh": 15.1,
+        "cloud_cover": 95.0,
+        "wind_kmh": 5.8,
+        "gust_kmh": 10.1,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1373,11 +1373,11 @@
       {
         "time": "2026-10-24T08:00+02:00",
         "label_time": "08:00",
-        "temperature": 18.5,
+        "temperature": 16.8,
         "precipitation": 0.0,
-        "cloud_cover": 100.0,
-        "wind_kmh": 10.1,
-        "gust_kmh": 21.2,
+        "cloud_cover": 97.0,
+        "wind_kmh": 6.5,
+        "gust_kmh": 11.9,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1386,11 +1386,11 @@
       {
         "time": "2026-10-24T09:00+02:00",
         "label_time": "09:00",
-        "temperature": 19.5,
+        "temperature": 19.1,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 6.1,
-        "gust_kmh": 19.1,
+        "wind_kmh": 5.4,
+        "gust_kmh": 14.0,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1399,11 +1399,11 @@
       {
         "time": "2026-10-24T10:00+02:00",
         "label_time": "10:00",
-        "temperature": 20.7,
+        "temperature": 20.8,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 4.7,
-        "gust_kmh": 11.5,
+        "wind_kmh": 5.4,
+        "gust_kmh": 11.2,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1412,11 +1412,11 @@
       {
         "time": "2026-10-24T11:00+02:00",
         "label_time": "11:00",
-        "temperature": 21.5,
+        "temperature": 21.4,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 4.7,
-        "gust_kmh": 12.6,
+        "wind_kmh": 7.2,
+        "gust_kmh": 14.0,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1425,11 +1425,11 @@
       {
         "time": "2026-10-24T12:00+02:00",
         "label_time": "12:00",
-        "temperature": 21.7,
+        "temperature": 21.1,
         "precipitation": 0.0,
-        "cloud_cover": 100.0,
+        "cloud_cover": 99.0,
         "wind_kmh": 6.5,
-        "gust_kmh": 13.3,
+        "gust_kmh": 14.4,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1438,24 +1438,24 @@
       {
         "time": "2026-10-24T13:00+02:00",
         "label_time": "13:00",
-        "temperature": 21.1,
-        "precipitation": 0.0,
+        "temperature": 19.7,
+        "precipitation": 0.1,
         "cloud_cover": 100.0,
-        "wind_kmh": 8.6,
-        "gust_kmh": 16.6,
-        "weather_code": 3,
-        "icon": "☁",
-        "kind": "cloudy",
-        "label": "Molto nuvoloso"
+        "wind_kmh": 1.1,
+        "gust_kmh": 17.6,
+        "weather_code": 61,
+        "icon": "☂",
+        "kind": "rain",
+        "label": "Pioggia"
       },
       {
         "time": "2026-10-24T14:00+02:00",
         "label_time": "14:00",
-        "temperature": 20.9,
+        "temperature": 21.7,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 18.0,
-        "gust_kmh": 35.3,
+        "wind_kmh": 14.0,
+        "gust_kmh": 26.3,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1464,24 +1464,24 @@
       {
         "time": "2026-10-24T15:00+02:00",
         "label_time": "15:00",
-        "temperature": 21.4,
-        "precipitation": 0.3,
+        "temperature": 22.2,
+        "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 15.8,
-        "gust_kmh": 43.6,
-        "weather_code": 61,
-        "icon": "☂",
-        "kind": "rain",
-        "label": "Pioggia"
+        "wind_kmh": 20.2,
+        "gust_kmh": 40.0,
+        "weather_code": 3,
+        "icon": "☁",
+        "kind": "cloudy",
+        "label": "Molto nuvoloso"
       },
       {
         "time": "2026-10-24T16:00+02:00",
         "label_time": "16:00",
-        "temperature": 21.4,
+        "temperature": 21.5,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 18.0,
-        "gust_kmh": 36.0,
+        "wind_kmh": 16.9,
+        "gust_kmh": 37.1,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1494,7 +1494,7 @@
         "precipitation": 0.0,
         "cloud_cover": 100.0,
         "wind_kmh": 16.9,
-        "gust_kmh": 33.5,
+        "gust_kmh": 33.8,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1503,11 +1503,11 @@
       {
         "time": "2026-10-24T18:00+02:00",
         "label_time": "18:00",
-        "temperature": 20.2,
+        "temperature": 20.3,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 15.1,
-        "gust_kmh": 30.6,
+        "wind_kmh": 14.4,
+        "gust_kmh": 30.2,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1519,8 +1519,8 @@
         "temperature": 19.6,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 13.7,
-        "gust_kmh": 27.4,
+        "wind_kmh": 14.8,
+        "gust_kmh": 29.2,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1529,23 +1529,49 @@
       {
         "time": "2026-10-24T20:00+02:00",
         "label_time": "20:00",
-        "temperature": 19.4,
+        "temperature": 19.3,
         "precipitation": 0.0,
-        "cloud_cover": 78.0,
-        "wind_kmh": 13.7,
-        "gust_kmh": 29.5,
+        "cloud_cover": 100.0,
+        "wind_kmh": 15.1,
+        "gust_kmh": 28.1,
+        "weather_code": 3,
+        "icon": "☁",
+        "kind": "cloudy",
+        "label": "Molto nuvoloso"
+      },
+      {
+        "time": "2026-10-24T21:00+02:00",
+        "label_time": "21:00",
+        "temperature": 19.2,
+        "precipitation": 0.0,
+        "cloud_cover": 77.0,
+        "wind_kmh": 16.6,
+        "gust_kmh": 29.2,
         "weather_code": 2,
         "icon": "☁",
         "kind": "cloudy",
         "label": "Parzialmente nuvoloso"
       },
       {
-        "time": "2026-10-24T21:00+02:00",
-        "label_time": "21:00",
-        "temperature": 19.7,
+        "time": "2026-10-24T22:00+02:00",
+        "label_time": "22:00",
+        "temperature": 19.6,
         "precipitation": 0.0,
-        "cloud_cover": 90.0,
-        "wind_kmh": 16.2,
+        "cloud_cover": 86.0,
+        "wind_kmh": 16.9,
+        "gust_kmh": 31.7,
+        "weather_code": 3,
+        "icon": "☁",
+        "kind": "cloudy",
+        "label": "Molto nuvoloso"
+      },
+      {
+        "time": "2026-10-24T23:00+02:00",
+        "label_time": "23:00",
+        "temperature": 19.2,
+        "precipitation": 0.0,
+        "cloud_cover": 85.0,
+        "wind_kmh": 15.8,
         "gust_kmh": 30.2,
         "weather_code": 3,
         "icon": "☁",
@@ -1553,39 +1579,13 @@
         "label": "Molto nuvoloso"
       },
       {
-        "time": "2026-10-24T22:00+02:00",
-        "label_time": "22:00",
-        "temperature": 19.3,
-        "precipitation": 0.0,
-        "cloud_cover": 81.0,
-        "wind_kmh": 16.2,
-        "gust_kmh": 30.6,
-        "weather_code": 2,
-        "icon": "☁",
-        "kind": "cloudy",
-        "label": "Parzialmente nuvoloso"
-      },
-      {
-        "time": "2026-10-24T23:00+02:00",
-        "label_time": "23:00",
-        "temperature": 19.2,
-        "precipitation": 0.0,
-        "cloud_cover": 13.0,
-        "wind_kmh": 16.6,
-        "gust_kmh": 30.6,
-        "weather_code": 1,
-        "icon": "☾",
-        "kind": "calm",
-        "label": "Poco nuvoloso"
-      },
-      {
         "time": "2026-10-25T00:00+02:00",
         "label_time": "00:00",
-        "temperature": 19.5,
+        "temperature": 18.9,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 17.6,
-        "gust_kmh": 29.2,
+        "wind_kmh": 11.5,
+        "gust_kmh": 28.4,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1594,15 +1594,15 @@
       {
         "time": "2026-10-25T01:00+02:00",
         "label_time": "01:00",
-        "temperature": 19.6,
+        "temperature": 19.3,
         "precipitation": 0.0,
-        "cloud_cover": 88.0,
-        "wind_kmh": 22.3,
-        "gust_kmh": 39.6,
-        "weather_code": 2,
+        "cloud_cover": 100.0,
+        "wind_kmh": 18.7,
+        "gust_kmh": 35.6,
+        "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
-        "label": "Parzialmente nuvoloso"
+        "label": "Molto nuvoloso"
       },
       {
         "time": "2026-10-25T02:00+02:00",
@@ -1610,8 +1610,8 @@
         "temperature": 19.5,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 26.3,
-        "gust_kmh": 47.5,
+        "wind_kmh": 19.8,
+        "gust_kmh": 36.0,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1620,76 +1620,76 @@
       {
         "time": "2026-10-25T03:00+01:00",
         "label_time": "03:00",
-        "temperature": 19.1,
+        "temperature": 19.3,
         "precipitation": 0.0,
-        "cloud_cover": 28.0,
-        "wind_kmh": 23.0,
-        "gust_kmh": 46.8,
-        "weather_code": 1,
-        "icon": "☾",
-        "kind": "calm",
-        "label": "Poco nuvoloso"
+        "cloud_cover": 100.0,
+        "wind_kmh": 22.7,
+        "gust_kmh": 41.4,
+        "weather_code": 3,
+        "icon": "☁",
+        "kind": "cloudy",
+        "label": "Molto nuvoloso"
       },
       {
         "time": "2026-10-25T04:00+01:00",
         "label_time": "04:00",
-        "temperature": 19.1,
+        "temperature": 19.3,
         "precipitation": 0.0,
-        "cloud_cover": 69.0,
-        "wind_kmh": 23.8,
-        "gust_kmh": 43.6,
-        "weather_code": 2,
+        "cloud_cover": 90.0,
+        "wind_kmh": 24.5,
+        "gust_kmh": 47.9,
+        "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
-        "label": "Parzialmente nuvoloso"
+        "label": "Molto nuvoloso"
       },
       {
         "time": "2026-10-25T05:00+01:00",
         "label_time": "05:00",
-        "temperature": 19.3,
-        "precipitation": 0.0,
-        "cloud_cover": 99.0,
-        "wind_kmh": 27.4,
-        "gust_kmh": 49.3,
-        "weather_code": 3,
-        "icon": "☁",
-        "kind": "cloudy",
-        "label": "Molto nuvoloso"
+        "temperature": 17.7,
+        "precipitation": 5.7,
+        "cloud_cover": 100.0,
+        "wind_kmh": 16.6,
+        "gust_kmh": 47.9,
+        "weather_code": 63,
+        "icon": "☂",
+        "kind": "rain",
+        "label": "Pioggia"
       },
       {
         "time": "2026-10-25T06:00+01:00",
         "label_time": "06:00",
-        "temperature": 18.1,
+        "temperature": 18.6,
+        "precipitation": 0.8,
+        "cloud_cover": 100.0,
+        "wind_kmh": 19.1,
+        "gust_kmh": 46.8,
+        "weather_code": 61,
+        "icon": "☂",
+        "kind": "rain",
+        "label": "Pioggia"
+      },
+      {
+        "time": "2026-10-25T07:00+01:00",
+        "label_time": "07:00",
+        "temperature": 19.0,
         "precipitation": 0.0,
-        "cloud_cover": 83.0,
-        "wind_kmh": 17.3,
-        "gust_kmh": 52.9,
+        "cloud_cover": 100.0,
+        "wind_kmh": 21.2,
+        "gust_kmh": 39.6,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
         "label": "Molto nuvoloso"
       },
       {
-        "time": "2026-10-25T07:00+01:00",
-        "label_time": "07:00",
-        "temperature": 18.9,
-        "precipitation": 0.0,
-        "cloud_cover": 45.0,
-        "wind_kmh": 17.3,
-        "gust_kmh": 33.5,
-        "weather_code": 2,
-        "icon": "⛅",
-        "kind": "cloudy",
-        "label": "Parzialmente nuvoloso"
-      },
-      {
         "time": "2026-10-25T08:00+01:00",
         "label_time": "08:00",
-        "temperature": 18.7,
+        "temperature": 18.9,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 14.4,
-        "gust_kmh": 31.3,
+        "wind_kmh": 17.3,
+        "gust_kmh": 37.8,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1698,11 +1698,11 @@
       {
         "time": "2026-10-25T09:00+01:00",
         "label_time": "09:00",
-        "temperature": 19.9,
+        "temperature": 19.8,
         "precipitation": 0.0,
         "cloud_cover": 100.0,
-        "wind_kmh": 20.2,
-        "gust_kmh": 37.1,
+        "wind_kmh": 19.4,
+        "gust_kmh": 36.0,
         "weather_code": 3,
         "icon": "☁",
         "kind": "cloudy",
@@ -1713,61 +1713,61 @@
         "label_time": "10:00",
         "temperature": 20.6,
         "precipitation": 0.0,
-        "cloud_cover": 7.0,
-        "wind_kmh": 19.8,
-        "gust_kmh": 38.2,
-        "weather_code": 0,
-        "icon": "☀",
-        "kind": "calm",
-        "label": "Sereno"
+        "cloud_cover": 80.0,
+        "wind_kmh": 20.2,
+        "gust_kmh": 37.1,
+        "weather_code": 3,
+        "icon": "☁",
+        "kind": "cloudy",
+        "label": "Molto nuvoloso"
       },
       {
         "time": "2026-10-25T11:00+01:00",
         "label_time": "11:00",
-        "temperature": 21.5,
+        "temperature": 21.2,
         "precipitation": 0.0,
-        "cloud_cover": 45.0,
-        "wind_kmh": 20.9,
-        "gust_kmh": 38.2,
-        "weather_code": 1,
-        "icon": "🌤",
-        "kind": "calm",
-        "label": "Poco nuvoloso"
+        "cloud_cover": 55.0,
+        "wind_kmh": 19.4,
+        "gust_kmh": 38.5,
+        "weather_code": 3,
+        "icon": "☁",
+        "kind": "cloudy",
+        "label": "Molto nuvoloso"
       },
       {
         "time": "2026-10-25T12:00+01:00",
         "label_time": "12:00",
         "temperature": 21.4,
         "precipitation": 0.0,
-        "cloud_cover": 75.0,
-        "wind_kmh": 21.2,
-        "gust_kmh": 43.9,
-        "weather_code": 3,
-        "icon": "☁",
-        "kind": "cloudy",
-        "label": "Molto nuvoloso"
+        "cloud_cover": 10.0,
+        "wind_kmh": 22.0,
+        "gust_kmh": 41.0,
+        "weather_code": 0,
+        "icon": "☀",
+        "kind": "calm",
+        "label": "Sereno"
       },
       {
         "time": "2026-10-25T13:00+01:00",
         "label_time": "13:00",
         "temperature": 21.4,
         "precipitation": 0.0,
-        "cloud_cover": 100.0,
-        "wind_kmh": 19.8,
-        "gust_kmh": 39.6,
-        "weather_code": 3,
-        "icon": "☁",
-        "kind": "cloudy",
-        "label": "Molto nuvoloso"
+        "cloud_cover": 1.0,
+        "wind_kmh": 20.5,
+        "gust_kmh": 40.7,
+        "weather_code": 0,
+        "icon": "☀",
+        "kind": "calm",
+        "label": "Sereno"
       },
       {
         "time": "2026-10-25T14:00+01:00",
         "label_time": "14:00",
-        "temperature": 21.7,
+        "temperature": 21.4,
         "precipitation": 0.0,
         "cloud_cover": 1.0,
-        "wind_kmh": 20.5,
-        "gust_kmh": 39.6,
+        "wind_kmh": 19.4,
+        "gust_kmh": 38.2,
         "weather_code": 0,
         "icon": "☀",
         "kind": "calm",
@@ -1776,15 +1776,15 @@
       {
         "time": "2026-10-25T15:00+01:00",
         "label_time": "15:00",
-        "temperature": 21.2,
+        "temperature": 21.1,
         "precipitation": 0.0,
-        "cloud_cover": 29.0,
-        "wind_kmh": 20.9,
-        "gust_kmh": 39.2,
-        "weather_code": 2,
-        "icon": "⛅",
+        "cloud_cover": 100.0,
+        "wind_kmh": 16.6,
+        "gust_kmh": 36.0,
+        "weather_code": 3,
+        "icon": "☁",
         "kind": "cloudy",
-        "label": "Parzialmente nuvoloso"
+        "label": "Molto nuvoloso"
       }
     ],
     "days": [
@@ -1792,9 +1792,9 @@
         "key": "today",
         "label": "Oggi",
         "temp_min": 14.8,
-        "temp_max": 21.7,
-        "precipitation_sum": 0.3,
-        "gust_max_kmh": 43.6,
+        "temp_max": 22.2,
+        "precipitation_sum": 0.1,
+        "gust_max_kmh": 40.0,
         "thunder_signal": false,
         "icon": "☂",
         "kind": "rain",
@@ -1804,14 +1804,14 @@
       {
         "key": "tomorrow",
         "label": "Domani",
-        "temp_min": 17.8,
-        "temp_max": 21.7,
-        "precipitation_sum": 0.0,
-        "gust_max_kmh": 52.9,
+        "temp_min": 16.1,
+        "temp_max": 21.4,
+        "precipitation_sum": 6.5,
+        "gust_max_kmh": 47.9,
         "thunder_signal": false,
-        "icon": "⛅",
-        "kind": "calm",
-        "condition": "Variabile o poco nuvoloso",
+        "icon": "☂",
+        "kind": "rain",
+        "condition": "Possibili piogge",
         "basis": "ItaliaMeteo ICON-2I"
       }
     ],
@@ -1819,19 +1819,19 @@
       "available": true,
       "horizon": "3–48 h",
       "models_count": 4,
-      "wet_models": 3,
-      "dry_models": 1,
-      "precip_min_mm": 0.3,
+      "wet_models": 4,
+      "dry_models": 0,
+      "precip_min_mm": 2.7,
       "precip_max_mm": 11.4,
-      "precip_median_mm": 6.6,
+      "precip_median_mm": 8.5,
       "agreement": "basso",
       "label": "Pioggia probabile · quantità incerta",
       "models": [
         {
           "label": "ItaliaMeteo ICON-2I",
-          "precip_mm": 0.3,
-          "gust_max_kmh": 52.9,
-          "cape_max": 410
+          "precip_mm": 6.6,
+          "gust_max_kmh": 47.9,
+          "cape_max": 620
         },
         {
           "label": "DWD ICON",
@@ -1852,7 +1852,7 @@
           "cape_max": 330
         }
       ],
-      "note": "3/4 modelli indicano pioggia ≥0,5 mm nelle 3–48 h. Quantità incerta: 0,3–11,4 mm; mediana 6,6 mm. Impatto modellistico: Moderato (modellistico). Segnali d'impatto: pioggia intensa 2/4, raffiche ≥50 km/h 1/4, instabilità convettiva accompagnata da precipitazione/temporale 0/4.",
+      "note": "4/4 modelli indicano pioggia ≥0,5 mm nelle 3–48 h. Quantità incerta: 2,7–11,4 mm; mediana 8,5 mm. Impatto modellistico: Moderato (modellistico). Segnali d'impatto: pioggia intensa 3/4, raffiche ≥50 km/h 0/4, instabilità convettiva accompagnata da precipitazione/temporale 0/4.",
       "precipitation_tendency": "Pioggia probabile",
       "quantity_uncertainty": "elevata",
       "impact_label": "Moderato (modellistico)",
@@ -1862,13 +1862,13 @@
     "stale": false,
     "nowcast_simple": {
       "window": "0–3 h",
-      "status": "watch",
-      "title": "Da monitorare",
-      "text": "Aree di pioggia sono presenti nei dintorni. Al momento non è confermato un arrivo su Giammoro.",
+      "status": "calm",
+      "title": "Tranquillo",
+      "text": "Al momento radar e fulmini non mostrano fenomeni rilevanti vicino a Giammoro.",
       "detail": null,
       "nearest_signal_km": null,
       "indicators": {
-        "radar": "Segnale debole entro ~30 km",
+        "radar": "Nessun nucleo rilevante",
         "trajectory": "Non applicabile",
         "lightning": "Assenti entro 30 km",
         "distance": null,
@@ -1878,7 +1878,7 @@
     }
   },
   "local_precipitation": {
-    "generated_at": "2026-10-24T04:15:50+02:00",
+    "generated_at": "2026-10-24T04:30:54+02:00",
     "status": "dry",
     "label": "Nessuna pioggia locale rilevata ora",
     "observation_basis": "Radar-DPC multi-raggio 1/3/5 km + persistenza temporale",
@@ -1889,7 +1889,7 @@
     "recent_accumulation_signal": false,
     "radar": {
       "sri": {
-        "timestamp": "2026-10-24T04:05+02:00",
+        "timestamp": "2026-10-24T04:20+02:00",
         "age_minutes": 10,
         "1": {
           "point": 0.0,
@@ -1911,7 +1911,7 @@
         }
       },
       "srt1": {
-        "timestamp": "2026-10-24T04:05+02:00",
+        "timestamp": "2026-10-24T04:20+02:00",
         "age_minutes": 10,
         "1": {
           "point": 0.0,
@@ -1943,58 +1943,8 @@
       "signals": [],
       "semantic": "precipitation_presence_not_impact"
     },
-    "impact_level": "moderato",
+    "impact_level": "low",
     "history": [
-      {
-        "timestamp": "2026-10-24T01:29+02:00",
-        "rain_detected": false,
-        "recent_accumulation": false,
-        "basis": "nessun segnale radar locale coerente",
-        "sri": {
-          "timestamp": "2026-10-24T01:20+02:00",
-          "age_minutes": 9,
-          "1": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "3": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "5": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          }
-        },
-        "srt1": {
-          "timestamp": "2026-10-24T01:20+02:00",
-          "age_minutes": 9,
-          "1": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "3": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "5": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          }
-        }
-      },
       {
         "timestamp": "2026-10-24T01:44+02:00",
         "rain_detected": false,
@@ -2544,13 +2494,63 @@
             "p90": 0.0
           }
         }
+      },
+      {
+        "timestamp": "2026-10-24T04:30+02:00",
+        "rain_detected": false,
+        "recent_accumulation": false,
+        "basis": "nessun segnale radar locale coerente",
+        "sri": {
+          "timestamp": "2026-10-24T04:20+02:00",
+          "age_minutes": 10,
+          "1": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "3": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "5": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          }
+        },
+        "srt1": {
+          "timestamp": "2026-10-24T04:20+02:00",
+          "age_minutes": 10,
+          "1": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "3": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "5": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          }
+        }
       }
     ],
     "errors": [],
     "note": "La presenza di pioggia e l'impatto sono separati. I valori areali entro 1/3/5 km servono a riconoscere rovesci locali che possono sfuggire al singolo pixel e non vengono presentati come accumulo esatto su Giammoro."
   },
   "verification": {
-    "updated_at": "2026-10-24T02:15:53+00:00",
+    "updated_at": "2026-10-24T02:30:56+00:00",
     "summary": {
       "total_results": 300,
       "evaluable_results": 300,
@@ -2659,13 +2659,13 @@
       },
       "metric_version": "local-event-v2",
       "cumulative_event_metrics": {
-        "samples": 437,
+        "samples": 440,
         "true_positive": 0,
-        "true_negative": 437,
+        "true_negative": 440,
         "false_positive": 0,
         "false_negative": 0,
         "event_samples": 0,
-        "no_event_samples": 437,
+        "no_event_samples": 440,
         "event_detection_percent": null,
         "precision_percent": null,
         "false_alarm_ratio_percent": null,
@@ -2676,13 +2676,13 @@
       },
       "cumulative_by_horizon": {
         "30": {
-          "samples": 146,
+          "samples": 147,
           "true_positive": 0,
-          "true_negative": 146,
+          "true_negative": 147,
           "false_positive": 0,
           "false_negative": 0,
           "event_samples": 0,
-          "no_event_samples": 146,
+          "no_event_samples": 147,
           "event_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
@@ -2692,13 +2692,13 @@
           "accuracy_percent": 100.0
         },
         "60": {
-          "samples": 146,
+          "samples": 147,
           "true_positive": 0,
-          "true_negative": 146,
+          "true_negative": 147,
           "false_positive": 0,
           "false_negative": 0,
           "event_samples": 0,
-          "no_event_samples": 146,
+          "no_event_samples": 147,
           "event_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
@@ -2708,13 +2708,13 @@
           "accuracy_percent": 100.0
         },
         "120": {
-          "samples": 145,
+          "samples": 146,
           "true_positive": 0,
-          "true_negative": 145,
+          "true_negative": 146,
           "false_positive": 0,
           "false_negative": 0,
           "event_samples": 0,
-          "no_event_samples": 145,
+          "no_event_samples": 146,
           "event_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
@@ -2749,9 +2749,9 @@
       "retention_note": "Le metriche cumulative v2 sono conservate separatamente dal rolling window di 300 risultati. La baseline v1 resta visibile ma non viene sommata perché usa una definizione precedente dell'evento locale."
     },
     "latest_result": {
-      "snapshot_id": "20261024T001526Z",
-      "issued_at": "2026-10-24T00:15:26+00:00",
-      "verified_at": "2026-10-24T02:15:53+00:00",
+      "snapshot_id": "20261024T003011Z",
+      "issued_at": "2026-10-24T00:30:11+00:00",
+      "verified_at": "2026-10-24T02:30:56+00:00",
       "horizon_minutes": 120,
       "outcome": "correct",
       "predicted_event": false,
@@ -2791,13 +2791,13 @@
       "metric_version": "local-precipitation-v1",
       "semantic": "rain_presence_not_severity",
       "cumulative": {
-        "samples": 358,
+        "samples": 361,
         "true_positive": 0,
-        "true_negative": 358,
+        "true_negative": 361,
         "false_positive": 0,
         "false_negative": 0,
         "rain_samples": 0,
-        "dry_samples": 358,
+        "dry_samples": 361,
         "rain_detection_percent": null,
         "precision_percent": null,
         "false_alarm_ratio_percent": null,
@@ -2805,39 +2805,39 @@
       },
       "by_horizon": {
         "30": {
-          "samples": 122,
+          "samples": 123,
           "true_positive": 0,
-          "true_negative": 122,
+          "true_negative": 123,
           "false_positive": 0,
           "false_negative": 0,
           "rain_samples": 0,
-          "dry_samples": 122,
+          "dry_samples": 123,
           "rain_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
           "accuracy_percent": 100.0
         },
         "60": {
-          "samples": 120,
+          "samples": 121,
           "true_positive": 0,
-          "true_negative": 120,
+          "true_negative": 121,
           "false_positive": 0,
           "false_negative": 0,
           "rain_samples": 0,
-          "dry_samples": 120,
+          "dry_samples": 121,
           "rain_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
           "accuracy_percent": 100.0
         },
         "120": {
-          "samples": 116,
+          "samples": 117,
           "true_positive": 0,
-          "true_negative": 116,
+          "true_negative": 117,
           "false_positive": 0,
           "false_negative": 0,
           "rain_samples": 0,
-          "dry_samples": 116,
+          "dry_samples": 117,
           "rain_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
