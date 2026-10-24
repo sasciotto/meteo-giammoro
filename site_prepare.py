@@ -18,12 +18,19 @@ APPROACH_UI_PATH = Path(__file__).with_name("approaching_cells_ui.js")
 QUALITY_UI_PATH = Path(__file__).with_name("analysis_quality_ui.js")
 VERIFICATION_HISTORY_UI_PATH = Path(__file__).with_name("verification_history_ui.js")
 RADAR_UI_PATH = Path(__file__).with_name("radar_ui.js")
+RADAR_SOURCES_UI_PATH = Path(__file__).with_name("radar_sources_ui.js")
 RADAR_APP_URL = "https://radar.protezionecivile.it/#/pages/dashboard?zoom=6"
 
 
 def _dashboard_scripts() -> str:
     scripts = ['<script src="forecast_dashboard.js"></script>']
-    for path in (APPROACH_UI_PATH, QUALITY_UI_PATH, VERIFICATION_HISTORY_UI_PATH, RADAR_UI_PATH):
+    for path in (
+        APPROACH_UI_PATH,
+        QUALITY_UI_PATH,
+        VERIFICATION_HISTORY_UI_PATH,
+        RADAR_UI_PATH,
+        RADAR_SOURCES_UI_PATH,
+    ):
         if path.exists():
             scripts.append("<script>\n" + path.read_text(encoding="utf-8").strip() + "\n</script>")
     return "\n".join(scripts)
