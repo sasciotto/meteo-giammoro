@@ -1,251 +1,269 @@
 # PROJECT_CONTEXT.md — Meteo Giammoro
 
-Checkpoint operativo: 18 ottobre 2026, ~14:56 CEST (Europe/Rome)
-Repository: sasciotto/meteo-giammoro
-Dashboard pubblica: https://sasciotto.github.io/meteo-giammoro/
-Riferimento territoriale: Giammoro, Pace del Mela (ME), circa 38.2018 N, 15.31816 E
-Schema dati corrente: data.json schema 2.1
+Checkpoint operativo aggiornato: **24 ottobre 2026**, dopo il ciclo meteo delle **14:05 CEST** (`Europe/Rome`).
 
-> Questo documento è la fonte di contesto operativa da usare per riprendere il progetto.  
-> `README.md` nel repository è attualmente parzialmente obsoleto e non descrive tutte le funzioni oggi attive.
+Repository: `sasciotto/meteo-giammoro`  
+Dashboard pubblica: GitHub Pages del repository `meteo-giammoro`  
+Territorio di riferimento: **Giammoro, Pace del Mela (ME)**  
+Coordinate di riferimento: circa **38.2018 N, 15.31816 E**  
+Schema principale: `data.json` **2.1**
+
+> Questo file è il checkpoint operativo principale per riprendere il progetto in una nuova chat. Prima di qualsiasi modifica rileggere comunque il `main` corrente, perché il bot meteo aggiorna continuamente i JSON di runtime.
 
 ---
 
-## Obiettivo generale
+## Obiettivo generale del progetto
 
-Realizzare e mantenere una dashboard meteorologica pubblica, gratuita e automatica per Giammoro, capace di combinare osservazioni, radar, fulminazioni, modelli numerici, allerte ufficiali e verifica ex-post per fornire:
+Realizzare e mantenere, a **costo monetario zero**, una dashboard meteorologica pubblica e automatica per Giammoro che combini dati osservativi, radar, fulminazioni, modelli numerici, allerte ufficiali e verifica ex-post.
+
+Il prodotto deve offrire due livelli di lettura:
+
+- **Meteo**: home semplice, chiara e prudente;
+- **Analisi dettagliata**: evidenze tecniche, tracking radar, modelli, qualità dati e verifica storica.
+
+Obiettivi operativi principali:
 
 - situazione corrente riferita a Giammoro;
-- nowcasting 0–3 h con priorità alle osservazioni;
-- previsione breve/oraria e oggi-domani;
-- scenario multi-modello 3–48 h;
-- quadro 2–7+ giorni con modelli/ensemble;
-- allerta ufficiale contestualizzata per l’area;
-- confidenza dell’analisi;
-- verifica storica delle previsioni;
-- notifiche solo in caso di cambiamenti meteorologicamente significativi.
+- nowcasting locale **0–3 h** con priorità alle osservazioni;
+- previsione oraria e sintesi Oggi/Domani;
+- scenario deterministico multi-modello **3–48 h**;
+- supporto ensemble **2–7+ giorni**;
+- allerta ufficiale correttamente riferita alla zona;
+- tracking radar multi-cella e multi-frame;
+- rilevamento separato della semplice presenza di pioggia locale;
+- verifica ex-post a 30/60/120 minuti;
+- raccolta di metriche sufficienti per migliorare progressivamente precisione e richiamo senza aumentare falsi allarmi.
 
-La dashboard è presentata come:
+Attribuzione da mantenere:
 
 **“Modello di analisi meteo creato da Salvatore Sciotto”**
-
-Questa attribuzione va mantenuta.
 
 ---
 
 ## Stato attuale
 
-Il progetto è operativo su GitHub Pages e aggiornato automaticamente.
-
-### Stato repository
+### Repository e versioni operative
 
 - Branch operativo: `main`.
-- Ultimo commit di codice intenzionale da considerare baseline:
-  - `49080c0bb1896aba2a3a5c4c7b72b351c8604a7e`
-  - messaggio: `Rende la dashboard più resiliente e coerente`
-- `main` avanza poi continuamente tramite commit automatici del bot che aggiornano `data.json`, `history.json`, `verification.json` ed `events.json`.
-- HEAD osservato durante questo checkpoint:
-  - `11b7a508d8e2aab78b6750fa8385d1385269ff59`
-  - commit automatico dati del 18/10/2026.
-- Ultimo ciclo operativo verificato:
-  - workflow `Aggiorna Meteo Giammoro`
-  - run #599
-  - conclusione `success`.
-- Backup storico da NON eliminare o rinominare senza richiesta esplicita:
-  - branch `backup/pre-modifiche-2026-10-16-0954`
-  - commit `2bb886bf38d6f01eef7c241caa75cedc3ed78b3e`
+- **Ultimo commit di codice funzionale intenzionale da considerare baseline**:
+  - `9ed00f56dc97882546862409ff42f6abe89e833c`
+  - messaggio: `Allinea home e verifica pioggia al backend`.
+- Dopo quel commit il bot ha continuato ad avanzare `main` con soli file dati.
+- HEAD osservato al momento di questo checkpoint:
+  - `149161b065ddbd39aa594549b88a8cb5cd8499fd`.
+- Il confronto `9ed00f5… → 149161b…` modifica soltanto:
+  - `data.json`;
+  - `events.json`;
+  - `history.json`;
+  - `verification.json`.
+- Quindi il **codice valido corrente è ancora quello di `9ed00f5…`**, mentre `main` contiene dati più recenti.
 
-### Snapshot dati al checkpoint
+### Validazione CI/CD
 
-Ultimo `data.json` osservato:
+Il commit di codice `9ed00f5…` è stato validato dal workflow `Aggiorna Meteo Giammoro`, run **#1217**, concluso con successo:
 
-- aggiornamento: 18/10/2026 14:46 CEST;
-- `collector_status`: `ok`;
-- nessun errore collector;
+- **128 test passati**;
+- collector completato;
+- nowcast v4 completato;
+- home forecast completata;
+- runtime quality completata;
+- verifica eventi v2 completata;
+- storico verifica completato;
+- verifica presenza pioggia completata;
+- preparazione sito completata;
+- screenshot Radar-DPC acquisito;
+- GitHub Pages pubblicata;
+- persistenza dati su `main` riuscita.
+
+L’ultimo ciclo operativo osservato prima del checkpoint è il run **#1233**, anch’esso concluso con `success`.
+
+### Backup
+
+Backup più recente creato prima delle prossime novità:
+
+- branch: `backup/pre-novita-2026-10-24-1403`
+- commit: `96d884de80a1a1c2f122c77f73186b0286d8a3c5`
+
+Il branch fotografa integralmente progetto e dati prima delle modifiche future. Non spostarlo, riscriverlo o eliminarlo.
+
+Backup storici da conservare:
+
+- `backup/pre-modifiche-2026-10-19-0904`
+- `backup/pre-modifiche-2026-10-16-0954`
+
+### Snapshot meteo al checkpoint — dato volatile
+
+Al ciclo delle **14:05 CEST del 24/10/2026**:
+
+- collector: `ok`, nessun errore;
 - stazione primaria MeteoGiammoro: `maintenance`, esclusa dall’analisi;
-- nowcast: Basso (radar);
-- rischio 3–48 h: Basso–moderato;
-- allerta: Gialla (oggi 18/10) per rischi idrogeologico e temporali, validata tramite bollettino nazionale DPC;
-- pioggia radar 1 h / 24 h: 0 mm;
-- EUMETSAT MTG-LI attivo;
-- trend pressione modellistico attivo.
+- nowcast: `Moderato (radar vicino)`;
+- SRI: eco significativo nell’area vasta, con massimo entro 30 km circa 9,9 mm/h;
+- track principale: nucleo a circa 37,6 km NW, moto ESE ~25,9 km/h, minima distanza proiettata ~13,5 km;
+- `latest_change`: `Nucleo radar in avvicinamento verso Giammoro`, evento attivo con scadenza automatica;
+- fulmini MTG-LI: nessun flash entro 30 km nel granulo recente;
+- tendenza 3–48 h: pioggia probabile, 4/4 modelli bagnati, impatto modellistico moderato;
+- allerta: **Gialla (oggi 24/10)** per rischio idrogeologico e temporali, validata con bollettino nazionale DPC.
 
-Questi valori meteo sono uno snapshot e cambiano a ogni ciclo: non trattarli come configurazione permanente.
+Questi valori non sono configurazione: cambiano a ogni ciclo.
 
 ---
 
 ## Requisiti e vincoli confermati
 
-### Territorio e fonti
+### Integrità meteorologica e territoriale
 
-1. Il riferimento deve essere sempre Giammoro.
-2. Le stazioni vicine sono solo supporto/validazione e devono mantenere la propria identità geografica.
-3. Non rinominare una stazione vicina come “Giammoro” e non creare una falsa media locale.
-4. La stazione MeteoGiammoro è attualmente guasta/in manutenzione:
-   - stato corrente: `maintenance`;
-   - esclusa dai calcoli;
-   - percorso di rientro previsto: `maintenance` → `test` (visibile ma ancora esclusa) → `online` dopo validazione.
-5. Se un dato non è disponibile, è preferibile mostrare `null`/“non disponibile” piuttosto che inventare o interpolare senza dichiararlo.
+1. Il riferimento deve essere sempre **Giammoro**.
+2. Non rinominare mai una stazione vicina come “Giammoro”.
+3. Le stazioni vicine servono come supporto/contesto e devono conservare nome e località reali.
+4. Non creare una falsa “media Giammoro” usando stazioni circostanti.
+5. Se un dato non esiste o non è affidabile, usare `null`, `unknown`, `unavailable` o testo equivalente; **non inventare**.
+6. I massimi radar areali non devono essere descritti come accumuli puntuali su Giammoro.
+7. Le allerte ufficiali hanno priorità su interpretazioni locali o modellistiche.
+8. Una traiettoria radar non deve essere presentata come certa se l’associazione della cella è fragile.
 
-### Prodotto e UX
+### Stazione MeteoGiammoro
 
-6. Modalità semplice: “Meteo”.
-7. Modalità tecnica: “Analisi dettagliata”.
-8. La home deve restare semplice e leggibile.
-9. Nessuna duplicazione della previsione “Oggi e domani”.
-10. Struttura preferita della home:
-    - Adesso a Giammoro;
-    - Prossime ore;
-    - Pioggia e temporali;
-    - Previsione per Giammoro:
-      - fasce orarie;
-      - Oggi;
-      - Domani;
-      - consenso multi-modello 3–48 h;
-    - Allerta ufficiale.
-11. Non mostrare condizioni del cielo dedotte se i dati necessari non esistono.
-12. Se la previsione modellistica fallisce temporaneamente, usare l’ultima previsione valida solo se chiaramente marcata come “Dato precedente”.
-13. Le allerte ufficiali devono prevalere su qualsiasi interpretazione locale e devono essere presentate con prudenza se la validazione automatica non è sicura.
+Stato corrente:
+
+- `maintenance`;
+- `excluded_from_analysis: true`.
+
+Percorso obbligatorio di rientro:
+
+`maintenance` → `test` visibile ma ancora esclusa → `online` solo dopo validazione.
+
+Non anticipare il ritorno online.
+
+### UX
+
+Home semplice: **Meteo**.  
+Sezione tecnica: **Analisi dettagliata**.
+
+Ordine attuale confermato della home:
+
+1. **Previsione per Giammoro**
+2. **PROSSIME ORE**
+3. **PIOGGIA E TEMPORALI**
+4. **Allerta ufficiale**
+
+La vecchia card combinata **OGGI E DOMANI** è rimossa dal markup pubblico perché sostituita dalla previsione completa.
+
+Le due card sintetiche restano visibili e devono usare gli stessi segnali del backend, non logiche meteorologiche indipendenti.
 
 ### Costi e infrastruttura
 
-14. Il progetto deve restare a costo monetario zero.
-15. Preferire GitHub Actions/GitHub Pages e fonti gratuite.
-16. È accettabile una cadenza non perfettamente regolare se questo migliora affidabilità e mantiene costo zero.
-17. Non introdurre servizi a pagamento o trial che rischiano di diventare a pagamento senza consenso esplicito.
-
-### Notifiche
-
-18. Notificare solo variazioni meteorologicamente significative.
-19. Non generare notifiche ripetitive quando nulla cambia.
-20. È stata creata anche una automazione ChatGPT esterna al repository, `Giammoro Meteo Watch`, configurata come condition-watch orario. Non è parte della pipeline GitHub e non va confusa con l’heartbeat del progetto.
+- costo monetario: **zero**;
+- hosting: GitHub Pages;
+- elaborazione: GitHub Actions;
+- fonti gratuite;
+- nessun servizio a pagamento/trial senza richiesta esplicita;
+- aggiornamento circa ogni 15 minuti, accettando piccole irregolarità dello scheduler.
 
 ---
 
-## Approccio meteorologico adottato
+## Decisioni progettuali principali e motivazioni
 
-### 0–3 ore
+### 1. Osservazioni prima dei modelli nel 0–3 h
 
-Priorità a:
+Nel brevissimo termine la priorità è:
 
 1. Radar-DPC;
-2. fulminazioni EUMETSAT MTG Lightning Imager;
+2. EUMETSAT MTG Lightning Imager;
 3. osservazioni/stazioni affidabili;
-4. modelli sul punto come supporto.
+4. modelli numerici come supporto.
 
-Il nowcasting non deve diventare modellocentrico quando sono disponibili osservazioni recenti.
+Motivo: un rovescio locale reale deve prevalere su un modello che non lo risolve, mentre un singolo modello non deve generare allarmismo con radar asciutto.
 
-### 3–48 ore
+### 2. Presenza di pioggia separata dall’impatto
 
-Confronto deterministico tra:
+La semplice domanda “sta piovendo / può piovere?” è separata da “quanto è significativo il fenomeno?”.
 
-- ItaliaMeteo / ARPAE ICON-2I;
-- DWD ICON;
-- ECMWF IFS;
-- NOAA GFS.
+`local_precipitation` misura la **presenza**; `nowcast.level` e le regole di rischio descrivono l’**impatto/intensità**.
 
-La home utilizza ICON-2I come base oraria principale, ma mostra separatamente un consenso multi-modello 3–48 h con:
+Questo evita che un piovasco debole venga trattato come “nessun fenomeno” solo perché non raggiunge soglie d’impatto.
 
-- numero modelli che prevedono almeno 0,5 mm;
-- minimo/massimo precipitazione;
-- mediana;
-- livello di accordo/dispersione.
+### 3. Radar locale multi-raggio 1/3/5 km
 
-### 2–7+ giorni
+Per ridurre i falsi negativi dovuti al singolo pixel:
 
-Sono previsti/collegati ensemble:
+- SRI e SRT1 vengono riletti su 1/3/5 km;
+- sono conservati `point`, `max`, `mean`, `p90`;
+- esiste una memoria locale di circa 180 minuti;
+- lo stato è `active`, `recent` o `dry`.
 
-- ECMWF ENS;
-- ICON EPS;
-- GEFS.
+I valori areali servono per riconoscere coerenza spaziale e persistenza, **non come pluviometro puntuale**.
 
-Usarli per spread/incertezza, non come singola previsione deterministica.
+### 4. `tracked_cell` separata da `hazard_cell`
 
-### Effetti locali da considerare
+Il track temporalmente coerente può essere diverso dalla cella più rilevante per Giammoro.
 
-Giammoro è un’area costiera della Valle del Mela. L’analisi deve poter tenere conto, quando utile, di:
+- `tracked_cell`: usata per continuità, velocità, direzione, ETA;
+- `hazard_cell`: cella più rilevante localmente.
 
-- costa;
-- orografia di Santa Lucia/Monforte;
-- differenze rispetto a Milazzo;
-- Stretto di Messina;
-- convergenze locali;
-- vento/outflow;
-- CAPE e instabilità.
+Motivo: non perdere la continuità temporale del track e, contemporaneamente, non ignorare una cella secondaria più vicina/pericolosa.
 
----
+### 5. Qualità dati, affidabilità traiettoria e probabilità sono concetti distinti
 
-## Fonti dati attive
+Tre campi separati:
 
-### Stazioni
+- `analysis_quality`: freschezza/disponibilità delle fonti;
+- `trajectory_reliability`: robustezza geometrica del track;
+- `predictive_confidence`: probabilità previsionale, che resta **non calibrata**.
 
-Il collector usa il database live del Centro Meteorologico Siciliano come aggregatore e conserva la rete originaria.
+Non trasformare `analysis_quality` in una percentuale di “probabilità di previsione corretta”.
 
-Aree/stazioni configurate come supporto:
+Una traiettoria basata su soli **2 frame** è limitata a massimo **64/100, “Media”**.
 
-- Pace del Mela / area Giammoro;
-- Milazzo;
-- San Filippo del Mela;
-- Santa Lucia del Mela;
-- Merì;
-- Monforte San Giorgio;
-- Barcellona Pozzo di Gotto;
-- Messina;
-- Venetico;
-- San Pier Marina;
-- San Pier Niceto.
+Se `lightning.age_minutes` manca, il contributo qualità fulmini è **0**, non massimo.
 
-Reti possibili: DRPC/Protezione Civile, SIAS, LineaMeteo, Wunderground e altre, con qualità classificata.
+### 6. Allerte ufficiali con validazione e normalizzazione temporale
 
-### Radar e satellite DPC
+La fonte regionale DRPC/CFD resta primaria per il dettaglio; il bollettino DPC nazionale viene usato per validare livello e zona.
 
-Prodotti usati:
+Zona operativa:
 
-- SRI — intensità di pioggia;
-- VMI — riflettività massima;
-- SRT1 — cumulata ultima ora;
-- CUM24 — cumulata 24 h;
-- TEMP — temperatura interpolata rete termometrica;
-- IR_108 — satellite infrarosso.
+**Nord-Orientale, versante tirrenico e isole Eolie**.
 
-Statistiche locali calcolate in intorni 5/15/30 km quando applicabile.
+`runtime_quality.py` corregge anche etichette relative come “domani” dopo il cambio di giorno.
 
-### Fulminazioni
+### 7. Verifica eventi significativa separata dalla verifica semplice della pioggia
 
-Fonte attiva:
+Le due metriche non vanno mescolate:
 
-**EUMETSAT MTG Lightning Imager L2 Lightning Flashes**
+- `local-event-v2`: eventi locali significativi;
+- `local-precipitation-v1`: semplice presenza di pioggia.
 
-Credenziali GitHub Secrets:
+La baseline storica `legacy-event-v1` resta visibile ma non viene sommata alla v2 perché usa una semantica differente.
 
-- `EUMETSAT_CONSUMER_KEY`
-- `EUMETSAT_CONSUMER_SECRET`
+### 8. Home coerente con il backend
 
-Le credenziali non devono mai finire nel browser o nei file pubblici.
+Le card **PROSSIME ORE** e **PIOGGIA E TEMPORALI** sono state riallineate al backend.
 
-### Allerte
+- PROSSIME ORE riprende `home_summary.nowcast_simple`;
+- PIOGGIA E TEMPORALI considera, in ordine, pioggia locale attiva, fulmini, pioggia recente, cella radar vicina e segnale modellistico 0–3 h.
 
-Fonti:
+Motivo: eliminare contraddizioni fra la previsione principale e le vecchie regole JavaScript.
 
-- CFD/DRPC Sicilia — avviso regionale/PDF;
-- Dipartimento Protezione Civile nazionale — bollettino di criticità/allerta per cross-validation.
+### 9. Lifecycle di `latest_change`
 
-Zona DPC usata:
+- gli eventi radar di avvicinamento hanno `valid_until` e vengono chiusi se non riconfermati;
+- i cambi generici 0–3 h vengono risolti quando il target annunciato non coincide più con il nowcast corrente.
 
-**Nord-Orientale, versante tirrenico e isole Eolie**
-
-L’avviso regionale resta fonte di dettaglio; il bollettino nazionale viene usato per validare automaticamente il livello quando possibile.
+Motivo: evitare che la home mostri per ore un aumento/riduzione ormai superato.
 
 ---
 
-## Architettura corrente
+## Architettura e pipeline corrente
 
-Pipeline attiva del workflow principale:
+Pipeline effettiva del workflow principale:
 
 ```text
 collector.py
   ↓
 nowcast_v4.py
+  ↓
+analysis_quality_update.py
   ↓
 home_forecast_v2.py
   ↓
@@ -253,660 +271,531 @@ runtime_quality.py
   ↓
 verification_engine_v2.py
   ↓
+verification_history.py
+  ↓
+precipitation_verification.py
+  ↓
+analysis_quality_update.py
+  ↓
 site_prepare.py
   ↓
-GitHub Pages artifact/deploy
+GitHub Pages
   ↓
-persistenza JSON su main
+persistenza data.json / history.json / verification.json / events.json su main
 ```
 
-### collector.py
-
-Responsabilità principali:
-
-- acquisizione stazioni;
-- modelli deterministici;
-- ensemble;
-- radar DPC;
-- satellite;
-- allerte;
-- prima valutazione territoriale;
-- `data.json` e storico di base.
-
-`data.json` usa schema 2.1.
-
-### Nowcasting
-
-La catena è stratificata:
-
-- `nowcast_engine.py` — base/legacy;
-- `nowcast_v2.py` — tracking multi-cella/multi-frame;
-- `nowcast_v4.py` — wrapper attivo e corrente.
-
-`nowcast_v4.py` aggiunge:
-
-- separazione tra `tracked_cell` e `hazard_cell`;
-- scoring di rilevanza locale;
-- controllo qualità del tracking;
-- penalizzazione della confidenza se il track è incoerente;
-- EUMETSAT MTG-LI;
-- quality guard;
-- trend pressione;
-- sanitizzazione dew point;
-- testi runtime aggiornati.
-
-### Tracking radar
-
-Principi correnti:
-
-- una cella può essere mantenuta temporalmente come `tracked_cell`;
-- la cella più pericolosa/localmente rilevante può essere diversa e viene esposta come `hazard_cell`;
-- ETA e traiettoria appartengono al track temporale, non automaticamente all’hazard locale;
-- associazioni con velocità implicita/errore/residuo sospetti vengono declassate;
-- se l’associazione è sospetta, ETA e closest approach vengono rimossi;
-- `track_quality` può essere `good`, `degraded`, `suspect`, `unavailable`.
-
-### Confidenza nowcasting
-
-La confidenza usa:
-
-- freschezza radar;
-- rilevamento cella;
-- tracking;
-- cross-check radar;
-- stazioni;
-- modelli;
-- fulminazioni;
-- penalità qualità tracking.
-
-Non interpretare il punteggio come probabilità meteorologica calibrata.
-
-### quality_guard.py
-
-Funzioni principali:
-
-- evita di presentare come certa un’allerta regionale euristica non validata;
-- conserva eventuale livello come `regional_candidate`;
-- ripulisce validità PDF contaminate;
-- sopprime falsi cambi `Da verificare → <colore>`;
-- pulisce testi legacy sui fulmini;
-- mantiene storico pressione fino a circa 6 h;
-- calcola Δ1 h e Δ3 h;
-- dichiara esplicitamente che il trend di pressione è modellistico sul punto, non barometro locale.
-
-### Home/previsione
-
-`home_forecast.py` è il motore base.
-
-Entry point attivo: `home_forecast_v2.py`.
-
-Comportamenti v2:
-
-- non deduce “sereno/poco nuvoloso” se la copertura nuvolosa manca;
-- produce `home_summary.current`;
-- produce previsione oraria;
-- produce Oggi/Domani;
-- aggiunge consenso multi-modello;
-- se il modello home fallisce:
-  - `collector_status` diventa `degraded`;
-  - tenta fallback all’ultima `home_summary` valida;
-  - massimo fallback: 360 minuti / 6 h;
-  - marca `stale: true`;
-  - mostra età e motivo del dato precedente.
-
-Il workflow riusa la cache Open-Meteo generata dal collector per evitare una seconda chiamata quando possibile.
-
-### runtime_quality.py
-
-Normalizza testi runtime relativi alle date.
-
-Caso principale:
-
-- un bollettino emesso il 17 che dice “domani” per il 18 non deve continuare a mostrare “domani” dopo la mezzanotte del 18;
-- viene trasformato, per esempio, in `Gialla (oggi 18/10)`.
-
-### Frontend
-
-File sorgente:
-
-- `index.html`
-- `forecast_dashboard.js`
-
-Importante: `index.html` nel repository non coincide esattamente con l’HTML pubblicato.
-
-Durante il deploy, `site_prepare.py`:
-
-- rimuove dal markup pubblico la vecchia card combinata OGGI E DOMANI;
-- converte la griglia a due card;
-- fa usare alla home `data.home_summary.current` quando disponibile;
-- inserisce `forecast_dashboard.js` prima dello script principale;
-- collega `window.renderForecastDashboard(d)` al medesimo oggetto `data` già caricato.
-
-Quindi sulla pagina pubblica:
-
-- `data.json` viene fetchato una sola volta per ciclo frontend;
-- `forecast_dashboard.js` non effettua un secondo fetch;
-- espone `window.renderForecastDashboard`;
-- mostra fallback “Previsione temporaneamente non disponibile” se necessario;
-- mostra badge/testo “Dato precedente” se viene servito il fallback stale.
-
-### Verifica ex-post
-
-File:
-
-- `verification_engine.py` — base;
-- `verification_engine_v2.py` — adattatore attivo.
-
-Orizzonti:
-
-- 30 min;
-- 60 min;
-- 120 min.
-
-La v2 separa `hazard_cell` dal track radar e aggiunge metriche evento/non-evento:
-
-- TP;
-- TN;
-- FP;
-- FN;
-- POD/event detection;
-- precision;
-- false alarm ratio;
-- specificity;
-- balanced accuracy;
-- CSI.
-
-Lo storico mantiene ancora `accuracy_percent` per compatibilità, ma non deve essere usato come metrica principale di qualità degli eventi.
-
-Snapshot verifica al checkpoint:
-
-- 300 risultati valutabili;
-- 300 corretti;
-- accuracy globale 100%;
-- 0 campioni evento;
-- 300 campioni non-evento;
-- 0 campioni ETA;
-- 0 campioni traiettoria.
-
-Conclusione: il 100% attuale dimostra soprattutto corretta classificazione di “nessun evento”; non dimostra ancora capacità predittiva sugli eventi.
-
----
-
-## Automazione, scheduling e deploy
-
-### Workflow principale
+### Workflow
 
 `.github/workflows/update-weather.yml`
 
-Trigger:
-
 - `workflow_dispatch`;
-- push di file di codice/config;
-- cron backup:
-  - `7,22,37,52 * * * *`.
+- cron ai minuti `7,22,37,52`;
+- guardia freschezza: salta cicli non-push se i dati hanno meno di 10 minuti;
+- Python 3.12;
+- esegue l’intera suite pytest prima di acquisire nuovi dati;
+- conserva `/tmp/data-previous.json`;
+- riusa la cache Open-Meteo fra collector e home forecast;
+- deploya Pages prima della persistenza Git dei JSON;
+- persistenza con fetch/rebase/retry fino a 3 tentativi;
+- concorrenza accodata, `cancel-in-progress: false`.
 
-Freshness guard:
-
-- se `data.json` ha meno di 10 minuti, un trigger non-push può evitare un ciclo duplicato.
-
-Ordine rilevante:
-
-1. test;
-2. snapshot ciclo precedente;
-3. collector + cache modelli;
-4. nowcast;
-5. home forecast;
-6. runtime quality;
-7. verifica;
-8. preparazione `_site`;
-9. deploy Pages;
-10. persistenza JSON su `main`.
-
-Il deploy Pages avviene prima della persistenza dati su `main`, così un eventuale conflitto Git non rende la dashboard pubblica obsoleta.
-
-La persistenza dati usa fetch/rebase/retry fino a 3 tentativi.
-
-### Heartbeat
-
-`.github/workflows/weather-heartbeat.yml`
-
-Sistema self-relaying:
-
-1. dispatch di `update-weather.yml`;
-2. attesa 15 minuti;
-3. dispatch del proprio workflow;
-4. retry in caso di errori.
-
-Il cron del workflow principale resta backup opportunistico.
-
-Questa soluzione è stata scelta per rimanere a costo zero e ridurre la dipendenza dall’affidabilità del solo scheduler GitHub.
+Esiste anche `.github/workflows/weather-heartbeat.yml`, auto-rilanciante, che chiede un aggiornamento e poi attende 15 minuti. Funziona, ma tenere un runner in `sleep 900` resta debito infrastrutturale da valutare in futuro.
 
 ---
 
-## File rilevanti
+## Componenti principali
 
-### Core
+### `collector.py`
 
-- `collector.py` — acquisizione e regole deterministiche principali.
-- `nowcast_engine.py` — base nowcast legacy.
-- `nowcast_v2.py` — tracking multi-cella/multi-frame e logica legacy lightning.
-- `nowcast_v4.py` — entry point nowcast attivo.
-- `lightning_eumetsat.py` — integrazione EUMETSAT MTG-LI.
-- `quality_guard.py` — protezioni output, allerta, trend pressione.
-- `home_forecast.py` — motore home base.
-- `home_forecast_v2.py` — entry point home attivo.
-- `runtime_quality.py` — normalizzazioni runtime/date.
-- `verification_engine.py` — verifica base.
-- `verification_engine_v2.py` — verifica attiva event-sensitive.
-- `site_prepare.py` — trasforma `index.html` nel markup realmente pubblicato.
+Responsabilità:
 
-### Frontend
+- stazioni;
+- Radar-DPC;
+- modelli deterministici;
+- ensemble;
+- satellite/prodotti DPC;
+- allerte regionali e nazionali;
+- dati territoriali;
+- `data.json` schema 2.1.
 
-- `index.html` — sorgente dashboard, modalità Meteo/Analisi dettagliata.
-- `forecast_dashboard.js` — modulo previsione dettagliata, senza fetch autonomo.
+Modelli deterministici principali:
 
-### Config
+- ItaliaMeteo / ARPAE ICON-2I;
+- DWD ICON;
+- ECMWF IFS;
+- NOAA GFS.
 
-- `config/stations.json` — coordinate, timezone, stazioni/gruppi.
-- `config/overrides.json` — override manuali temporanei; non lasciare livelli allerta fissi.
+Ensemble:
 
-### Stato persistente
+- ECMWF ENS;
+- ICON EPS;
+- GEFS.
 
-- `data.json` — stato corrente.
-- `history.json` — cambiamenti significativi.
-- `verification.json` — snapshot e risultati verifica.
-- `events.json` — eventi archiviati.
+### `nowcast_v4.py`
 
-### CI/CD
+Entry point attivo del nowcasting.
 
-- `.github/workflows/update-weather.yml`
-- `.github/workflows/weather-heartbeat.yml`
+Aggiunge sopra la base v2:
 
-### Test
+- tracking multi-cella/multi-frame;
+- `tracked_cell` e `hazard_cell` separate;
+- scoring di rilevanza locale;
+- quality guard del track;
+- soppressione di ETA/proiezioni fragili;
+- EUMETSAT MTG-LI;
+- sanitizzazione di dati incoerenti;
+- integrazione delle variazioni significative.
 
-Suite corrente include almeno:
+Non creare `nowcast_v5.py`/`v6.py` per nuove modifiche ordinarie: consolidare l’architettura esistente.
 
-- `test_collector.py`
-- `test_home_forecast.py`
-- `test_home_forecast_v2.py`
-- `test_lightning_eumetsat.py`
-- `test_nowcast_engine.py`
-- `test_nowcast_v2.py`
-- `test_nowcast_v4.py`
-- `test_quality_guard.py`
-- `test_runtime_quality.py`
-- `test_site_prepare.py`
-- `test_verification_engine.py`
-- `test_verification_engine_v2.py`
+### `analysis_quality.py` / `analysis_quality_update.py`
 
-Eseguire sempre:
+Calcola:
 
-```bash
-python -m pytest -q
-```
+- qualità dati;
+- affidabilità traiettoria;
+- stato della calibrazione previsionale.
 
-prima di considerare valida una modifica.
+`analysis_confidence` esiste solo come alias legacy deprecato della qualità dati.
+
+Soglia minima attuale per iniziare a studiare una calibrazione probabilistica: **20 campioni evento**.
+
+### `home_forecast_v2.py`
+
+Entry point attivo della previsione home.
+
+- modello base orario: ICON-2I quando disponibile;
+- previsione oraria;
+- Oggi/Domani;
+- fallback dell’ultima previsione valida fino a 6 ore, marcato `stale`;
+- consenso multi-modello conservato per l’analisi tecnica.
+
+### `runtime_quality.py`
+
+Responsabilità correnti:
+
+- normalizzazione del giorno dell’allerta;
+- chiusura `latest_change` obsoleti;
+- raffinamento indicatori radar della home;
+- radar locale 1/3/5 km;
+- memoria della pioggia locale;
+- separazione presenza pioggia / impatto;
+- segnale modelli 0–3 h;
+- `current_wet_models` ricavato dalla precipitazione corrente dei modelli.
+
+Soglie correnti del segnale modellistico di presenza:
+
+- `wet`: accumulo 0–3 h ≥ 0,2 mm;
+- `notable`: accumulo 0–3 h ≥ 0,5 mm;
+- modello corrente bagnato: precipitazione corrente ≥ 0,1 mm.
+
+Non abbassare queste soglie senza prima valutare eventi reali e falsi allarmi.
+
+### `verification_engine_v2.py`
+
+Metrica eventi locali significativi, `local-event-v2`.
+
+Evento osservato se almeno uno dei driver principali è presente, con dati freschi:
+
+- cella radar significativa entro 15 km;
+- `rain_1h >= 2 mm` quando disponibile;
+- fulmini entro 20 km.
+
+Esiste anche `nearby_signal` più debole per diagnostica/watch.
+
+Orizzonti: 30, 60, 120 minuti.
+
+Metriche principali:
+
+- TP / TN / FP / FN;
+- POD / event detection;
+- precision;
+- FAR;
+- specificity;
+- balanced accuracy;
+- CSI;
+- ETA e errore traiettoria quando valutabili.
+
+L’accuracy globale è **secondaria** perché può essere dominata dai non-eventi.
+
+### `verification_history.py`
+
+Conserva metriche cumulative v2 indipendenti dalla rolling window di 300 risultati.
+
+Baseline legacy separata:
+
+- `legacy-event-v1`;
+- commit sorgente `626b2f168212dc46d27f3fb03191a0b4174fb9d4`;
+- 300 campioni;
+- TP 14, TN 234, FP 9, FN 43;
+- POD 24,6%; precision 60,9%; FAR 39,1%; CSI 21,2%.
+
+Non sommare baseline v1 e v2.
+
+### `precipitation_verification.py`
+
+Metrica `local-precipitation-v1`, semantica `rain_presence_not_severity`.
+
+Previsione positiva:
+
+- 30 min: pioggia già attiva oppure almeno 2 modelli con precipitazione corrente;
+- 60 min: pioggia già attiva oppure segnale 0–3 h forte/supportato o almeno 2 modelli `notable`;
+- 120 min: pioggia già attiva oppure segnale 0–3 h `weak`/`supported`.
+
+L’osservazione usa la storia radar multi-raggio persistita.
+
+### `site_prepare.py`
+
+Genera l’HTML realmente pubblicato.
+
+- rimuove la vecchia card OGGI E DOMANI;
+- conserva PROSSIME ORE / PIOGGIA E TEMPORALI;
+- assegna `id="homeSummaryCards"`;
+- inietta gli script UI;
+- cattura in modo best-effort uno screenshot Radar-DPC ufficiale;
+- se lo screenshot fallisce, il deploy continua con link alla piattaforma ufficiale.
+
+Importante: `index.html` sorgente non coincide esattamente con l’HTML finale di Pages.
+
+### `forecast_dashboard.js`
+
+Frontend della previsione principale e delle due card sintetiche.
+
+- inserisce **Previsione per Giammoro** prima di `homeSummaryCards`;
+- usa lo stesso oggetto `data.json` già caricato, senza secondo fetch;
+- PROSSIME ORE usa `home_summary.nowcast_simple`;
+- PIOGGIA E TEMPORALI usa `local_precipitation`, MTG-LI, hazard radar e segnale modellistico;
+- mostra indicatori Radar, Pioggia locale, Modelli 0–3 h, Traiettoria, Fulmini, Distanza;
+- visualizza la verifica eventi privilegiando le metriche evento rispetto all’accuracy globale.
 
 ---
 
-## Decisioni importanti e motivazioni
+## Fonti dati attive
 
-### GitHub Pages + Actions
+### Radar-DPC
 
-Scelta per:
+Prodotti principali:
 
-- costo zero;
-- repository pubblico;
-- deploy riproducibile;
-- nessun server da mantenere.
+- `SRI` — intensità precipitazione;
+- `VMI` — riflettività;
+- `SRT1` — cumulata ultima ora;
+- `CUM24` — cumulata 24 h;
+- `TEMP` — temperatura interpolata rete termometrica;
+- `IR10.8` / equivalente IR usato dal collector quando disponibile.
 
-### EUMETSAT MTG-LI per i fulmini
+Nowcasting strutturato tipicamente su intorni 5/15/30 km; rilevamento pioggia locale aggiuntivo su 1/3/5 km.
 
-Sono stati tentati approcci DPC LTG/LAMPINET REST/WMS, ma il prodotto non è disponibile in modo sufficientemente stabile/strutturato negli endpoint usati.
+### Fulminazioni
 
-Decisione corrente:
+Fonte attiva:
 
-- EUMETSAT MTG-LI è la fonte automatica per le fulminazioni;
-- non riaprire l’approccio LTG/LAMPINET come prima scelta senza nuove evidenze/API.
+**EUMETSAT MTG Lightning Imager L2 Lightning Flashes**.
 
-### Nessun falso dato locale
+Secret GitHub richiesti:
 
-Le stazioni circostanti non vengono mediate come se fossero Giammoro.
+- `EUMETSAT_CONSUMER_KEY`
+- `EUMETSAT_CONSUMER_SECRET`
 
-Motivo: evitare un numero apparentemente locale ma meteorologicamente/fisicamente non rappresentativo.
+Non esporli mai in client, JSON pubblico o log intenzionali.
 
-### tracked_cell ≠ hazard_cell
+DPC LTG/LAMPINET resta legacy/non usato: il productType necessario non è disponibile nella REST Radar-DPC v2 utilizzata dal progetto.
 
-Decisione presa per evitare che una cella mantenuta per continuità temporale venga automaticamente presentata come la minaccia principale per Giammoro.
+### Stazioni
 
-### Quality guard sulle allerte
+Feed/aggregatore: Centro Meteorologico Siciliano.
 
-Un colore estratto euristicamente dal PDF regionale non viene pubblicato come certo se il cross-check nazionale fallisce.
+Principio vincolante: il nome reale della stazione resta sempre visibile.
 
-### Consenso multi-modello separato dalla base oraria
+Stazioni supportate/configurate comprendono Pace del Mela / area Giammoro, San Filippo del Mela, Santa Lucia del Mela, Monforte San Giorgio, Barcellona, Messina e altre località circostanti.
 
-ICON-2I resta pratico per la previsione oraria, ma non deve essere confuso con “consenso” quando ECMWF/GFS/ICON divergono.
+Fallback in caso di feed indisponibile:
 
-### Fallback stale della previsione
+- conserva l’ultimo dato noto;
+- lo marca come dato precedente / stato non corrente;
+- lo esclude dall’analisi;
+- `collector_status` diventa `degraded`.
 
-Un timeout Open-Meteo non deve cancellare immediatamente una previsione utile.
+### Allerte
 
-Decisione:
-
-- mantenere ultima previsione valida fino a 6 h;
-- etichettarla esplicitamente;
-- passare collector a `degraded`.
-
-### Un solo fetch nel browser
-
-La previsione non deve fare un fetch separato da quello della dashboard principale.
-
-Motivo:
-
-- evitare richieste inutili;
-- evitare per pochi istanti dati di cicli diversi nella stessa pagina.
+- DRPC/CFD Sicilia: fonte regionale di dettaglio;
+- DPC nazionale: cross-validation automatica.
 
 ---
 
-## Approcci scartati / da non riproporre senza motivo
+## File e risorse rilevanti
 
-### Render / scheduler esterno
+| File | Ruolo |
+|---|---|
+| `collector.py` | acquisizione e prima analisi dati |
+| `nowcast_v2.py` | tracking multi-cella/multi-frame di base |
+| `nowcast_v4.py` | entry point nowcast corrente |
+| `approaching_cells.py` | diagnostica celle secondarie/avvicinamento |
+| `lightning_eumetsat.py` | MTG-LI |
+| `quality_guard.py` | normalizzazione/guardie conservative |
+| `analysis_quality.py` | qualità, traiettoria, calibrazione |
+| `analysis_quality_update.py` | applicazione qualità al JSON |
+| `home_forecast.py` | base previsione home |
+| `home_forecast_v2.py` | entry point home corrente |
+| `model_outlook.py` | outlook multi-modello |
+| `runtime_quality.py` | pioggia locale, lifecycle, normalizzazioni |
+| `verification_engine.py` | motore verifica base |
+| `verification_engine_v2.py` | verifica eventi locale corrente |
+| `verification_history.py` | metriche cumulative e baseline |
+| `precipitation_verification.py` | verifica presenza pioggia |
+| `index.html` | sorgente HTML |
+| `forecast_dashboard.js` | UI previsione e sintesi home |
+| `approaching_cells_ui.js` | UI celle |
+| `analysis_quality_ui.js` | UI qualità |
+| `verification_history_ui.js` | UI storico verifica |
+| `radar_ui.js` | UI radar ufficiale |
+| `site_prepare.py` | build dell’HTML pubblico |
+| `data.json` | stato corrente e output principale |
+| `history.json` | storico variazioni |
+| `verification.json` | metriche ex-post |
+| `events.json` | snapshot/eventi/pending e stato cumulativo |
+| `config/stations.json` | territorio e stazioni |
+| `config/overrides.json` | override configurativi |
+| `requirements.txt` | dipendenze Python |
+| `tests/` | suite regressione |
+| `.github/workflows/update-weather.yml` | pipeline principale |
+| `.github/workflows/weather-heartbeat.yml` | heartbeat auto-rilanciante |
 
-Valutato e poi scartato.
+---
 
-Motivi:
+## Versioni correnti da considerare valide
 
-- richiesta esplicita di costo zero;
-- Render non era collegato/configurato.
+- `data.json.schema_version`: **2.1**
+- `verification.json.schema_version`: **1.1**
+- metrica eventi: **`local-event-v2`**
+- metrica pioggia: **`local-precipitation-v1`**
+- baseline legacy: **`legacy-event-v1`**, solo confronto storico
+- Python workflow: **3.12**
+- codice funzionale baseline: **`9ed00f56dc97882546862409ff42f6abe89e833c`**
+- HEAD dati osservato al checkpoint: **`149161b065ddbd39aa594549b88a8cb5cd8499fd`**
+- backup pre-novità: **`backup/pre-novita-2026-10-24-1403` → `96d884de80a1a1c2f122c77f73186b0286d8a3c5`**
+- suite validata: **128 test** sul commit di codice corrente.
 
-### cron-job.org
+---
 
-Non è mai stato configurato.
+## Stato della verifica al checkpoint
 
-Non dichiararlo attivo.
+Questi numeri sono snapshot e continueranno ad aumentare.
 
-### DPC LTG/LAMPINET come fonte lightning automatica principale
+### `local-event-v2`
 
-Tentativi REST/WMS non hanno prodotto una pipeline affidabile.
+Rolling window 300 risultati:
 
-Fonte corrente: EUMETSAT MTG-LI.
+- TP 1;
+- TN 286;
+- FP 5;
+- FN 8;
+- eventi osservati 9;
+- POD 11,1%;
+- precision 16,7%;
+- FAR 83,3%;
+- balanced accuracy 54,7%;
+- CSI 7,1%.
 
-### Fidarsi del solo cron GitHub
+Cumulativo v2:
 
-Il cron GitHub è risultato intermittente.
+- 554 campioni;
+- 9 eventi;
+- TP 1;
+- FP 5;
+- FN 8.
 
-Soluzione corrente:
+Interpretazione: il campione evento è ancora piccolo e le prestazioni su eventi reali non sono soddisfacenti. **Non usare l’accuracy globale ~98% come prova di buona previsione**, perché è dominata dai non-eventi.
 
-- heartbeat self-relaying;
-- cron come backup.
+### `local-precipitation-v1`
 
-### Accuracy globale come “precisione del modello”
+Al checkpoint:
 
-Da non usare come indicatore principale: il dataset corrente è dominato dai non-eventi.
+- 475 campioni;
+- 0 campioni con pioggia osservata;
+- 14 falsi positivi complessivi;
+- nessun POD valutabile.
+
+La parte a 30 minuti è stata appena corretta per usare `current_wet_models`; i campioni precedenti non rappresentano pienamente questa nuova logica. Non fare backfill artificiale.
+
+### Confidenza previsionale
+
+`predictive_confidence` resta **Non calibrata**.
+
+Soglia minima di studio: 20 eventi. Al checkpoint la v2 ne ha 9.
+
+---
+
+## Approcci scartati o da non riproporre
+
+- Non creare `nowcast_v5.py`, `v6.py`, ecc. solo per aggiungere funzionalità: consolidare v4/v2 esistenti.
+- Non usare stazioni vicine come se fossero la stazione di Giammoro.
+- Non mediare arbitrariamente stazioni vicine per inventare un dato locale.
+- Non mostrare massimi radar areali come accumuli puntuali.
+- Non trattare `analysis_quality` o `trajectory_reliability` come probabilità meteorologica.
+- Non fondere la baseline `legacy-event-v1` con `local-event-v2`.
+- Non retrodatare il racconto manuale di un episodio di pioggia dentro la metrica automatica: se in futuro si volesse conservare un report umano, usare una provenienza separata `manual_report` non mischiata alle osservazioni automatiche.
+- Non riportare LTG/LAMPINET come fonte attiva se la REST DPC utilizzata non lo espone.
+- Non rendere il deploy dipendente dallo screenshot radar: deve restare best-effort.
+- Non aumentare indiscriminatamente la sensibilità per ridurre i miss prima di avere più eventi reali verificati.
 
 ---
 
 ## Problemi noti e punti ancora incerti
 
-### 1. README.md è obsoleto
+### 1. Pochi eventi reali nella metrica v2
 
-Attualmente contiene informazioni non più vere, tra cui:
+Solo 9 eventi cumulativi al checkpoint. Serve più campione prima di tuning aggressivo o calibrazione probabilistica.
 
-- fulminazioni non automatiche;
-- traiettoria non automatica;
-- workflow ogni 30 minuti;
-- vecchio modello di deploy.
+### 2. Prestazioni evento ancora deboli
 
-Da aggiornare.
+POD e CSI sono bassi e il FAR è alto. È il problema meteorologico principale da migliorare, ma va affrontato analizzando i singoli miss/false alarm, non abbassando semplicemente tutte le soglie.
 
-Il nuovo `PROJECT_CONTEXT.md` deve avere priorità fino all’aggiornamento del README.
+### 3. Verifica pioggia ancora senza eventi osservati
 
-### 2. index.html sorgente contiene ancora elementi legacy
+`local-precipitation-v1` ha molti campioni asciutti ma nessun evento pioggia osservato nel suo periodo prospettico. Attendere episodi reali prima di giudicare recall/POD.
 
-La card OGGI E DOMANI e parte delle vecchie funzioni frontend esistono nel file sorgente.
+### 4. Semantica della finestra della verifica pioggia
 
-`site_prepare.py` le modifica/rimuove nell’artifact pubblicato.
+Attualmente un orizzonte è considerato “pioggia osservata” se esiste un rilevamento fra l’istante di emissione e la finestra fino a `horizon + 15 min`.
 
-La pagina pubblica è corretta, ma questa architettura crea debito tecnico: una futura pulizia dovrebbe rendere `index.html` già coerente senza patch di deploy.
+Quindi la metrica misura in pratica **“ha piovuto entro quell’orizzonte”**, non “pioveva esattamente al minuto 30/60/120”.
 
-### 3. Testi legacy LTG/LAMPINET in nowcast_v2.py
+Anche `observed_at_issue` rende positiva la previsione di più orizzonti se sta già piovendo. Questa scelta è plausibile ma va rivalutata prima di una calibrazione formale.
 
-`nowcast_v2.py` conserva ancora descrizioni/nomi LTG/LAMPINET, incluso `significant_lightning_change()`, mentre v4 passa dati EUMETSAT.
+### 5. Classificazione qualità delle stazioni
 
-La maggior parte dei testi pubblici viene corretta da v4/quality guard, ma un nuovo evento elettrico significativo può ancora generare testo legacy.
+Il feed corrente può contenere nomi come `(DRPC)` o `(LineaMeteo)` ma non sempre espone il campo rete in modo utilizzabile; alcune stazioni risultano quindi `source_quality: unknown` anche se online.
 
-Correzione consigliata: rendere `significant_lightning_change()` source-agnostic o EUMETSAT-specific.
+Prima di usarle maggiormente nell’analisi servono:
 
-### 4. Verifica eventi non ancora significativa
+- mapping affidabile della rete;
+- quality control automatico;
+- controlli su pressione, temperatura, umidità, pioggia e salti anomali.
 
-Al checkpoint:
+### 6. MeteoGiammoro ancora fuori servizio
 
-- 0 event samples;
-- ETA samples = 0;
-- trajectory samples = 0.
+Finché non passa attraverso test e validazione non deve influenzare l’analisi.
 
-Non è ancora possibile valutare realmente POD/CSI/precision/ETA.
+### 7. ETA e errore traiettoria ancora scarsamente popolati
 
-Serve raccogliere eventi reali.
+Le metriche ETA/traiettoria possono restare `null` se non esistono track coerenti valutabili sullo stesso ID. Non inventare valori per riempire la metrica.
 
-### 5. UI tecnica non valorizza ancora bene le nuove metriche evento
+### 8. Overhead del radar locale
 
-`verification_engine_v2.py` produce metriche corrette, ma la sezione dettagliata della pagina conserva ancora molta enfasi su accuracy globale.
+`runtime_quality.py` effettua richieste DPC aggiuntive SRI/SRT1 per ottenere statistiche 1/3/5 km. È ancora a costo zero, ma aggiunge traffico e dipendenza di rete; se in futuro si ottimizza, riusare i raster raw senza cambiare la semantica.
 
-Da fare: mostrare esplicitamente POD, FAR, CSI, balanced accuracy e numero di event samples, relegando accuracy globale a dato secondario.
+### 9. Heartbeat GitHub
 
-### 6. Fallback stale da rifinire
+`weather-heartbeat.yml` funziona ma occupa un runner con `sleep 900`. È un possibile punto di semplificazione futura, non una priorità meteorologica.
 
-`home_forecast_v2.py` copia l’ultima previsione valida fino a 6 h.
+### 10. UI dedicata della metrica pioggia
 
-Da verificare/migliorare:
-
-- eliminare ore ormai passate dal blocco hourly;
-- gestire correttamente cambio data/mezzanotte;
-- ricalcolare etichette Oggi/Domani se il fallback attraversa il giorno successivo.
-
-### 7. “Ultimo cambiamento significativo” può essere storico rispetto allo stato corrente
-
-È possibile che `latest_change` descriva un aumento precedente mentre il nowcast corrente è già tornato basso.
-
-Non è necessariamente un bug, ma può confondere.
-
-Possibili miglioramenti:
-
-- mostrare chiaramente l’età del cambiamento;
-- registrare anche downgrade significativi;
-- oppure separare “ultimo evento storico” da “cambiamento ancora attivo”.
-
-### 8. Parser allerta regionale resta fragile
-
-Il cross-check DPC nazionale rende l’output pubblico prudente, ma il parsing diretto del PDF regionale non è ancora robusto per tutte le impaginazioni.
-
-Se si migliora il parser:
-
-- analizzare la cella esatta della zona A;
-- distinguere oggi/domani;
-- usare fixture reali;
-- per analizzare PDF via strumenti web usare screenshot delle pagine, non solo testo estratto.
-
-### 9. MeteoGiammoro ancora fuori servizio
-
-Rientro da gestire solo dopo test/validazione.
-
-Non riattivarla automaticamente come fonte primaria.
+La metrica `precipitation_presence` è presente nei JSON e nella pipeline, ma prima di aggiungere nuove visualizzazioni verificare se serve davvero una sezione dedicata nell’Analisi dettagliata. Evitare duplicazioni con la verifica eventi.
 
 ---
 
 ## Attività completate
 
-- Dashboard pubblica GitHub Pages.
-- Collector multi-sorgente.
-- Stazioni di supporto con provenienza preservata.
-- Radar-DPC 5/15/30 km.
-- Tracking multi-cella e multi-frame.
-- Separazione `tracked_cell` / `hazard_cell`.
-- Quality score del tracking.
-- Penalizzazione confidenza su track dubbio.
-- EUMETSAT MTG-LI integrato.
-- Dew point protetto da mix incoerente di fonti.
-- Trend pressione 1 h / 3 h con storico breve.
-- Allerte DRPC + validazione DPC nazionale.
-- Soppressione falso loop `Da verificare → Verde`.
-- Normalizzazione oggi/domani rispetto alla data effettiva.
-- Previsione oraria e Oggi/Domani.
-- Consenso multi-modello 3–48 h.
-- Fallback previsione precedente su timeout.
-- Collector `degraded` se previsione home fallisce.
-- Eliminazione duplicazione Oggi/Domani nella pagina pubblica.
-- Unificazione fetch frontend.
-- Verifica ex-post 30/60/120.
-- Metriche evento/non-evento.
-- Heartbeat self-relaying.
-- Cron GitHub di backup.
-- Persistenza con rebase/retry.
-- Test automatici nel workflow.
-- Backup branch storico.
+- pipeline GitHub Actions + Pages stabile;
+- aggiornamento ~15 min con heartbeat + cron backup;
+- schema `data.json` 2.1;
+- integrazione Radar-DPC;
+- tracking multi-cella/multi-frame;
+- separazione `tracked_cell` / `hazard_cell`;
+- filtro qualità della traiettoria;
+- integrazione EUMETSAT MTG-LI;
+- allerta regionale + validazione nazionale;
+- normalizzazione “oggi/domani” delle allerte;
+- separazione qualità dati / traiettoria / probabilità;
+- previsione home v2 con fallback stale;
+- consenso multi-modello 3–48 h;
+- verifica eventi v2 e metriche cumulative;
+- baseline legacy separata;
+- rilevamento pioggia locale 1/3/5 km con memoria;
+- verifica prospettica presenza pioggia 30/60/120 min;
+- `current_wet_models` per il 30 min;
+- lifecycle dei `latest_change`;
+- fix qualità fulmini con timestamp assente;
+- cap di affidabilità per traiettorie a due frame;
+- card PROSSIME ORE e PIOGGIA E TEMPORALI riallineate al backend;
+- ordine home aggiornato con Previsione per Giammoro sopra le due card sintetiche;
+- screenshot Radar-DPC best-effort con fallback;
+- suite CI corrente: 128 test passati;
+- backup completo pre-novità del 24/10 creato.
 
 ---
 
 ## Attività ancora aperte
 
-Priorità consigliata:
-
-1. Aggiornare `README.md` all’architettura reale e rimandare a `PROJECT_CONTEXT.md`.
-2. Correggere definitivamente i testi LTG/LAMPINET legacy in `nowcast_v2.py`.
-3. Portare le metriche evento nella UI tecnica e de-enfatizzare accuracy globale.
-4. Rifinire il fallback stale attraversando ore/data.
-5. Ridurre debito frontend:
-   - rimuovere realmente dal sorgente `index.html` la card legacy;
-   - eliminare le vecchie inferenze JS ormai sostituite dal backend;
-   - ridurre la necessità di patch in `site_prepare.py`.
-6. Migliorare parser allerta regionale con fixture PDF reali.
-7. Attendere/raccogliere eventi reali per validare:
-   - POD;
-   - CSI;
-   - FAR;
-   - precision;
-   - ETA;
-   - traiettoria.
-8. Monitorare stabilità dell’heartbeat e dei timeout Open-Meteo.
-9. Quando MeteoGiammoro torna disponibile, creare una fase di validazione `test` prima di `online`.
+1. Raccogliere eventi reali sufficienti per `local-event-v2`.
+2. Analizzare singolarmente FN e FP per orizzonte 30/60/120.
+3. Raccogliere primi veri eventi di `local-precipitation-v1` dopo l’introduzione di `current_wet_models`.
+4. Valutare una semantica più rigorosa della verifica pioggia per ogni orizzonte.
+5. Classificare meglio le reti delle stazioni e introdurre quality control.
+6. Riportare MeteoGiammoro prima in `test`, poi eventualmente `online` solo dopo confronto e validazione.
+7. Valutare se esporre in UI la verifica pioggia separata.
+8. Ridurre gradualmente il debito tecnico fra `nowcast_engine.py`, `nowcast_v2.py`, `nowcast_v4.py` e fra `verification_engine.py` / `verification_engine_v2.py`, senza creare nuove versioni parallele.
+9. Valutare in futuro una semplificazione del heartbeat GitHub.
 
 ---
 
 ## Prossimi passi consigliati
 
-Il prossimo intervento dovrebbe essere soprattutto di consolidamento, non di aggiunta fonti.
+### Priorità 1 — non toccare subito le soglie
 
-### A. Pulizia documentazione
+Lasciare accumulare casi reali e usare la verifica per capire **perché** nascono FN/FP.
 
-- aggiornare `README.md`;
-- aggiungere/linkare `PROJECT_CONTEXT.md`;
-- descrivere chiaramente i wrapper attivi (v4, v2) e quali file sono base/legacy.
+Per ogni nuovo evento reale, confrontare:
 
-### B. Pulizia lightning legacy
+- SRI/VMI 1/3/5/15/30 km;
+- cella più vicina e hazard score;
+- direzione/velocità/closest approach;
+- fulmini;
+- precipitazione corrente dei 4 modelli;
+- accumulo 0–3 h;
+- stazioni vicine, solo come contesto attribuito correttamente.
 
-In `nowcast_v2.py`:
+### Priorità 2 — quality control stazioni
 
-- non usare più “LTG/LAMPINET” nei testi se il provider reale è EUMETSAT;
-- fare passare provider/source esplicito a `significant_lightning_change`;
-- aggiungere test che simulino aumento flash EUMETSAT.
+Definire mapping rete e controlli fisici prima di aumentare il loro peso.
 
-### C. UI verifica
+### Priorità 3 — calibrazione
 
-In Analisi dettagliata mostrare:
+Solo quando esiste un campione evento sufficiente, studiare una probabilità reale per orizzonte. Fino ad allora mantenere `predictive_confidence = Non calibrata`.
 
-- event samples;
-- TP / FP / FN;
-- POD;
-- FAR;
-- CSI;
-- balanced accuracy;
-- ETA samples;
-- trajectory samples.
+### Priorità 4 — consolidamento
 
-Mostrare accuracy globale soltanto come metrica secondaria.
-
-### D. Hardening fallback previsione
-
-Quando `home_summary.stale == true`:
-
-- filtra hourly rispetto all’ora corrente;
-- correggi today/tomorrow rispetto alla data corrente;
-- se non rimane un orizzonte utile, passa a “temporaneamente non disponibile”.
-
-### E. Semplificazione frontend
-
-Obiettivo di medio periodo:
-
-- rendere `index.html` il più vicino possibile all’HTML finale;
-- usare `site_prepare.py` soltanto per composizione minima, non per correggere markup/logic legacy.
+Quando si aggiungono nuove funzioni, preferire modifiche ai moduli correnti con test di regressione invece di introdurre nuove generazioni `v5/v6`.
 
 ---
 
-## Istruzioni operative importanti
+## Istruzioni operative importanti per continuare il progetto
 
-### Prima di modificare il repository
-
-1. Fetchare sempre la HEAD attuale di `main`.
-2. Ricordare che il bot può fare commit dati ogni ~15 minuti.
-3. Non usare una SHA vecchia per scritture multi-file senza riallineamento.
-4. Non fare force push.
-5. Se si crea un commit multi-file, basarlo sulla HEAD più recente.
-6. Non toccare il branch backup senza richiesta esplicita.
-
-### Dopo ogni modifica
-
-1. Eseguire/attendere `python -m pytest -q`.
-2. Verificare il workflow GitHub Actions reale.
-3. Verificare:
+1. **Prima di ogni modifica, rileggere il HEAD di `main`**: il bot può aver aggiunto commit dati dopo l’ultimo messaggio della chat.
+2. Distinguere sempre:
+   - commit di codice intenzionale;
+   - commit automatici dati.
+3. Non riscrivere o spostare i branch di backup.
+4. Per modifiche importanti creare un nuovo backup prima di procedere, se richiesto o se il rischio è alto.
+5. Eseguire/aggiornare test per ogni cambio di semantica meteorologica o UI.
+6. Dopo una modifica di codice controllare il workflow reale fino a:
+   - test;
    - collector;
    - nowcast;
-   - home forecast;
-   - runtime quality;
    - verifica;
-   - preparazione sito;
-   - upload/deploy Pages;
+   - Pages;
    - persistenza dati.
-4. Controllare il `data.json` prodotto, non solo l’esito dei test.
-5. Per verificare la pagina appena pubblicata, preferire l’artifact Pages/workflow se il crawler web pubblico mostra una cache vecchia.
-
-### Scritture GitHub
-
-Il repository cambia continuamente per commit del bot.
-
-Per modifiche multi-file:
-
-- preferire commit atomici con tree/commit/ref quando disponibile;
-- usare lease/controllo della HEAD;
-- se `main` avanza, ricostruire il commit sulla nuova HEAD;
-- non sovrascrivere commit dati recenti.
-
-### PDF/allerta
-
-Se si analizza un PDF ufficiale:
-
-- non affidarsi solo a regex sul testo;
-- verificare layout/tabella;
-- con strumenti web usare screenshot delle pagine rilevanti;
-- distinguere data del bollettino da termini relativi “oggi/domani”.
-
-### Sicurezza
-
-- nessuna credenziale nel frontend;
-- EUMETSAT solo tramite GitHub Secrets;
-- non pubblicare token/API secret;
-- gli override manuali devono essere temporanei e tracciabili.
-
-### Stile di lavoro desiderato
-
-- modifiche concrete, non solo proposte;
-- domande di chiarimento solo se indispensabili;
-- aggiornamenti brevi durante lavori lunghi;
-- verificare l’effetto reale dopo il deploy;
-- mantenere la dashboard semplice in modalità Meteo e tecnica in Analisi dettagliata.
+7. Non dichiarare una funzione “in produzione” finché il relativo workflow non è riuscito.
+8. Non inventare dati mancanti nei test o nella UI.
+9. Conservare sempre la frase di attribuzione del modello.
+10. Le modifiche al frontend devono considerare che `site_prepare.py` trasforma `index.html` prima della pubblicazione.
+11. Il sito pubblico deve continuare a usare un solo caricamento di `data.json` per la dashboard principale.
+12. Le fonti ufficiali e la prudenza semantica hanno priorità sull’aspetto “più spettacolare” della previsione.
+13. Se una nuova funzione cambia il significato di una metrica, creare una nuova `metric_version` o una migrazione esplicita; non mischiare serie incompatibili.
+14. Non usare report umani come ground truth automatico senza provenienza distinta.
 
 ---
 
 ## Prompt per la nuova chat
 
-Sto continuando il progetto Meteo Giammoro (`sasciotto/meteo-giammoro`). Usa il file `PROJECT_CONTEXT.md` come fonte principale e più aggiornata di contesto. Prima di modificare qualcosa, verifica la HEAD corrente di `main` perché il bot aggiorna automaticamente i dati ogni ~15 minuti. Mantieni Giammoro come unico riferimento territoriale, costo zero, modalità “Meteo” semplice e “Analisi dettagliata” tecnica, e non riattivare MeteoGiammoro finché non è validata. Parti dalle attività aperte e dai prossimi passi indicati nel documento, esegui le modifiche direttamente nel repository e verifica sempre test, workflow, `data.json` e deploy GitHub Pages.
+Usa `PROJECT_CONTEXT.md` del repository `sasciotto/meteo-giammoro` come fonte principale e autosufficiente di contesto per continuare il progetto Meteo Giammoro. Prima di fare modifiche, rileggi il `main` corrente e gli ultimi workflow perché il bot aggiorna continuamente i JSON. Mantieni tutti i vincoli del checkpoint: costo zero, Giammoro come riferimento, nessun dato inventato, stazioni vicine mai rinominate, MeteoGiammoro esclusa finché non validata, allerte ufficiali prioritarie, qualità/traiettoria/probabilità separate, baseline di verifica non mischiate e nessuna nuova v5/v6 senza necessità. Quando propongo una novità, integrala nell’architettura esistente, aggiungi test di regressione e verifica il deploy reale prima di considerarla conclusa.
