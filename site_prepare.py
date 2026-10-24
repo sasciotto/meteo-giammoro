@@ -74,12 +74,12 @@ def transform(html: str) -> str:
     html, count = LEGACY_CARD.subn(placeholder, html, count=1)
     if count:
         html = html.replace('<div class="grid three section">', '<div class="grid two section">', 1)
-        # Le vecchie card PROSSIME ORE / PIOGGIA E TEMPORALI restano solo come
-        # compatibilità per lo script storico ma non sono più visibili: la home usa
-        # esclusivamente home_summary.nowcast_simple + previsione oraria/oggi-domani.
+        # OGGI E DOMANI viene sostituita dalla previsione completa. Le due card
+        # PROSSIME ORE / PIOGGIA E TEMPORALI restano visibili subito sotto
+        # "Previsione per Giammoro" come sintesi rapida della situazione.
         html = html.replace(
             '<div class="grid two section">',
-            '<div class="grid two section" id="legacyHomeSummary" hidden>',
+            '<div class="grid two section" id="homeSummaryCards">',
             1,
         )
 

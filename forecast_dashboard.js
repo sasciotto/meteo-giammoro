@@ -147,9 +147,14 @@
       section = document.createElement('section');
       section.id = 'forecastDetail';
       section.className = 'section card forecast-detail';
-      const alertCard = byId('homeAlertCard');
-      const homeSection = alertCard?.parentElement;
-      if (homeSection && alertCard) homeSection.insertBefore(section, alertCard);
+      const summaryCards = byId('homeSummaryCards');
+      if (summaryCards?.parentElement) {
+        summaryCards.parentElement.insertBefore(section, summaryCards);
+      } else {
+        const alertCard = byId('homeAlertCard');
+        const homeSection = alertCard?.parentElement;
+        if (homeSection && alertCard) homeSection.insertBefore(section, alertCard);
+      }
     }
     return section;
   }
