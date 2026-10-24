@@ -18,6 +18,20 @@ def test_radar_sources_ui_contains_requested_external_views_and_is_lazy():
     assert "if (shouldLoad) loadSource(valid)" in js
 
 
+def test_radar_frames_scale_and_follow_viewport():
+    js = Path("radar_sources_ui.js").read_text(encoding="utf-8")
+    assert "fit: 'desktop'" in js
+    assert "designWidth: 1440" in js
+    assert "designWidth: 1280" in js
+    assert "height:clamp(480px,74dvh,820px)" in js
+    assert "frameVisualHeight" in js
+    assert "function fitFrame(sourceId)" in js
+    assert "transform = `scale(${scale})`" in js
+    assert "requestFullscreen" in js
+    assert "fullscreenchange" in js
+    assert "window.addEventListener('resize'" in js
+
+
 def test_site_prepare_injects_radar_sources_view():
     scripts = s._dashboard_scripts()
     assert "radarSourcesView" in scripts
