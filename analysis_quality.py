@@ -80,7 +80,9 @@ def _lightning_support_score(data: dict) -> int:
     if lightning.get("status") != "ok":
         return 0
     age = _num(lightning.get("age_minutes"))
-    if age is None or age <= 20:
+    if age is None:
+        return 0
+    if age <= 20:
         return 20
     if age <= 35:
         return 16
@@ -184,6 +186,8 @@ def trajectory_reliability(data: dict) -> dict:
     conflict_penalty = 8 if int((data.get("approaching_cells", {}) or {}).get("suppressed_by_main_track") or 0) > 0 else 0
 
     score = max(0, min(100, frame_score + quality_score + association_score + residual_score - conflict_penalty))
+    if frames <= 2 or str(motion.get("method") or "") == "two_frame":
+        score = min(score, 64)
     if track_status == "suspect":
         score = min(score, 39)
     elif track_status == "degraded":
@@ -191,6 +195,8 @@ def trajectory_reliability(data: dict) -> dict:
 
     status = "suspect" if track_status == "suspect" else "degraded" if track_status == "degraded" else _quality_status(score)
     reasons = []
+    if frames <= 2 or str(motion.get("method") or "") == "two_frame":
+        reasons.append("solo due frame coerenti: affidabilità operativa limitata")
     if conflict_penalty:
         reasons.append("ultimo confronto a due frame in disaccordo con il fit multi-frame")
     reasons.extend(str(x) for x in (track_quality.get("reasons", []) or []) if x)
@@ -250,7 +256,6 @@ def apply(data: dict) -> dict:
     data["trajectory_reliability"] = trajectory
     data["predictive_confidence"] = predictive
 
-    # Alias mantenuto per compatibilità con consumer storici. Non va più interpretato come probabilità.
     legacy = dict(quality)
     legacy["deprecated_alias"] = True
     legacy["note"] = quality["note"] + " Campo legacy analysis_confidence mantenuto solo per compatibilità."

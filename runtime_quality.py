@@ -153,6 +153,45 @@ def expire_stale_radar_change(data: dict, now: datetime | None = None) -> None:
         data["history"] = ([{"time": now.strftime("%d/%m/%Y %H:%M"), "text": title}] + history)[:50]
 
 
+def _normalized_signal_label(value) -> str:
+    text = str(value or "").lower().replace("–", "-").replace("—", "-")
+    text = re.sub(r"\s*\([^)]*\)\s*", " ", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
+def resolve_obsolete_nowcast_change(data: dict, now: datetime | None = None) -> None:
+    """Chiude una variazione 0–3 h quando il livello corrente non coincide più con il target annunciato."""
+    change = data.get("latest_change", {}) or {}
+    if str(change.get("status") or "") in {"expired", "resolved"}:
+        return
+    title = str(change.get("title") or "")
+    if "→" not in title or not re.match(r"^(Aumento|Riduzione) del segnale 0[–-]3 h:", title):
+        return
+
+    target = title.rsplit("→", 1)[-1].strip()
+    current = str((data.get("nowcast", {}) or {}).get("label") or "").strip()
+    if not target or not current or _normalized_signal_label(target) == _normalized_signal_label(current):
+        return
+
+    now = now or datetime.now(TZ)
+    previous_title = title
+    closed_title = "Segnalazione 0–3 h precedente conclusa"
+    data["latest_change"] = {
+        **change,
+        "title": closed_title,
+        "text": f"La variazione precedente non rappresenta più il quadro corrente, ora {current}.",
+        "window": "evento concluso",
+        "confidence": "—",
+        "evidence": f"Segnalazione precedente: {previous_title}. Stato 0–3 h corrente: {current}.",
+        "event_type": "nowcast_change",
+        "status": "resolved",
+        "resolved_at": now.isoformat(timespec="seconds"),
+    }
+    history = [item for item in (data.get("history", []) or []) if isinstance(item, dict)]
+    if not history or str(history[0].get("text") or "") != closed_title:
+        data["history"] = ([{"time": now.strftime("%d/%m/%Y %H:%M"), "text": closed_title}] + history)[:50]
+
+
 def _radar_stat_max(data: dict, product: str, radius: int) -> float | None:
     row = (((data.get("dpc_observations", {}) or {}).get("products", {}) or {}).get(product, {}) or {})
     if not row.get("ok"):
@@ -243,17 +282,34 @@ def _fetch_local_product(data: dict, product_name: str) -> tuple[dict, str | Non
         return fallback, str(exc)
 
 
+def _current_precipitation(row: dict) -> float | None:
+    current = row.get("current", {}) or {}
+    precipitation = _num(current.get("precipitation"))
+    if precipitation is not None:
+        return max(0.0, precipitation)
+    rain = _num(current.get("rain"))
+    showers = _num(current.get("showers"))
+    parts = [value for value in (rain, showers) if value is not None]
+    return max(0.0, sum(parts)) if parts else None
+
+
 def _model_precipitation_signal(data: dict) -> dict:
     amounts: list[tuple[str, float]] = []
+    current_amounts: list[tuple[str, float]] = []
     for row in data.get("model_details", []) or []:
         if not isinstance(row, dict) or not row.get("ok"):
             continue
+        label = str(row.get("label") or "modello")
         amount = _num(((row.get("next_0_3h", {}) or {}).get("precip_sum")))
         if amount is not None:
-            amounts.append((str(row.get("label") or "modello"), amount))
+            amounts.append((label, amount))
+        current_amount = _current_precipitation(row)
+        if current_amount is not None:
+            current_amounts.append((label, current_amount))
 
     wet = [(label, amount) for label, amount in amounts if amount >= 0.2]
     notable = [(label, amount) for label, amount in amounts if amount >= 0.5]
+    current_wet = [(label, amount) for label, amount in current_amounts if amount >= 0.1]
     if len(wet) >= 3:
         status = "supported"
         label = "Pioggia possibile"
@@ -270,7 +326,11 @@ def _model_precipitation_signal(data: dict) -> dict:
         "available_models": len(amounts),
         "wet_models": len(wet),
         "notable_models": len(notable),
+        "current_available_models": len(current_amounts),
+        "current_wet_models": len(current_wet),
+        "max_current_precip_mm": round(max((amount for _, amount in current_amounts), default=0.0), 2),
         "max_precip_0_3h_mm": round(max((amount for _, amount in amounts), default=0.0), 1),
+        "current_signals": [{"model": model, "current_precip_mm": round(amount, 2)} for model, amount in current_wet],
         "signals": [{"model": model, "precip_0_3h_mm": round(amount, 1)} for model, amount in wet],
         "semantic": "precipitation_presence_not_impact",
     }
@@ -435,6 +495,7 @@ def apply(data: dict, now: datetime | None = None, previous: dict | None = None,
     now = now or datetime.now(TZ)
     normalize_alert_relative_day(data, now)
     expire_stale_radar_change(data, now)
+    resolve_obsolete_nowcast_change(data, now)
     refine_home_nowcast_radar(data)
     if update_local:
         update_local_precipitation(data, previous=previous or {}, now=now)

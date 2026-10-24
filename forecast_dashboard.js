@@ -60,6 +60,72 @@
     document.head.appendChild(style);
   }
 
+  function summaryIcon(status) {
+    if (status === 'active') return '☂';
+    if (status === 'incoming') return '↘';
+    if (status === 'watch') return '◷';
+    return '✓';
+  }
+
+  function renderSummaryCards(data) {
+    const home = data?.home_summary || {};
+    const simple = home.nowcast_simple || {};
+    const hoursTitle = byId('homeHoursTitle');
+    const hoursText = byId('homeHoursText');
+    const hoursIcon = byId('hoursIcon');
+    if (hoursTitle && simple.title) hoursTitle.textContent = simple.title;
+    if (hoursText && simple.text) hoursText.textContent = simple.text;
+    if (hoursIcon) hoursIcon.textContent = summaryIcon(String(simple.status || 'calm'));
+
+    const stormTitle = byId('homeStormTitle');
+    const stormText = byId('homeStormText');
+    const stormIcon = byId('stormIcon');
+    if (!stormTitle || !stormText || !stormIcon) return;
+
+    const local = data?.local_precipitation || {};
+    const forecast = local.forecast_0_3h || {};
+    const lightning = data?.lightning || {};
+    const flashes20 = lightning.status === 'ok' ? (num(lightning?.radii?.['20']?.flash_count) || 0) : 0;
+    const hazard = data?.nowcast_tracking?.hazard_cell || {};
+    const distance = num(hazard.distance_km);
+
+    if (local.status === 'active') {
+      stormTitle.textContent = 'Pioggia nell’area di Giammoro';
+      stormText.textContent = 'Il radar multi-raggio rileva precipitazione nell’area. Il segnale areale non viene presentato come accumulo puntuale sulla stazione.';
+      stormIcon.textContent = '☂';
+      return;
+    }
+    if (flashes20 > 0) {
+      stormTitle.textContent = 'Fulmini nelle vicinanze';
+      stormText.textContent = `Rilevati ${flashes20} flash entro 20 km da Giammoro.`;
+      stormIcon.textContent = '⛈';
+      return;
+    }
+    if (local.status === 'recent') {
+      stormTitle.textContent = 'Pioggia terminata o attenuata';
+      stormText.textContent = 'Pioggia rilevata recentemente nell’area di Giammoro; il segnale radar locale attuale è cessato o si è attenuato.';
+      stormIcon.textContent = '☂';
+      return;
+    }
+    if (distance != null && distance <= 25) {
+      stormTitle.textContent = distance <= 15 ? 'Nucleo radar molto vicino' : 'Nucleo radar nelle vicinanze';
+      stormText.textContent = `Una cella radar significativa si trova a circa ${fmt(distance)} km da Giammoro${hazard.bearing ? ` ${hazard.bearing}` : ''}.`;
+      stormIcon.textContent = '↗';
+      return;
+    }
+    if (['weak', 'supported'].includes(String(forecast.status || ''))) {
+      stormTitle.textContent = 'Piovaschi possibili';
+      const wet = num(forecast.wet_models) || 0;
+      const available = num(forecast.available_models) || 0;
+      stormText.textContent = `Radar locale attualmente asciutto; ${wet}/${available} modelli mostrano un segnale di precipitazione nelle prossime 3 ore.`;
+      stormIcon.textContent = '☂';
+      return;
+    }
+    stormTitle.textContent = 'Nessuna pioggia o temporale vicino';
+    stormText.textContent = 'Il radar locale è attualmente asciutto e non risultano fulmini entro 20 km.';
+    stormIcon.textContent = '☂';
+  }
+
   function simpleNowcastHtml(home) {
     const row = home?.nowcast_simple || {};
     if (!row.title || !row.text) return '';
@@ -68,6 +134,8 @@
     const indicators = row.indicators || {};
     const signalRows = [
       ['Radar', indicators.radar],
+      ['Pioggia locale', indicators.pioggia_locale],
+      ['Modelli 0–3 h', indicators.modelli_0_3h],
       ['Traiettoria', indicators.trajectory],
       ['Fulmini', indicators.lightning],
       ['Distanza', indicators.distance]
@@ -160,6 +228,7 @@
   }
 
   function render(data) {
+    renderSummaryCards(data);
     renderVerification(data);
     const section = ensureSection();
     if (!section) return;
