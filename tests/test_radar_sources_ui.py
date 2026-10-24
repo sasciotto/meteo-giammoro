@@ -14,6 +14,8 @@ def test_radar_sources_ui_contains_requested_external_views_and_is_lazy():
     assert "mode-radar" in js
     assert "Radar e satellite" in js
     assert "non alimentano il motore di nowcasting" in js
+    assert "selectSource(SOURCES[0].id, false)" in js
+    assert "if (shouldLoad) loadSource(valid)" in js
 
 
 def test_site_prepare_injects_radar_sources_view():
