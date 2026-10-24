@@ -19,7 +19,6 @@ QUALITY_UI_PATH = Path(__file__).with_name("analysis_quality_ui.js")
 VERIFICATION_HISTORY_UI_PATH = Path(__file__).with_name("verification_history_ui.js")
 RADAR_UI_PATH = Path(__file__).with_name("radar_ui.js")
 RADAR_SOURCES_UI_PATH = Path(__file__).with_name("radar_sources_ui.js")
-RADAR_LOADING_UI_PATH = Path(__file__).with_name("radar_loading_ui.js")
 RADAR_APP_URL = "https://radar.protezionecivile.it/#/pages/dashboard?zoom=6"
 
 
@@ -31,7 +30,6 @@ def _dashboard_scripts() -> str:
         VERIFICATION_HISTORY_UI_PATH,
         RADAR_UI_PATH,
         RADAR_SOURCES_UI_PATH,
-        RADAR_LOADING_UI_PATH,
     ):
         if path.exists():
             scripts.append("<script>\n" + path.read_text(encoding="utf-8").strip() + "\n</script>")
@@ -83,17 +81,12 @@ def transform(html: str) -> str:
     html, count = LEGACY_CARD.subn(placeholder, html, count=1)
     if count:
         html = html.replace('<div class="grid three section">', '<div class="grid two section">', 1)
-        # OGGI E DOMANI viene sostituita dalla previsione completa. Le due card
-        # PROSSIME ORE / PIOGGIA E TEMPORALI restano visibili subito sotto
-        # "Previsione per Giammoro" come sintesi rapida della situazione.
         html = html.replace(
             '<div class="grid two section">',
             '<div class="grid two section" id="homeSummaryCards">',
             1,
         )
 
-    # Il 3–48 h non è un'allerta/rischio operativo: la card espone la tendenza
-    # modellistica e mantiene l'impatto separato nei dettagli del JSON.
     html = html.replace(
         '<div class="k">Rischio 3–48 h</div>',
         '<div class="k">Tendenza 3–48 h</div>',
