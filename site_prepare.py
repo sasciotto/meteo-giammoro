@@ -20,7 +20,9 @@ VERIFICATION_HISTORY_UI_PATH = Path(__file__).with_name("verification_history_ui
 RADAR_UI_PATH = Path(__file__).with_name("radar_ui.js")
 RADAR_SOURCES_UI_PATH = Path(__file__).with_name("radar_sources_ui.js")
 HOME_POLISH_UI_PATH = Path(__file__).with_name("home_polish_ui.js")
+SEISMIC_EVENTS_UI_PATH = Path(__file__).with_name("seismic_events_ui.js")
 AUTO_REFRESH_UI_PATH = Path(__file__).with_name("auto_refresh_ui.js")
+SEISMIC_DATA_PATH = Path(__file__).with_name("seismic_events.json")
 RADAR_APP_URL = "https://radar.protezionecivile.it/#/pages/dashboard?zoom=6"
 
 
@@ -33,11 +35,46 @@ def _dashboard_scripts() -> str:
         RADAR_UI_PATH,
         RADAR_SOURCES_UI_PATH,
         HOME_POLISH_UI_PATH,
+        SEISMIC_EVENTS_UI_PATH,
         AUTO_REFRESH_UI_PATH,
     ):
         if path.exists():
             scripts.append("<script>\n" + path.read_text(encoding="utf-8").strip() + "\n</script>")
     return "\n".join(scripts)
+
+
+def update_seismic_events() -> None:
+    """Aggiorna il dataset INGV senza rendere il deploy meteo dipendente dalla rete sismica."""
+    try:
+        import seismic_collector
+
+        payload = seismic_collector.collect(SEISMIC_DATA_PATH)
+        status = (payload.get("meta") or {}).get("status")
+        print(f"Dataset sismico INGV: {status}")
+    except Exception as exc:
+        print(f"Dataset sismico INGV non aggiornato: {exc}")
+
+
+def copy_seismic_events(dest_dir: Path) -> None:
+    if SEISMIC_DATA_PATH.exists():
+        shutil.copy2(SEISMIC_DATA_PATH, dest_dir / SEISMIC_DATA_PATH.name)
+
+
+def stage_seismic_events() -> None:
+    """Aggiunge il JSON sismico al commit dati gia gestito dal workflow, senza fallire localmente."""
+    if not SEISMIC_DATA_PATH.exists() or not Path(".git").exists():
+        return
+    try:
+        subprocess.run(
+            ["git", "add", str(SEISMIC_DATA_PATH)],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError):
+        pass
 
 
 def capture_official_radar_snapshot(output: Path) -> bool:
@@ -124,6 +161,9 @@ def main() -> int:
     source = Path(args.source)
     dest = Path(args.dest)
     dest.parent.mkdir(parents=True, exist_ok=True)
+    update_seismic_events()
+    copy_seismic_events(dest.parent)
+    stage_seismic_events()
     dest.write_text(transform(source.read_text(encoding="utf-8")), encoding="utf-8")
     captured = capture_official_radar_snapshot(dest.parent / "radar-dpc.png")
     print("Screenshot Radar-DPC acquisito" if captured else "Screenshot Radar-DPC non disponibile: uso fallback con link ufficiale")

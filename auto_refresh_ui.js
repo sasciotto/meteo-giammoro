@@ -11,11 +11,13 @@
   }
 
   function currentViewState() {
-    const mode = document.body.classList.contains('mode-radar')
-      ? 'radar'
-      : document.body.classList.contains('mode-expert')
-        ? 'expert'
-        : 'home';
+    const mode = document.body.classList.contains('mode-events')
+      ? 'events'
+      : document.body.classList.contains('mode-radar')
+        ? 'radar'
+        : document.body.classList.contains('mode-expert')
+          ? 'expert'
+          : 'home';
     const radarSource = document.querySelector('.radar-source-tab.active')?.dataset.radarSource || null;
     return {
       mode,
@@ -45,7 +47,9 @@
     const state = readViewState();
     if (!state) return;
 
-    if (state.mode === 'radar') {
+    if (state.mode === 'events') {
+      document.getElementById('eventsBtn')?.click();
+    } else if (state.mode === 'radar') {
       document.getElementById('radarBtn')?.click();
       if (state.radarSource) {
         document.querySelector(`[data-radar-source="${CSS.escape(state.radarSource)}"]`)?.click();
