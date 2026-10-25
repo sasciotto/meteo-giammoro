@@ -50,8 +50,10 @@
       .home-nowcast-timeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 13px}
       .home-nowcast-step{padding:10px 11px;border:1px solid var(--line);border-radius:11px;background:var(--surface2)}
       .home-nowcast-step-time{font-size:10px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-      .home-nowcast-step-main{margin-top:3px;font-size:13px;font-weight:770;color:#34434e;line-height:1.3}
-      .home-nowcast-step-meta{margin-top:4px;font-size:10px;color:var(--muted)}
+      .home-nowcast-step-main{display:flex;align-items:center;gap:8px;margin-top:4px;font-size:13px;font-weight:770;color:#34434e;line-height:1.3}
+      .home-nowcast-step-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px;width:30px;height:30px;font-size:24px;line-height:1;filter:drop-shadow(0 2px 4px rgba(20,32,42,.08))}
+      .home-nowcast-step-condition{min-width:0}
+      .home-nowcast-step-meta{margin-top:5px;font-size:10px;color:var(--muted)}
       #forecastDetail .hourly-strip{display:none}
       #forecastDetail .day-grid{margin-top:8px}
       .home-alert.home-alert-compact{padding:10px 13px;gap:10px;border-left-width:4px;background:#f6fbf8}
@@ -64,7 +66,7 @@
         .hero{align-items:flex-start}.hero-meta{align-items:flex-start;text-align:left;padding:7px 9px}.weather-main-inner{padding:18px}.home-nowcast-signals{grid-template-columns:repeat(2,minmax(0,1fr))}.home-nowcast-timeline{grid-template-columns:repeat(2,minmax(0,1fr))}.home-observation-strip{display:block}.home-observation-sources{margin-top:7px}#forecastDetail .section-title{display:block}.home-forecast-actions{margin-top:9px}
       }
       @media(max-width:430px){
-        .hero h1{font-size:29px}.hero-meta{margin-top:7px}.weather-icon{font-size:49px;min-width:58px}.weather-temp{font-size:55px}.weather-main-inner{padding:16px}.home-nowcast-title{font-size:19px}.home-nowcast-timeline{grid-template-columns:1fr 1fr}
+        .hero h1{font-size:29px}.hero-meta{margin-top:7px}.weather-icon{font-size:49px;min-width:58px}.weather-temp{font-size:55px}.weather-main-inner{padding:16px}.home-nowcast-title{font-size:19px}.home-nowcast-timeline{grid-template-columns:1fr 1fr}.home-nowcast-step-icon{flex-basis:27px;width:27px;height:27px;font-size:22px}
       }
     `;
     document.head.appendChild(style);
@@ -131,6 +133,18 @@
     return index === 0 ? 'Prossima ora' : `+${index + 1} h`;
   }
 
+  function fallbackWeatherIcon(label) {
+    const text = String(label || '').toLowerCase();
+    if (text.includes('temporal')) return '⛈';
+    if (text.includes('piogg')) return '☂';
+    if (text.includes('neve')) return '❄';
+    if (text.includes('nebb')) return '≋';
+    if (text.includes('molto nuvol')) return '☁';
+    if (text.includes('parzial') || text.includes('poco nuvol')) return '⛅';
+    if (text.includes('sereno')) return '☀';
+    return '•';
+  }
+
   function renderNowcastTimeline(data) {
     const card = byId('homeNowcastSimple');
     if (!card) return;
@@ -159,7 +173,16 @@
 
       const main = document.createElement('div');
       main.className = 'home-nowcast-step-main';
-      main.textContent = row?.label || 'Scenario orario';
+
+      const icon = document.createElement('span');
+      icon.className = 'home-nowcast-step-icon';
+      icon.setAttribute('aria-hidden', 'true');
+      icon.textContent = String(row?.icon || fallbackWeatherIcon(row?.label));
+
+      const condition = document.createElement('span');
+      condition.className = 'home-nowcast-step-condition';
+      condition.textContent = row?.label || 'Scenario orario';
+      main.append(icon, condition);
 
       const meta = document.createElement('div');
       meta.className = 'home-nowcast-step-meta';
