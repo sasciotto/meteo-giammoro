@@ -28,6 +28,15 @@ def test_seismic_ui_keeps_official_only_tsunami_language_and_ingv_links():
     assert "Mappa radiale" in js
 
 
+def test_seismic_ui_emphasizes_dates_and_times():
+    js = Path("seismic_events_ui.js").read_text(encoding="utf-8")
+    assert "events-datetime" in js
+    assert "events-status-time" in js
+    assert "font-variant-numeric:tabular-nums" in js
+    assert 'font-weight:780' in js
+    assert '<span class=\"events-datetime\">${esc(localTime(event.time_local || event.time_utc))}</span>' in js
+
+
 def test_site_prepare_updates_and_copies_seismic_dataset():
     source = Path("site_prepare.py").read_text(encoding="utf-8")
     assert "SEISMIC_EVENTS_UI_PATH" in source
