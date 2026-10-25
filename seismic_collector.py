@@ -42,6 +42,15 @@ def _float(value: Any) -> float | None:
         return None
 
 
+def _field(row: dict[str, Any], *names: str) -> Any:
+    normalized = {str(key).strip().lower(): value for key, value in row.items() if key is not None}
+    for name in names:
+        key = name.strip().lower()
+        if key in normalized:
+            return normalized[key]
+    return None
+
+
 def _parse_utc(value: str) -> datetime | None:
     text = str(value or "").strip()
     if not text:
@@ -97,18 +106,18 @@ def parse_fdsn_text(text: str) -> list[dict[str, Any]]:
     events: list[dict[str, Any]] = []
 
     for row in reader:
-        lat = _float(row.get("Latitude"))
-        lon = _float(row.get("Longitude"))
-        origin = _parse_utc(str(row.get("Time") or ""))
+        lat = _float(_field(row, "Latitude"))
+        lon = _float(_field(row, "Longitude"))
+        origin = _parse_utc(str(_field(row, "Time") or ""))
         if lat is None or lon is None or origin is None:
             continue
 
-        event_type = str(row.get("EventType") or "").strip().lower()
+        event_type = str(_field(row, "EventType") or "").strip().lower()
         if event_type and event_type != "earthquake":
             continue
 
-        event_id = str(row.get("EventID") or "").strip()
-        magnitude = _float(row.get("Magnitude"))
+        event_id = str(_field(row, "EventID") or "").strip()
+        magnitude = _float(_field(row, "Magnitude"))
         distance = haversine_km(GIAMMORO_LAT, GIAMMORO_LON, lat, lon)
         bearing = bearing_degrees(GIAMMORO_LAT, GIAMMORO_LON, lat, lon)
         local_time = origin.astimezone(ROME)
@@ -120,11 +129,11 @@ def parse_fdsn_text(text: str) -> list[dict[str, Any]]:
                 "time_local": local_time.isoformat(timespec="seconds"),
                 "latitude": round(lat, 5),
                 "longitude": round(lon, 5),
-                "depth_km": _float(row.get("Depth/km")),
+                "depth_km": _float(_field(row, "Depth/km", "Depth/Km", "Depth/KM")),
                 "magnitude": magnitude,
-                "magnitude_type": str(row.get("MagType") or "").strip() or None,
-                "location": str(row.get("EventLocationName") or "").strip() or "Area non specificata",
-                "author": str(row.get("Author") or "").strip() or None,
+                "magnitude_type": str(_field(row, "MagType") or "").strip() or None,
+                "location": str(_field(row, "EventLocationName") or "").strip() or "Area non specificata",
+                "author": str(_field(row, "Author") or "").strip() or None,
                 "event_type": event_type or "earthquake",
                 "distance_km": round(distance, 1),
                 "bearing_deg": round(bearing),
