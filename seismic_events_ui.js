@@ -41,20 +41,20 @@
       .events-only{display:none}body.mode-events .events-only{display:block}
       .events-view{margin-top:0}.events-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:12px}
       .events-head h2{margin:0;font-size:25px}.events-head p{margin:5px 0 0;color:var(--muted);max-width:780px}
-      .events-status{font-size:11px;color:var(--muted);text-align:right}.events-status strong{display:block;color:var(--text);font-size:12px}
+      .events-status{font-size:11px;color:var(--muted);text-align:right}.events-status strong{display:block;color:var(--text);font-size:12px}.events-status-time{display:inline-block;margin-top:2px;color:#34434e;font-size:12px;font-weight:760;font-variant-numeric:tabular-nums}
       .events-summary-grid{display:grid;grid-template-columns:1.25fr .75fr .75fr;gap:10px;margin-top:12px}
       .events-summary-card{border:1px solid var(--line);border-radius:14px;padding:14px;background:var(--surface)}
       .events-summary-card.primary{background:linear-gradient(135deg,#f4f7f9,#fff)}
-      .events-magnitude{font-size:31px;font-weight:820;letter-spacing:-.03em;margin-top:4px}.events-place{font-size:14px;font-weight:760;margin-top:3px}.events-meta{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}
+      .events-magnitude{font-size:31px;font-weight:820;letter-spacing:-.03em;margin-top:4px}.events-place{font-size:14px;font-weight:760;margin-top:3px}.events-meta{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.45}.events-datetime{display:inline-block;color:#34434e;font-size:12px;font-weight:780;letter-spacing:.01em;font-variant-numeric:tabular-nums}.events-meta .events-datetime{margin-bottom:2px}
       .events-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px;margin-top:12px}.events-panel{padding:16px 17px}
       .events-panel h3{margin:0;font-size:18px}.events-panel-sub{font-size:11px;color:var(--muted);margin-top:3px}
       .seismic-map{position:relative;min-height:410px;margin-top:12px;border:1px solid var(--line);border-radius:14px;background:radial-gradient(circle at center,#fff 0,#f6f9fa 58%,#eef3f5 100%);overflow:hidden}
       .seismic-map svg{display:block;width:100%;height:410px}.seismic-map text{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;fill:#64727d}.seismic-map .ring{fill:none;stroke:#cbd7dd;stroke-width:1;stroke-dasharray:4 5}.seismic-map .axis{stroke:#dce5e9;stroke-width:1}.seismic-map .home{fill:#0f6786;stroke:#fff;stroke-width:3}.seismic-map .quake{fill:#ad2a2a;fill-opacity:.78;stroke:#fff;stroke-width:1.4;cursor:pointer}.seismic-map .quake:hover{fill-opacity:1}.seismic-map .label{font-size:10px}.seismic-map .home-label{font-size:11px;font-weight:800;fill:#0f6786}
-      .events-list{margin-top:10px}.event-row{display:grid;grid-template-columns:76px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.event-row:first-child{border-top:0}.event-mag{font-size:18px;font-weight:820}.event-place{font-weight:720;font-size:13px}.event-detail{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.4}.event-link{font-size:11px;font-weight:760;white-space:nowrap}
+      .events-list{margin-top:10px}.event-row{display:grid;grid-template-columns:76px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}.event-row:first-child{border-top:0}.event-mag{font-size:18px;font-weight:820}.event-place{font-weight:720;font-size:13px}.event-detail{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.45}.event-detail .events-datetime{font-size:11px;margin-right:2px}.event-link{font-size:11px;font-weight:760;white-space:nowrap}
       .events-note{margin-top:12px;padding:12px 13px;border:1px solid var(--line);border-radius:12px;background:var(--surface2);font-size:12px;line-height:1.5}.events-note strong{display:block;margin-bottom:3px}
       .events-error{padding:18px;border:1px solid #ead8aa;border-radius:13px;background:#fff8e9;color:#654c13;margin-top:12px}.events-loading{padding:22px;text-align:center;color:var(--muted)}
       @media(max-width:850px){.events-summary-grid{grid-template-columns:1fr 1fr}.events-summary-card.primary{grid-column:1/-1}.events-grid{grid-template-columns:1fr}.events-status{text-align:left}}
-      @media(max-width:560px){.events-head{display:block}.events-status{margin-top:8px}.events-summary-grid{grid-template-columns:1fr}.events-summary-card.primary{grid-column:auto}.event-row{grid-template-columns:66px 1fr}.event-link{grid-column:2}.seismic-map,.seismic-map svg{min-height:340px;height:340px}}
+      @media(max-width:560px){.events-head{display:block}.events-status{margin-top:8px}.events-summary-grid{grid-template-columns:1fr}.events-summary-card.primary{grid-column:auto}.event-row{grid-template-columns:66px 1fr}.event-link{grid-column:2}.seismic-map,.seismic-map svg{min-height:340px;height:340px}.events-datetime{font-size:11.5px}.event-detail .events-datetime{font-size:11px}}
     `;
     document.head.appendChild(style);
   }
@@ -88,7 +88,7 @@
 
   function eventSummaryCard(label, event, primary=false) {
     if (!event) return `<div class="events-summary-card${primary?' primary':''}"><div class="k">${esc(label)}</div><div class="events-place">Nessun evento nel periodo</div><div class="events-meta">Nessun terremoto corrispondente ai filtri correnti.</div></div>`;
-    return `<div class="events-summary-card${primary?' primary':''}"><div class="k">${esc(label)}</div><div class="events-magnitude">${esc(magnitude(event))}</div><div class="events-place">${esc(event.location)}</div><div class="events-meta">${esc(localTime(event.time_local || event.time_utc))}<br>${esc(event.distance_km)} km ${esc(event.direction || '')} da Giammoro · profondità ${event.depth_km == null ? '—' : esc(event.depth_km)+' km'}</div></div>`;
+    return `<div class="events-summary-card${primary?' primary':''}"><div class="k">${esc(label)}</div><div class="events-magnitude">${esc(magnitude(event))}</div><div class="events-place">${esc(event.location)}</div><div class="events-meta"><span class="events-datetime">${esc(localTime(event.time_local || event.time_utc))}</span><br>${esc(event.distance_km)} km ${esc(event.direction || '')} da Giammoro · profondità ${event.depth_km == null ? '—' : esc(event.depth_km)+' km'}</div></div>`;
   }
 
   function mapSvg(events) {
@@ -114,7 +114,7 @@
   function eventRows(events, limit=12) {
     const rows = (events || []).slice(0,limit);
     if (!rows.length) return '<div class="events-note">Nessun evento nel periodo e raggio selezionati.</div>';
-    return `<div class="events-list">${rows.map(event => `<div class="event-row"><div class="event-mag">${esc(magnitude(event))}</div><div><div class="event-place">${esc(event.location)}</div><div class="event-detail">${esc(localTime(event.time_local || event.time_utc))} · ${esc(event.distance_km)} km ${esc(event.direction || '')} da Giammoro · prof. ${event.depth_km == null ? '—' : esc(event.depth_km)+' km'}</div></div><a class="source-link event-link" href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Scheda INGV ↗</a></div>`).join('')}</div>`;
+    return `<div class="events-list">${rows.map(event => `<div class="event-row"><div class="event-mag">${esc(magnitude(event))}</div><div><div class="event-place">${esc(event.location)}</div><div class="event-detail"><span class="events-datetime">${esc(localTime(event.time_local || event.time_utc))}</span> · ${esc(event.distance_km)} km ${esc(event.direction || '')} da Giammoro · prof. ${event.depth_km == null ? '—' : esc(event.depth_km)+' km'}</div></div><a class="source-link event-link" href="${esc(event.source_url)}" target="_blank" rel="noopener noreferrer">Scheda INGV ↗</a></div>`).join('')}</div>`;
   }
 
   function render(data) {
@@ -126,7 +126,7 @@
     const regional = Array.isArray(data?.regional) ? data.regional : [];
     const local = Array.isArray(data?.local) ? data.local : [];
 
-    status.innerHTML = `<strong>${meta.status === 'ok' ? 'INGV aggiornato' : meta.status === 'stale' ? 'Ultimo dato disponibile' : 'Dato non disponibile'}</strong>${esc(meta.generated_at ? localTime(meta.generated_at) : '—')} · ${esc(meta.events_count ?? regional.length)} eventi`;
+    status.innerHTML = `<strong>${meta.status === 'ok' ? 'INGV aggiornato' : meta.status === 'stale' ? 'Ultimo dato disponibile' : 'Dato non disponibile'}</strong><span class="events-status-time">${esc(meta.generated_at ? localTime(meta.generated_at) : '—')}</span> · ${esc(meta.events_count ?? regional.length)} eventi`;
 
     content.innerHTML = `<div class="events-summary-grid">${eventSummaryCard(`Ultimo evento entro ${summary.local_radius_km || 150} km`, summary.latest_local, true)}${eventSummaryCard('Più forte vicino', summary.strongest_local)}${eventSummaryCard('Più forte entro 500 km', summary.strongest_regional)}</div><div class="events-grid"><div class="card events-panel"><h3>Mappa rispetto a Giammoro</h3><div class="events-panel-sub">Mappa radiale: posizione relativa e distanza. Non rappresenta confini amministrativi o pericolosità.</div>${mapSvg(regional)}</div><div class="card events-panel"><h3>Eventi entro 150 km</h3><div class="events-panel-sub">Ultimi ${esc(meta.period_days || 7)} giorni · fonte INGV</div>${eventRows(local,10)}</div></div><div class="card events-panel section"><h3>Sicilia, Calabria e area circostante</h3><div class="events-panel-sub">Eventi entro ${esc(summary.regional_radius_km || 500)} km da Giammoro · ordinati dal più recente</div>${eventRows(regional,16)}</div><div class="events-note"><strong>${esc(data?.tsunami?.title || 'Maremoti: solo informazioni ufficiali')}</strong>${esc(data?.tsunami?.text || '')} <a class="source-link" href="${esc(data?.tsunami?.cat_url || 'https://cat.ingv.it/')}" target="_blank" rel="noopener noreferrer">CAT-INGV ↗</a></div><div class="events-note"><strong>${esc(data?.safety?.title || 'In caso di terremoto')}</strong>${esc(data?.safety?.text || '')} <a class="source-link" href="${esc(data?.safety?.url || '#')}" target="_blank" rel="noopener noreferrer">Protezione Civile ↗</a></div>${meta.error ? `<div class="events-error">Aggiornamento INGV non riuscito: viene mostrato l'ultimo dataset disponibile. ${esc(meta.error)}</div>` : ''}`;
   }
