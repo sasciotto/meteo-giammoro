@@ -44,7 +44,7 @@
       .home-nowcast{padding:16px 17px;margin-bottom:10px}
       .home-nowcast-k{font-size:10px}
       .home-nowcast-title{font-size:22px}
-      .home-nowcast-text{font-size:14px;max-width:860px}
+      .home-nowcast-text{font-size:17px;font-weight:640;line-height:1.55;max-width:900px;margin-top:7px}
       .home-nowcast-signals{grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
       .home-nowcast-signal{padding:8px 9px}
       .home-nowcast-timeline{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin:0 0 13px}
@@ -63,7 +63,7 @@
       .home-alert.home-alert-compact .home-alert-text{display:none}
       .home-alert.home-alert-compact .home-alert-link{font-size:11px}
       @media(max-width:700px){
-        .hero{align-items:flex-start}.hero-meta{align-items:flex-start;text-align:left;padding:7px 9px}.weather-main-inner{padding:18px}.home-nowcast-signals{grid-template-columns:repeat(2,minmax(0,1fr))}.home-nowcast-timeline{grid-template-columns:repeat(2,minmax(0,1fr))}.home-observation-strip{display:block}.home-observation-sources{margin-top:7px}#forecastDetail .section-title{display:block}.home-forecast-actions{margin-top:9px}
+        .hero{align-items:flex-start}.hero-meta{align-items:flex-start;text-align:left;padding:7px 9px}.weather-main-inner{padding:18px}.home-nowcast-text{font-size:16px;line-height:1.5}.home-nowcast-signals{grid-template-columns:repeat(2,minmax(0,1fr))}.home-nowcast-timeline{grid-template-columns:repeat(2,minmax(0,1fr))}.home-observation-strip{display:block}.home-observation-sources{margin-top:7px}#forecastDetail .section-title{display:block}.home-forecast-actions{margin-top:9px}
       }
       @media(max-width:430px){
         .hero h1{font-size:29px}.hero-meta{margin-top:7px}.weather-icon{font-size:49px;min-width:58px}.weather-temp{font-size:55px}.weather-main-inner{padding:16px}.home-nowcast-title{font-size:19px}.home-nowcast-timeline{grid-template-columns:1fr 1fr}.home-nowcast-step-icon{flex-basis:27px;width:27px;height:27px;font-size:22px}
