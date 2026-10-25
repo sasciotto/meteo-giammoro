@@ -37,6 +37,13 @@ def test_home_polish_hourly_cards_use_backend_weather_icons():
     assert "aria-hidden" in js
 
 
+def test_home_polish_emphasizes_operational_nowcast_message():
+    js = Path("home_polish_ui.js").read_text(encoding="utf-8")
+    compact = "".join(js.split())
+    assert ".home-nowcast-text{font-size:17px;font-weight:640;line-height:1.55" in compact
+    assert ".home-nowcast-text{font-size:16px;line-height:1.5}" in compact
+
+
 def test_home_polish_keeps_support_station_identity_explicit():
     js = Path("home_polish_ui.js").read_text(encoding="utf-8")
     assert "station.display_name || station.name" in js
