@@ -29,6 +29,14 @@ def test_home_polish_reuses_backend_nowcast_and_marks_model_timeline():
     assert "['warning','orange','red']" in compact
 
 
+def test_home_polish_hourly_cards_use_backend_weather_icons():
+    js = Path("home_polish_ui.js").read_text(encoding="utf-8")
+    assert "row?.icon || fallbackWeatherIcon(row?.label)" in js
+    assert "home-nowcast-step-icon" in js
+    assert "fallbackWeatherIcon" in js
+    assert "aria-hidden" in js
+
+
 def test_home_polish_keeps_support_station_identity_explicit():
     js = Path("home_polish_ui.js").read_text(encoding="utf-8")
     assert "station.display_name || station.name" in js
