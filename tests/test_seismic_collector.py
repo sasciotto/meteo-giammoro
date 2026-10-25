@@ -4,7 +4,7 @@ from pathlib import Path
 import seismic_collector as s
 
 
-SAMPLE = """#EventID|Time|Latitude|Longitude|Depth/km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|MagAuthor|EventLocationName|EventType
+SAMPLE = """#EventID|Time|Latitude|Longitude|Depth/Km|Author|Catalog|Contributor|ContributorID|MagType|Magnitude|MagAuthor|EventLocationName|EventType
 123456|2026-10-25T10:15:00.000000|38.2500|15.4000|12.3|SURVEY-INGV|INGV|INGV|123456|ML|2.4|SURVEY-INGV|4 km NE Giammoro (ME)|earthquake
 123457|2026-10-24T08:00:00.000000|37.5000|14.0000|8.0|SURVEY-INGV|INGV|INGV|123457|ML|3.1|SURVEY-INGV|Sicilia centrale|earthquake
 """
