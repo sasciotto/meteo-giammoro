@@ -59,7 +59,8 @@ def test_radar_mobile_safe_mode_never_loads_embeds_or_gif():
     assert "Anteprimadisattivatasudispositivomobile" in compact
     assert "Modalitàmobileprotetta" in compact
     assert "Apri${source.label}nellaschedacorrente→" in compact
-    assert 'target="_blank"' not in compact.split('radar-mobile-open', 1)[1].split('</a>', 1)[0]
+    assert '<aclass="radar-mobile-open"href="${source.openUrl}">Apri${source.label}nellaschedacorrente→</a>' in compact
+    assert '<aclass="radar-mobile-open"href="${source.openUrl}"target="_blank"' not in compact
 
 
 def test_satellite_mtg_is_external_only_with_official_fallback():
