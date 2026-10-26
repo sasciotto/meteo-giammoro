@@ -20,7 +20,7 @@ def test_radar_sources_ui_contains_requested_external_views_and_is_lazy():
     assert "Radar e satellite" in js
     assert "non alimentano il motore di nowcasting" in js
     assert "selectSource(SOURCES[0].id,false)" in compact
-    assert "if(shouldLoad)loadSource(valid)" in compact
+    assert "if(shouldLoad&&!isMobileSafeMode())loadSource(valid)" in compact
 
 
 def test_radar_frames_scale_and_follow_viewport():
@@ -44,6 +44,19 @@ def test_radar_loading_is_integrated_without_overlay_patch():
     assert "radar_loading_ui.js" not in s._dashboard_scripts()
     assert "<iframeclass=\"radar-source-frame\"" in compact
     assert "hidden></iframe>" not in compact
+
+
+def test_radar_mobile_safe_mode_never_loads_embeds_or_gif():
+    js, compact = _compact_js()
+    assert "functionisMobileSafeMode()" in compact
+    assert "(max-width:900px)" in compact
+    assert "(pointer:coarse)" in compact
+    assert "if(isMobileSafeMode())return;" in compact
+    assert "if(shouldLoad&&!isMobileSafeMode())loadSource(valid)" in compact
+    assert "Anteprimadisattivatasudispositivomobile" in compact
+    assert "Modalitàmobileprotetta" in compact
+    assert "Apri${source.label}nellaschedacorrente→" in compact
+    assert 'target="_blank"' not in compact.split('radar-mobile-open', 1)[1].split('</a>', 1)[0]
 
 
 def test_site_prepare_injects_radar_sources_view():
