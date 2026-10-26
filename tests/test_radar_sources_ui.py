@@ -14,7 +14,10 @@ def test_radar_sources_ui_contains_requested_external_views_and_is_lazy():
     assert "meteoeradar.it/radar-meteo/giammoro/9429567" in js
     assert "embed.windy.com/embed.html" in js
     assert "overlay=radar" in js
-    assert "modeles20.meteociel.fr/satellite/animsatsandvisirmtgit.gif" in js
+    assert "meteociel.fr/accueil/satellite.php?mode=animation-visible-hd-mtg&region=it" in js
+    assert "view.eumetsat.int" in js
+    assert "modeles20.meteociel.fr/satellite/animsatsandvisirmtgit.gif" not in js
+    assert "kind:'external'" in compact
     assert "data-radar-src" in js
     assert "mode-radar" in js
     assert "Radar e satellite" in js
@@ -57,6 +60,16 @@ def test_radar_mobile_safe_mode_never_loads_embeds_or_gif():
     assert "Modalitàmobileprotetta" in compact
     assert "Apri${source.label}nellaschedacorrente→" in compact
     assert 'target="_blank"' not in compact.split('radar-mobile-open', 1)[1].split('</a>', 1)[0]
+
+
+def test_satellite_mtg_is_external_only_with_official_fallback():
+    js, compact = _compact_js()
+    assert "Satellite MTG · Meteosat-12" in js
+    assert "kind:'external'" in compact
+    assert "externalPanel" in js
+    assert "EUMETView ufficiale" in js
+    assert "Visualizzazione satellitare esterna" in js
+    assert "source.kind==='external'" in compact
 
 
 def test_site_prepare_injects_radar_sources_view():
