@@ -49,3 +49,22 @@ def test_home_polish_keeps_support_station_identity_explicit():
     assert "station.display_name || station.name" in js
     assert "coordinate di Giammoro" in js
     assert "Stazioni circostanti usate come controllo" in js
+
+
+def test_home_polish_uses_model_consensus_for_current_sky():
+    js = Path("home_polish_ui.js").read_text(encoding="utf-8")
+    compact = "".join(js.split())
+    assert "functioncurrentSkyConsensus(data)" in compact
+    assert "data?.model_details" in js
+    assert "row.current.cloud_cover" in js
+    assert "spread>=35" in compact
+    assert "label:'Cielo variabile'" in compact
+    assert "Consenso modellistico corrente" in js
+    assert "forte variabilità" in js
+
+
+def test_home_polish_does_not_override_rain_or_storm_with_sky_consensus():
+    js = Path("home_polish_ui.js").read_text(encoding="utf-8")
+    compact = "".join(js.split())
+    assert "functionrenderCurrentSky(data)" in compact
+    assert "card.classList.contains('rain')||card.classList.contains('storm')" in compact
