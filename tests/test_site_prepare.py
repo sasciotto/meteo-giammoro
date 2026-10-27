@@ -31,3 +31,14 @@ def test_forecast_dashboard_inserts_full_forecast_before_quick_cards():
     assert "const summaryCards = byId('homeSummaryCards');" in js
     assert "summaryCards.parentElement.insertBefore(section, summaryCards);" in js
     assert js.index("homeSummaryCards") < js.index("homeAlertCard")
+
+
+def test_seismic_persistence_is_explicitly_managed_by_workflow():
+    site_prepare = Path("site_prepare.py").read_text(encoding="utf-8")
+    workflow = Path(".github/workflows/update-weather.yml").read_text(encoding="utf-8")
+
+    assert "stage_seismic_events" not in site_prepare
+    assert "seismic_events.json" in workflow
+    assert 'DATA_FILES="data.json history.json verification.json events.json seismic_events.json"' in workflow
+    assert "git diff --cached --quiet -- ${DATA_FILES}" in workflow
+    assert "git add ${DATA_FILES}" in workflow
