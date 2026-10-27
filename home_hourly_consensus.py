@@ -67,11 +67,12 @@ def _style(rows: list[dict], cloud: float | None, spread: float | None, rain: fl
         return {'icon': '◌', 'kind': 'cloudy', 'label': 'Condizioni del cielo incerte', 'weather_code': 2}
 
     if spread is not None and spread >= 35:
-        if cloud >= 70:
-            return {'icon': '☁', 'kind': 'cloudy', 'label': 'Nuvoloso variabile', 'weather_code': 3}
-        if cloud >= 35:
-            return {'icon': '☁' if night else '⛅', 'kind': 'cloudy', 'label': 'Cielo variabile', 'weather_code': 2}
-        return {'icon': '☁' if night else '⛅', 'kind': 'cloudy', 'label': 'Poco nuvoloso o variabile', 'weather_code': 1}
+        return {
+            'icon': '☁' if night or cloud >= 70 else '⛅',
+            'kind': 'cloudy',
+            'label': 'Nuvoloso variabile' if cloud >= 70 else 'Cielo variabile',
+            'weather_code': 3 if cloud >= 70 else 2,
+        }
 
     if cloud >= 85:
         return {'icon': '☁', 'kind': 'cloudy', 'label': 'Molto nuvoloso', 'weather_code': 3}
