@@ -60,23 +60,6 @@ def copy_seismic_events(dest_dir: Path) -> None:
         shutil.copy2(SEISMIC_DATA_PATH, dest_dir / SEISMIC_DATA_PATH.name)
 
 
-def stage_seismic_events() -> None:
-    """Aggiunge il JSON sismico al commit dati gia gestito dal workflow, senza fallire localmente."""
-    if not SEISMIC_DATA_PATH.exists() or not Path(".git").exists():
-        return
-    try:
-        subprocess.run(
-            ["git", "add", str(SEISMIC_DATA_PATH)],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            text=True,
-            timeout=10,
-            check=False,
-        )
-    except (OSError, subprocess.SubprocessError):
-        pass
-
-
 def capture_official_radar_snapshot(output: Path) -> bool:
     """Cattura la web app Radar-DPC reale senza rendere il deploy dipendente dal browser."""
     browser = next(
@@ -163,7 +146,6 @@ def main() -> int:
     dest.parent.mkdir(parents=True, exist_ok=True)
     update_seismic_events()
     copy_seismic_events(dest.parent)
-    stage_seismic_events()
     dest.write_text(transform(source.read_text(encoding="utf-8")), encoding="utf-8")
     captured = capture_official_radar_snapshot(dest.parent / "radar-dpc.png")
     print("Screenshot Radar-DPC acquisito" if captured else "Screenshot Radar-DPC non disponibile: uso fallback con link ufficiale")
