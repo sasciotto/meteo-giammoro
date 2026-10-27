@@ -6,11 +6,13 @@ import json
 from pathlib import Path
 
 import analysis_quality
+import home_hourly_consensus
 
 
 def run(path: Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
     analysis_quality.apply(data)
+    home_hourly_consensus.apply_from_cache(data)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return data
 
@@ -20,7 +22,7 @@ def main() -> int:
     parser.add_argument("--data", default="data.json")
     args = parser.parse_args()
     run(Path(args.data))
-    print("Qualità dati, affidabilità traiettoria e confidenza previsionale aggiornate")
+    print("Qualità dati, affidabilità traiettoria, confidenza previsionale e consenso orario aggiornati")
     return 0
 
 
