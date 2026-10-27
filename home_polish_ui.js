@@ -127,6 +127,58 @@
     strip.appendChild(sourceWrap);
   }
 
+  function currentSkyConsensus(data) {
+    const rows = Array.isArray(data?.model_details) ? data.model_details : [];
+    const clouds = rows
+      .filter(row => row?.ok && row?.current)
+      .map(row => num(row.current.cloud_cover))
+      .filter(value => value != null && value >= 0 && value <= 100)
+      .sort((a, b) => a - b);
+    if (clouds.length < 2) return null;
+
+    const mid = Math.floor(clouds.length / 2);
+    const median = clouds.length % 2 ? clouds[mid] : (clouds[mid - 1] + clouds[mid]) / 2;
+    const spread = clouds[clouds.length - 1] - clouds[0];
+    const night = (() => {
+      try {
+        const hour = Number(new Intl.DateTimeFormat('en-GB', {timeZone:'Europe/Rome', hour:'2-digit', hourCycle:'h23'}).format(new Date()));
+        return Number.isFinite(hour) && (hour >= 19 || hour < 7);
+      } catch (_) {
+        return false;
+      }
+    })();
+
+    if (spread >= 35) {
+      return {value:median, spread, count:clouds.length, label:'Cielo variabile', icon:night?'☁':'⛅', kind:'cloudy', disagreement:true};
+    }
+    if (median >= 80) return {value:median, spread, count:clouds.length, label:'Cielo molto nuvoloso', icon:'☁', kind:'cloudy', disagreement:false};
+    if (median >= 45) return {value:median, spread, count:clouds.length, label:'Cielo parzialmente nuvoloso', icon:night?'☁':'⛅', kind:'cloudy', disagreement:false};
+    return {value:median, spread, count:clouds.length, label:'Cielo poco nuvoloso', icon:night?'☾':'🌤', kind:'calm', disagreement:false};
+  }
+
+  function renderCurrentSky(data) {
+    const card = byId('weatherMain');
+    if (!card || card.classList.contains('rain') || card.classList.contains('storm')) return;
+    const sky = currentSkyConsensus(data);
+    if (!sky) return;
+
+    const description = byId('homeDescription');
+    const icon = byId('weatherIcon');
+    const cloud = byId('homeCloud');
+    const cloudText = byId('homeCloudText');
+
+    card.className = `card weather-main ${sky.kind}`;
+    if (description) {
+      description.textContent = sky.label;
+      description.title = `Consenso modellistico corrente: mediana ${fmt(sky.value)}%, spread ${fmt(sky.spread)} punti su ${sky.count} modelli.`;
+    }
+    if (icon) icon.textContent = sky.icon;
+    if (cloud) cloud.textContent = `${fmt(sky.value)} %`;
+    if (cloudText) cloudText.textContent = sky.disagreement
+      ? `Consenso ${sky.count} modelli · forte variabilità`
+      : `Consenso ${sky.count} modelli`;
+  }
+
   function forecastStepLabel(row, index) {
     const time = String(row?.label_time || '').trim();
     if (time) return time;
@@ -250,6 +302,7 @@
   function render(data) {
     ensureStyles();
     renderRefreshStatus();
+    renderCurrentSky(data);
     renderObservationStrip(data);
     renderForecastHeader(data);
     renderNowcastTimeline(data);
