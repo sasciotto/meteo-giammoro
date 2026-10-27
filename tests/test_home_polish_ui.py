@@ -58,7 +58,7 @@ def test_home_polish_uses_model_consensus_for_current_sky():
     assert "data?.model_details" in js
     assert "row.current.cloud_cover" in js
     assert "spread>=35" in compact
-    assert "label:'Cielo variabile'" in compact
+    assert "label:'Cielo variabile'" in js
     assert "Consenso modellistico corrente" in js
     assert "forte variabilità" in js
 
