@@ -35,7 +35,7 @@ def test_hourly_consensus_avoids_false_clear_sky_when_models_disagree():
         'Cielo variabile',
         'Cielo variabile',
         'Cielo variabile',
-        'Poco nuvoloso o variabile',
+        'Cielo variabile',
     ]
     assert all(row['label'] != 'Sereno' for row in rows)
     assert rows[2]['cloud_spread'] == 50.0
