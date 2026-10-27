@@ -267,15 +267,16 @@ jobs:
       - name: Salva dati aggiornati nel repository
         if: steps.freshness.outputs.should_run == 'true'
         run: |
-          if git diff --quiet -- data.json history.json verification.json events.json; then
+          DATA_FILES="data.json history.json verification.json events.json seismic_events.json"
+          if git diff --quiet -- ${DATA_FILES} && git diff --cached --quiet -- ${DATA_FILES}; then
             echo "Nessuna modifica ai dati"
             exit 0
           fi
 
           git config user.name "meteo-giammoro-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data.json history.json verification.json events.json
-          git commit -m "Aggiorna dati meteo, tracking, home e verifica ex-post"
+          git add ${DATA_FILES}
+          git commit -m "Aggiorna dati meteo, tracking, home, eventi e verifica ex-post"
 
           for attempt in 1 2 3; do
             if git push; then
