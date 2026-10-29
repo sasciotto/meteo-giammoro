@@ -86,3 +86,16 @@ def test_auto_refresh_preserves_events_mode():
     assert "mode-events" in js
     assert "state.mode === 'events'" in js
     assert "eventsBtn" in js
+
+
+def test_auto_refresh_checks_seismic_dataset_while_events_are_open():
+    js = Path("auto_refresh_ui.js").read_text(encoding="utf-8")
+    assert "function seismicStamp(data)" in js
+    assert "function checkSeismicUpdate(initial = false)" in js
+    assert "seismic_events.json?_=${Date.now()}" in js
+    assert "document.body.classList.contains('mode-events')" in js
+    assert "event?.event_id" in js
+    assert "event?.magnitude" in js
+    assert "event?.latitude" in js
+    assert "event?.longitude" in js
+    assert "reloadWithFreshUrl();" in js
