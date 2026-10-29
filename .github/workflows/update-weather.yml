@@ -20,6 +20,8 @@ on:
       - "station_fallback.py"
       - "radar_ui.js"
       - "site_prepare.py"
+      - "solar_monitoring.py"
+      - "solar_monitoring_ui.js"
       - "collector.py"
       - "home_forecast.py"
       - "home_forecast_v2.py"
@@ -57,6 +59,8 @@ jobs:
     env:
       EUMETSAT_CONSUMER_KEY: ${{ secrets.EUMETSAT_CONSUMER_KEY }}
       EUMETSAT_CONSUMER_SECRET: ${{ secrets.EUMETSAT_CONSUMER_SECRET }}
+      LSASAF_USERNAME: ${{ secrets.LSASAF_USERNAME }}
+      LSASAF_PASSWORD: ${{ secrets.LSASAF_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -184,6 +188,10 @@ jobs:
           print(f"Modelli deterministici conservati in cache: {len(model_cache)}")
           PY
 
+      - name: Aggiorna monitoraggio solare LSA SAF
+        if: steps.freshness.outputs.should_run == 'true'
+        run: python solar_monitoring.py --data data.json --previous /tmp/data-previous.json
+
       - name: Tracking multi-cella, multi-frame e fulminazioni
         if: steps.freshness.outputs.should_run == 'true'
         run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
@@ -304,11 +312,12 @@ jobs:
 # Se il feed stazioni fallisce, l'ultimo ciclo valido resta consultabile ma è marcato precedente ed escluso dall'analisi.
 # Se il modello home fallisce, viene mantenuta fino a 6 h l'ultima previsione valida, marcata come dato precedente.
 # Il collector viene marcato degraded quando la previsione modellistica home o il feed stazioni non sono disponibili.
-# La pagina pubblica usa un solo fetch di data.json; forecast_dashboard.js riceve lo stesso oggetto dati.
+# La pagina pubblica usa un solo fetch di data.json; forecast_dashboard.js e monitoraggio solare ricevono lo stesso oggetto dati.
 # Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
 # Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
+# Solare: EUMETSAT LSA SAF MDSSFTD, opzionale via LSASAF_USERNAME/LSASAF_PASSWORD; un errore non degrada il collector meteo.
 # Verifica ex-post eventi: orizzonti 30/60/120 min; impatto locale separato dal track radar e metriche cumulative v2 persistenti.
 # Verifica pioggia: metrica separata 30/60/120 min per presenza di precipitazione locale, non severità.
 # Pioggia locale: contesto radar 1/3/5 km + persistenza; i massimi areali non sono presentati come accumuli puntuali.
