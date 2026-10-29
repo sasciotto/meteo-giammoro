@@ -39,6 +39,6 @@ def test_seismic_persistence_is_explicitly_managed_by_workflow():
 
     assert "stage_seismic_events" not in site_prepare
     assert "seismic_events.json" in workflow
-    assert 'DATA_FILES="data.json history.json verification.json events.json seismic_events.json"' in workflow
+    assert 'DATA_FILES="data.json history.json solar_history.json verification.json events.json seismic_events.json"' in workflow
     assert "git diff --cached --quiet -- ${DATA_FILES}" in workflow
     assert "git add ${DATA_FILES}" in workflow
