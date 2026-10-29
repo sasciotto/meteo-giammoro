@@ -4,10 +4,24 @@
   const CHECK_INTERVAL_MS = 60_000;
   const STATE_KEY = 'meteo-giammoro:auto-refresh-state';
   let knownStamp = null;
+  let knownSeismicStamp = null;
   let checking = false;
+  let checkingSeismic = false;
 
   function dataStamp(data) {
     return data?.meta?.last_check_iso || data?.meta?.generated_at || null;
+  }
+
+  function seismicStamp(data) {
+    const events = Array.isArray(data?.regional) ? data.regional : [];
+    return events.map(event => [
+      event?.event_id || '',
+      event?.time_utc || event?.time_local || '',
+      event?.magnitude ?? '',
+      event?.latitude ?? '',
+      event?.longitude ?? '',
+      event?.depth_km ?? '',
+    ].join(':')).join('|');
   }
 
   function currentViewState() {
@@ -101,13 +115,48 @@
     }
   }
 
+  async function checkSeismicUpdate(initial = false) {
+    if (checkingSeismic || document.hidden || !document.body.classList.contains('mode-events')) return;
+    checkingSeismic = true;
+    try {
+      const response = await fetch(`seismic_events.json?_=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {'Cache-Control': 'no-cache'},
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      const stamp = seismicStamp(data);
+
+      if (initial || knownSeismicStamp == null) {
+        knownSeismicStamp = stamp;
+        return;
+      }
+
+      if (stamp !== knownSeismicStamp) {
+        knownSeismicStamp = stamp;
+        reloadWithFreshUrl();
+      }
+    } catch (_) {
+      // Il monitor sismico è best-effort e non deve interferire con il meteo.
+    } finally {
+      checkingSeismic = false;
+    }
+  }
+
   window.addEventListener('load', () => {
     restoreViewState();
     checkForUpdate(true);
-    window.setInterval(() => checkForUpdate(false), CHECK_INTERVAL_MS);
+    checkSeismicUpdate(true);
+    window.setInterval(() => {
+      checkForUpdate(false);
+      checkSeismicUpdate(false);
+    }, CHECK_INTERVAL_MS);
   });
 
   document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) checkForUpdate(false);
+    if (!document.hidden) {
+      checkForUpdate(false);
+      checkSeismicUpdate(false);
+    }
   });
 })();
