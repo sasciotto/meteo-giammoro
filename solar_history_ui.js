@@ -3,9 +3,19 @@
 
   const byId = id => document.getElementById(id);
   const num = v => { const x = Number(v); return Number.isFinite(x) ? x : null; };
+  const SERIES_COLORS = {
+    'pace-del-mela': '#d97706',
+    'scl087': '#2563eb',
+    'lsa-saf': '#16a34a',
+  };
+  const FALLBACK_COLORS = ['#7c3aed', '#dc2626', '#0891b2', '#475569', '#be185d'];
   let historyCache = null;
   let historyPromise = null;
   let selectedHours = 24;
+
+  function seriesColor(id, index) {
+    return SERIES_COLORS[id] || FALLBACK_COLORS[index % FALLBACK_COLORS.length];
+  }
 
   function ensureStyles() {
     if (byId('solarHistoryStyles')) return;
@@ -16,7 +26,7 @@
       .solar-range{display:flex;gap:6px}.solar-range button{border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:7px 10px;font-weight:700;cursor:pointer}.solar-range button.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
       .solar-chart-card{margin-top:10px;border:1px solid var(--line);border-radius:13px;padding:12px;background:var(--surface2)}
       .solar-chart-title{display:flex;justify-content:space-between;gap:10px;align-items:baseline}.solar-chart-title b{font-size:14px}.solar-chart-title span{font-size:11px;color:var(--muted)}
-      .solar-chart{width:100%;height:250px;margin-top:8px}.solar-chart svg{width:100%;height:100%;display:block;overflow:visible}.solar-axis{stroke:currentColor;opacity:.18;stroke-width:1}.solar-series{fill:none;stroke-width:2.2;vector-effect:non-scaling-stroke}.solar-series.alt{stroke-dasharray:6 4}.solar-point{r:2.2}.solar-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:11px;color:var(--muted)}.solar-legend span::before{content:'—';font-weight:900;margin-right:5px;color:var(--accent)}
+      .solar-chart{width:100%;height:250px;margin-top:8px}.solar-chart svg{width:100%;height:100%;display:block;overflow:visible}.solar-axis{stroke:currentColor;opacity:.18;stroke-width:1}.solar-series{fill:none;stroke-width:2.6;vector-effect:non-scaling-stroke}.solar-series.alt{stroke-dasharray:6 4}.solar-point{r:2.2}.solar-legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:7px;font-size:11px;color:var(--muted)}.solar-legend span{display:inline-flex;align-items:center;gap:6px}.solar-legend i{display:inline-block;width:19px;border-top:3px solid var(--series-color);border-radius:2px}
       .solar-daily-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:11px}.solar-daily-table th,.solar-daily-table td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:right}.solar-daily-table th:first-child,.solar-daily-table td:first-child{text-align:left}
       @media(max-width:650px){.solar-chart{height:210px}.solar-daily-wrap{overflow-x:auto}}
     `;
@@ -84,10 +94,10 @@
     const minT = Math.min(...points.map(p=>p.t)); const maxT = Math.max(...points.map(p=>p.t));
     const maxY = Math.max(100, ...points.map(p=>p.y));
     const grid = [0,.25,.5,.75,1].map(f => { const y=height-pad-f*(height-pad*2); return `<line class="solar-axis" x1="${pad}" x2="${width-pad}" y1="${y}" y2="${y}"/><text x="4" y="${y+4}" font-size="10" opacity=".55">${Math.round(maxY*f)}</text>`; }).join('');
-    const paths = series.map((s,i) => `<path class="solar-series ${i%2?'alt':''}" d="${pathFor(s.points,minT,maxT,maxY,width,height,pad)}" stroke="currentColor" opacity="${Math.max(.35,1-i*.18)}"/>`).join('');
+    const paths = series.map((s,i) => `<path class="solar-series ${i%2?'alt':''}" d="${pathFor(s.points,minT,maxT,maxY,width,height,pad)}" stroke="${seriesColor(s.id,i)}"/>`).join('');
     const start = new Date(minT).toLocaleString('it-IT',{timeZone:'Europe/Rome',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     const end = new Date(maxT).toLocaleString('it-IT',{timeZone:'Europe/Rome',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    return `<div class="solar-chart-title"><b>Radiazione solare · W/m²</b><span>${start} → ${end}</span></div><div class="solar-chart"><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<line class="solar-axis" x1="${pad}" x2="${pad}" y1="${pad}" y2="${height-pad}"/>${paths}</svg></div><div class="solar-legend">${series.map(s=>`<span>${s.name}</span>`).join('')}</div>`;
+    return `<div class="solar-chart-title"><b>Radiazione solare · W/m²</b><span>${start} → ${end}</span></div><div class="solar-chart"><svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<line class="solar-axis" x1="${pad}" x2="${pad}" y1="${pad}" y2="${height-pad}"/>${paths}</svg></div><div class="solar-legend">${series.map((s,i)=>`<span style="--series-color:${seriesColor(s.id,i)}"><i aria-hidden="true"></i>${s.name}</span>`).join('')}</div>`;
   }
 
   function dailyTable(history) {
