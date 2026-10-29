@@ -1,16 +1,18 @@
 {
   "meta": {
     "schema_version": "2.1",
-    "last_check": "29/10/2026 15:28 CET",
+    "last_check": "29/10/2026 15:44 CET",
     "analysis_engine": "collector Python + regole deterministiche",
     "reference_area": "Giammoro, Pace del Mela (ME)",
     "coordinates": [
       38.2018,
       15.31816
     ],
-    "collector_status": "ok",
-    "collector_errors": [],
-    "last_check_iso": "2026-10-29T15:28:49+01:00"
+    "collector_status": "degraded",
+    "collector_errors": [
+      "stazioni: HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
+    ],
+    "last_check_iso": "2026-10-29T15:44:18+01:00"
   },
   "primary_station": {
     "name": "MeteoGiammoro",
@@ -59,23 +61,23 @@
         "quality": "non disponibile: temperatura e umidità da fonti diverse"
       },
       "humidity": {
-        "value": 55.0,
+        "value": 56.0,
         "unit": " %",
         "quality": "ItaliaMeteo ICON-2I"
       },
       "pressure": {
-        "value": 1018.5,
+        "value": 1018.4,
         "unit": " hPa",
         "trend": "stabile · Δ1h -0.1 hPa · Δ3h -0.6 hPa",
         "trend_quality": "trend modellistico sul punto"
       },
       "wind": {
-        "value": 7.9,
+        "value": 7.6,
         "unit": " km/h",
         "direction": 335
       },
       "gust": {
-        "value": 21.2,
+        "value": 19.8,
         "unit": " km/h"
       },
       "rain_1h": {
@@ -89,7 +91,7 @@
         "quality": "Radar-DPC CUM24"
       },
       "cloud_cover": {
-        "value": 31.0,
+        "value": 33.0,
         "unit": " %"
       }
     },
@@ -104,7 +106,7 @@
     "source": "CFD/DRPC Sicilia + DPC nazionale",
     "url": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/26302_AVVISO%20DRPC_2026_10_29_50887.pdf",
     "parser_note": "livello zona A estratto dal PDF regionale ma non validato automaticamente; consultare l'avviso ufficiale",
-    "retrieved_at": "2026-10-29T15:28+01:00",
+    "retrieved_at": "2026-10-29T15:44+01:00",
     "national_validation": {
       "error": "zona DPC nazionale non trovata nel bollettino corrente"
     },
@@ -115,7 +117,7 @@
     }
   },
   "latest_change": {
-    "time": "29/10/2026 15:28",
+    "time": "29/10/2026 15:44",
     "title": "Nuovo avviso ufficiale pubblicato — livello in verifica",
     "text": "È disponibile un avviso ufficiale aggiornato, ma il livello per la zona di Giammoro non è stato validato automaticamente. Consultare la fonte ufficiale prima di considerarlo definitivo.",
     "window": "Validità avviso: 29–30/10/2026; orari da verificare nel PDF ufficiale.",
@@ -152,9 +154,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:19 · 9 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 25 min fa",
       "temperature": 20.8,
       "dew_point": 10.9,
       "humidity": 53.0,
@@ -166,8 +168,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 52.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Archi - San Filippo del Mela (LineaMeteo). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Pace del Mela / area Giammoro."
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Archi - San Filippo del Mela (LineaMeteo). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Pace del Mela / area Giammoro. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:19:00+01:00",
+      "fallback_age_minutes": 25,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "Milazzo",
@@ -175,8 +181,8 @@
       "network": "nessuna stazione verificata nel feed corrente",
       "source_quality": "unknown",
       "status": "unknown",
-      "status_label": "Non disponibile",
-      "updated": "—",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 15 min fa",
       "temperature": null,
       "dew_point": null,
       "humidity": null,
@@ -188,7 +194,11 @@
       "rain_24h": null,
       "rain_day": null,
       "excluded_from_analysis": true,
-      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo."
+      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:28:49+01:00",
+      "fallback_age_minutes": 15,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "San Filippo del Mela (LineaMeteo)",
@@ -196,9 +206,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:14 · 14 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 30 min fa",
       "temperature": 19.7,
       "dew_point": 11.7,
       "humidity": 60.0,
@@ -210,8 +220,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 110.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: San Filippo del Mela (LineaMeteo). Il dato resta attribuito a questa stazione ed è usato solo come supporto per San Filippo del Mela."
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: San Filippo del Mela (LineaMeteo). Il dato resta attribuito a questa stazione ed è usato solo come supporto per San Filippo del Mela. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:14:00+01:00",
+      "fallback_age_minutes": 30,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "Santa Lucia del Mela (DRPC)",
@@ -219,9 +233,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:10 · 18 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 34 min fa",
       "temperature": 17.5,
       "dew_point": 10.6,
       "humidity": 64.0,
@@ -233,8 +247,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 418.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Santa Lucia del Mela (DRPC). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Santa Lucia del Mela."
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Santa Lucia del Mela (DRPC). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Santa Lucia del Mela. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:10:00+01:00",
+      "fallback_age_minutes": 34,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "Merì",
@@ -242,8 +260,8 @@
       "network": "nessuna stazione verificata nel feed corrente",
       "source_quality": "unknown",
       "status": "unknown",
-      "status_label": "Non disponibile",
-      "updated": "—",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 15 min fa",
       "temperature": null,
       "dew_point": null,
       "humidity": null,
@@ -255,7 +273,11 @@
       "rain_24h": null,
       "rain_day": null,
       "excluded_from_analysis": true,
-      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo."
+      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:28:49+01:00",
+      "fallback_age_minutes": 15,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "Monforte San Giorgio (DRPC)",
@@ -263,9 +285,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "14:50 · 38 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 54 min fa",
       "temperature": 18.9,
       "dew_point": 10.7,
       "humidity": 59.0,
@@ -277,8 +299,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 253.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Monforte San Giorgio (DRPC). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Monforte San Giorgio."
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Monforte San Giorgio (DRPC). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Monforte San Giorgio. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T14:50:00+01:00",
+      "fallback_age_minutes": 54,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "Barcellona (DRPC)",
@@ -286,9 +312,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:10 · 18 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 34 min fa",
       "temperature": 20.5,
       "dew_point": 10.9,
       "humidity": 54.0,
@@ -300,8 +326,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 105.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Barcellona (DRPC). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Barcellona Pozzo di Gotto."
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Barcellona (DRPC). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Barcellona Pozzo di Gotto. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:10:00+01:00",
+      "fallback_age_minutes": 34,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "Messina (SIAS)",
@@ -309,9 +339,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:10 · 18 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 34 min fa",
       "temperature": 16.2,
       "dew_point": 9.6,
       "humidity": 65.0,
@@ -323,8 +353,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 420.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Messina (SIAS). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Messina."
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Messina (SIAS). Il dato resta attribuito a questa stazione ed è usato solo come supporto per Messina. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:10:00+01:00",
+      "fallback_age_minutes": 34,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "Venetico (DRPC)",
@@ -332,9 +366,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:10 · 18 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 34 min fa",
       "temperature": 18.7,
       "dew_point": 10.3,
       "humidity": 58.0,
@@ -346,8 +380,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 70.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione aggiuntiva di supporto territoriale."
+      "excluded_from_analysis": true,
+      "note": "Stazione aggiuntiva di supporto territoriale. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:10:00+01:00",
+      "fallback_age_minutes": 34,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "San Pier Marina (LineaMeteo)",
@@ -355,9 +393,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:24 · 4 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 20 min fa",
       "temperature": 19.7,
       "dew_point": 11.5,
       "humidity": 59.0,
@@ -369,8 +407,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 34.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione aggiuntiva di supporto territoriale."
+      "excluded_from_analysis": true,
+      "note": "Stazione aggiuntiva di supporto territoriale. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:24:00+01:00",
+      "fallback_age_minutes": 20,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     },
     {
       "name": "San Pier Niceto (SIAS)",
@@ -378,9 +420,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "15:10 · 18 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 34 min fa",
       "temperature": 14.7,
       "dew_point": 8.4,
       "humidity": 66.0,
@@ -392,8 +434,12 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 617.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione aggiuntiva di supporto territoriale."
+      "excluded_from_analysis": true,
+      "note": "Stazione aggiuntiva di supporto territoriale. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-10-29T15:10:00+01:00",
+      "fallback_age_minutes": 34,
+      "fallback_reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)"
     }
   ],
   "dpc_observations": {
@@ -401,8 +447,8 @@
       "SRI": {
         "product": "SRI",
         "ok": true,
-        "timestamp": "2026-10-29T15:20+01:00",
-        "age_minutes": 8,
+        "timestamp": "2026-10-29T15:35+01:00",
+        "age_minutes": 9,
         "period": "PT5M",
         "stats": [
           {
@@ -434,8 +480,8 @@
       "SRT1": {
         "product": "SRT1",
         "ok": true,
-        "timestamp": "2026-10-29T15:20+01:00",
-        "age_minutes": 8,
+        "timestamp": "2026-10-29T15:35+01:00",
+        "age_minutes": 9,
         "period": "PT5M",
         "stats": [
           {
@@ -468,7 +514,7 @@
         "product": "CUM24",
         "ok": true,
         "timestamp": "2026-10-29T15:00+01:00",
-        "age_minutes": 28,
+        "age_minutes": 44,
         "period": "PT30M",
         "stats": [
           {
@@ -485,7 +531,7 @@
         "product": "TEMP",
         "ok": true,
         "timestamp": "2026-10-29T15:00+01:00",
-        "age_minutes": 28,
+        "age_minutes": 44,
         "period": "PT1H",
         "stats": [
           {
@@ -501,8 +547,8 @@
       "VMI": {
         "product": "VMI",
         "ok": true,
-        "timestamp": "2026-10-29T15:20+01:00",
-        "age_minutes": 8,
+        "timestamp": "2026-10-29T15:35+01:00",
+        "age_minutes": 9,
         "period": "PT5M",
         "stats": [
           {
@@ -534,17 +580,17 @@
       "IR_108": {
         "product": "IR_108",
         "ok": true,
-        "timestamp": "2026-10-29T15:20+01:00",
-        "age_minutes": 8,
+        "timestamp": "2026-10-29T15:35+01:00",
+        "age_minutes": 9,
         "period": "PT5M",
         "stats": [
           {
             "radius_km": 5,
             "count": 100,
             "point": 18.0,
-            "max": 19.0,
-            "mean": 18.15,
-            "p90": 19.0
+            "max": 18.5,
+            "mean": 17.7,
+            "p90": 18.5
           }
         ]
       }
@@ -553,10 +599,10 @@
     "source": "Radar-DPC / Dipartimento Protezione Civile"
   },
   "nowcast_evidence": {
-    "radar": "Radar-DPC: SRI max 5 km: 0 mm/h; SRI max 15 km: 0 mm/h; SRI max 30 km: 0 mm/h; SRT1 max 5 km: 0 mm · aggiornamento 2026-10-29T15:20+01:00",
-    "rain_gauges": "Stazioni/pluviometri raccolti dal feed locale: 635 righe disponibili; vengono mostrate solo le stazioni selezionate e la rete originaria.",
+    "radar": "Radar-DPC: SRI max 5 km: 0 mm/h; SRI max 15 km: 0 mm/h; SRI max 30 km: 0 mm/h; SRT1 max 5 km: 0 mm · aggiornamento 2026-10-29T15:35+01:00",
+    "rain_gauges": "Feed stazioni non disponibile nel ciclo corrente; l'ultimo dato noto resta visibile solo per riferimento ed è escluso dall'analisi.",
     "lightning": "EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile.",
-    "satellite": "Prodotto satellitare DPC IR10.8 disponibile · aggiornamento 2026-10-29T15:20+01:00. Il valore raw non viene trasformato in copertura percentuale senza una conversione validata.",
+    "satellite": "Prodotto satellitare DPC IR10.8 disponibile · aggiornamento 2026-10-29T15:35+01:00. Il valore raw non viene trasformato in copertura percentuale senza una conversione validata.",
     "wind_pressure": "Pressione sul punto: stabile; Δ1h -0.1 hPa; Δ3h -0.6 hPa. Trend modellistico, non misura barometrica locale.",
     "local_effects": "Giammoro viene valutata come area costiera della Valle del Mela, con possibili differenze rispetto a Milazzo, rilievi di Santa Lucia/Monforte e Stretto di Messina.",
     "tracking_quality": "Tracking radar non disponibile: nessuna cella tracciabile.",
@@ -591,28 +637,28 @@
       "id": "italia_meteo_arpae_icon_2i",
       "ok": true,
       "current": {
-        "time": "2026-10-29T15:15",
+        "time": "2026-10-29T15:30",
         "interval": 900,
-        "temperature_2m": 20.6,
-        "relative_humidity_2m": 55,
+        "temperature_2m": 20.5,
+        "relative_humidity_2m": 56,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 1,
-        "cloud_cover": 31,
-        "pressure_msl": 1018.5,
-        "wind_speed_10m": 7.9,
+        "cloud_cover": 33,
+        "pressure_msl": 1018.4,
+        "wind_speed_10m": 7.6,
         "wind_direction_10m": 335,
-        "wind_gusts_10m": 21.2
+        "wind_gusts_10m": 19.8
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 22.0,
+        "gust_max": 17.3,
         "cape_max": 10.0,
         "thunder_signal": false,
-        "temp_min": 15.0,
-        "temp_max": 20.8
+        "temp_min": 13.5,
+        "temp_max": 20.1
       },
       "next_3_48h": {
         "precip_sum": 17.2,
@@ -643,28 +689,28 @@
       "id": "dwd_icon_seamless",
       "ok": true,
       "current": {
-        "time": "2026-10-29T15:15",
+        "time": "2026-10-29T15:30",
         "interval": 900,
         "temperature_2m": 19.5,
-        "relative_humidity_2m": 54,
+        "relative_humidity_2m": 53,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 0,
-        "cloud_cover": 8,
-        "pressure_msl": 1018.0,
-        "wind_speed_10m": 9.0,
-        "wind_direction_10m": 331,
+        "cloud_cover": 9,
+        "pressure_msl": 1017.9,
+        "wind_speed_10m": 8.4,
+        "wind_direction_10m": 329,
         "wind_gusts_10m": 16.2
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 17.3,
+        "gust_max": 16.2,
         "cape_max": 0.0,
         "thunder_signal": false,
-        "temp_min": 17.4,
-        "temp_max": 19.6
+        "temp_min": 15.6,
+        "temp_max": 19.2
       },
       "next_3_48h": {
         "precip_sum": 1.0,
@@ -695,28 +741,28 @@
       "id": "ecmwf_ifs",
       "ok": true,
       "current": {
-        "time": "2026-10-29T15:15",
+        "time": "2026-10-29T15:30",
         "interval": 900,
         "temperature_2m": 18.5,
-        "relative_humidity_2m": 57,
+        "relative_humidity_2m": 58,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 0,
         "cloud_cover": 0,
-        "pressure_msl": 1018.5,
-        "wind_speed_10m": 4.5,
-        "wind_direction_10m": 265,
-        "wind_gusts_10m": 10.8
+        "pressure_msl": 1018.4,
+        "wind_speed_10m": 4.2,
+        "wind_direction_10m": 260,
+        "wind_gusts_10m": 10.4
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 12.2,
+        "gust_max": 12.6,
         "cape_max": 0.0,
         "thunder_signal": false,
         "temp_min": 18.2,
-        "temp_max": 18.5
+        "temp_max": 18.4
       },
       "next_3_48h": {
         "precip_sum": 0.6,
@@ -747,28 +793,28 @@
       "id": "ncep_gfs_seamless",
       "ok": true,
       "current": {
-        "time": "2026-10-29T15:15",
+        "time": "2026-10-29T15:30",
         "interval": 900,
-        "temperature_2m": 18.7,
+        "temperature_2m": 18.5,
         "relative_humidity_2m": 62,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 1,
-        "cloud_cover": 33,
+        "cloud_cover": 35,
         "pressure_msl": 1018.1,
-        "wind_speed_10m": 8.9,
-        "wind_direction_10m": 339,
-        "wind_gusts_10m": 6.5
+        "wind_speed_10m": 8.6,
+        "wind_direction_10m": 338,
+        "wind_gusts_10m": 6.1
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 6.8,
+        "gust_max": 5.4,
         "cape_max": 0.0,
         "thunder_signal": false,
-        "temp_min": 15.0,
-        "temp_max": 18.9
+        "temp_min": 14.7,
+        "temp_max": 18.0
       },
       "next_3_48h": {
         "precip_sum": 10.9,
@@ -1046,6 +1092,14 @@
       "text": "Aumento del segnale 0–3 h: Basso (radar) → Basso–moderato"
     }
   ],
+  "station_feed": {
+    "source": "fallback ultimo dato noto",
+    "rows": 0,
+    "status": "degraded",
+    "fallback": true,
+    "reason": "HTTPSConnectionPool(host='www.centrometeosicilia.it', port=443): Read timed out. (read timeout=25)",
+    "checked_at": "2026-10-29T15:44:03+01:00"
+  },
   "solar_monitoring": {
     "schema_version": "1.0",
     "metric_version": "solar-observation-v1",
@@ -1065,7 +1119,7 @@
     },
     "status": "credentials_missing",
     "message": "Credenziali LSA SAF non configurate",
-    "updated_at": "2026-10-29T14:28:46.162134Z",
+    "updated_at": "2026-10-29T14:44:14.394237Z",
     "observation": null,
     "daily": null
   },
@@ -1075,8 +1129,8 @@
     "unit": "mm/h",
     "peak_value": 0.0,
     "candidates": [],
-    "timestamp": "2026-10-29T15:20+01:00",
-    "age_minutes": 8,
+    "timestamp": "2026-10-29T15:35+01:00",
+    "age_minutes": 9,
     "motion": {
       "status": "unavailable"
     },
@@ -1112,12 +1166,12 @@
     "source": "EUMETSAT MTG Lightning Imager L2 Lightning Flashes",
     "collection": "EO:EUM:DAT:0691",
     "quality": "satellite_observation",
-    "timestamp": "2026-10-29T14:30+00:00",
-    "age_minutes": 0,
-    "product_id": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--x-x--ARC-x_C_EUMT_20261029143024_L2PF_OPE_20261029142005_20261029143005_N__O_0087_0000",
-    "entry": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--CHK-BODY--ARC-NC4E_C_EUMT_20261029143022_L2PF_OPE_20261029142005_20261029143005_N__O_0087_0001.nc",
-    "flash_count_total": 38149,
-    "nearest_km": 577.6,
+    "timestamp": "2026-10-29T14:40+00:00",
+    "age_minutes": 4,
+    "product_id": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--x-x--ARC-x_C_EUMT_20261029144025_L2PF_OPE_20261029143005_20261029144005_N__O_0088_0000",
+    "entry": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--CHK-BODY--ARC-NC4E_C_EUMT_20261029144023_L2PF_OPE_20261029143005_20261029144005_N__O_0088_0001.nc",
+    "flash_count_total": 36817,
+    "nearest_km": 579.3,
     "radii": {
       "5": {
         "flash_count": 0,
@@ -1143,7 +1197,7 @@
   },
   "approaching_cells": {
     "status": "none",
-    "timestamp": "2026-10-29T15:20+01:00",
+    "timestamp": "2026-10-29T15:35+01:00",
     "product": "SRI",
     "unit": "mm/h",
     "reference": "Giammoro, Pace del Mela (ME)",
@@ -1160,10 +1214,6 @@
     "summary": "Nessuna cella radar significativa rilevata nell'area di monitoraggio."
   },
   "pressure_history": [
-    {
-      "timestamp": "2026-10-29T09:41:36+01:00",
-      "hpa": 1019.5
-    },
     {
       "timestamp": "2026-10-29T09:47:50+01:00",
       "hpa": 1019.5
@@ -1251,6 +1301,10 @@
     {
       "timestamp": "2026-10-29T15:28:49+01:00",
       "hpa": 1018.5
+    },
+    {
+      "timestamp": "2026-10-29T15:44:18+01:00",
+      "hpa": 1018.4
     }
   ],
   "pressure_trend": {
@@ -1294,7 +1348,7 @@
     "note": "Confidenza previsionale non espressa in percentuale: il progetto non dispone ancora di una calibrazione probabilistica affidabile. Campioni evento disponibili: 0/20 come soglia minima di studio."
   },
   "home_summary": {
-    "generated_at": "2026-10-29T15:33:42+01:00",
+    "generated_at": "2026-10-29T15:44:26+01:00",
     "source": "Consenso multi-modello (ICON-2I · DWD ICON · ECMWF IFS · NOAA GFS)",
     "current": {
       "icon": "☀",
@@ -2068,7 +2122,7 @@
     }
   },
   "local_precipitation": {
-    "generated_at": "2026-10-29T15:33:42+01:00",
+    "generated_at": "2026-10-29T15:44:27+01:00",
     "status": "dry",
     "label": "Nessuna pioggia locale rilevata ora",
     "observation_basis": "Radar-DPC multi-raggio 1/3/5 km + persistenza temporale",
@@ -2079,8 +2133,8 @@
     "recent_accumulation_signal": false,
     "radar": {
       "sri": {
-        "timestamp": "2026-10-29T15:25+01:00",
-        "age_minutes": 8,
+        "timestamp": "2026-10-29T15:35+01:00",
+        "age_minutes": 9,
         "1": {
           "point": 0.0,
           "max": 0.0,
@@ -2101,8 +2155,8 @@
         }
       },
       "srt1": {
-        "timestamp": "2026-10-29T15:25+01:00",
-        "age_minutes": 8,
+        "timestamp": "2026-10-29T15:35+01:00",
+        "age_minutes": 9,
         "1": {
           "point": 0.0,
           "max": 0.0,
@@ -2139,56 +2193,6 @@
     },
     "impact_level": "low",
     "history": [
-      {
-        "timestamp": "2026-10-29T12:42+01:00",
-        "rain_detected": false,
-        "recent_accumulation": false,
-        "basis": "nessun segnale radar locale coerente",
-        "sri": {
-          "timestamp": "2026-10-29T12:35+01:00",
-          "age_minutes": 7,
-          "1": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "3": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "5": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          }
-        },
-        "srt1": {
-          "timestamp": "2026-10-29T12:35+01:00",
-          "age_minutes": 7,
-          "1": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "3": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "5": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          }
-        }
-      },
       {
         "timestamp": "2026-10-29T12:57+01:00",
         "rain_detected": false,
@@ -2688,13 +2692,63 @@
             "p90": 0.0
           }
         }
+      },
+      {
+        "timestamp": "2026-10-29T15:44+01:00",
+        "rain_detected": false,
+        "recent_accumulation": false,
+        "basis": "nessun segnale radar locale coerente",
+        "sri": {
+          "timestamp": "2026-10-29T15:35+01:00",
+          "age_minutes": 9,
+          "1": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "3": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "5": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          }
+        },
+        "srt1": {
+          "timestamp": "2026-10-29T15:35+01:00",
+          "age_minutes": 9,
+          "1": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "3": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "5": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          }
+        }
       }
     ],
     "errors": [],
     "note": "La presenza di pioggia e l'impatto sono separati. I valori areali entro 1/3/5 km servono a riconoscere rovesci locali che possono sfuggire al singolo pixel e non vengono presentati come accumulo esatto su Giammoro."
   },
   "verification": {
-    "updated_at": "2026-10-29T14:33:44+00:00",
+    "updated_at": "2026-10-29T14:44:29+00:00",
     "summary": {
       "total_results": 300,
       "evaluable_results": 300,
@@ -2729,13 +2783,13 @@
       },
       "by_horizon": {
         "30": {
-          "samples": 100,
+          "samples": 99,
           "true_positive": 0,
-          "true_negative": 100,
+          "true_negative": 99,
           "false_positive": 0,
           "false_negative": 0,
           "event_samples": 0,
-          "no_event_samples": 100,
+          "no_event_samples": 99,
           "event_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
@@ -2759,13 +2813,13 @@
           "csi_percent": null
         },
         "120": {
-          "samples": 100,
+          "samples": 101,
           "true_positive": 0,
-          "true_negative": 100,
+          "true_negative": 101,
           "false_positive": 0,
           "false_negative": 0,
           "event_samples": 0,
-          "no_event_samples": 100,
+          "no_event_samples": 101,
           "event_detection_percent": null,
           "precision_percent": null,
           "false_alarm_ratio_percent": null,
@@ -2803,18 +2857,18 @@
       },
       "metric_version": "local-event-v2",
       "cumulative_event_metrics": {
-        "samples": 1967,
+        "samples": 1969,
         "true_positive": 5,
-        "true_negative": 1899,
+        "true_negative": 1901,
         "false_positive": 26,
         "false_negative": 37,
         "event_samples": 42,
-        "no_event_samples": 1925,
+        "no_event_samples": 1927,
         "event_detection_percent": 11.9,
         "precision_percent": 16.1,
         "false_alarm_ratio_percent": 83.9,
-        "specificity_percent": 98.6,
-        "balanced_accuracy_percent": 55.2,
+        "specificity_percent": 98.7,
+        "balanced_accuracy_percent": 55.3,
         "csi_percent": 7.4,
         "accuracy_percent": 96.8
       },
@@ -2836,13 +2890,13 @@
           "accuracy_percent": 97.0
         },
         "60": {
-          "samples": 656,
+          "samples": 657,
           "true_positive": 1,
-          "true_negative": 629,
+          "true_negative": 630,
           "false_positive": 14,
           "false_negative": 12,
           "event_samples": 13,
-          "no_event_samples": 643,
+          "no_event_samples": 644,
           "event_detection_percent": 7.7,
           "precision_percent": 6.7,
           "false_alarm_ratio_percent": 93.3,
@@ -2852,13 +2906,13 @@
           "accuracy_percent": 96.0
         },
         "120": {
-          "samples": 654,
+          "samples": 655,
           "true_positive": 0,
-          "true_negative": 637,
+          "true_negative": 638,
           "false_positive": 2,
           "false_negative": 15,
           "event_samples": 15,
-          "no_event_samples": 639,
+          "no_event_samples": 640,
           "event_detection_percent": 0.0,
           "precision_percent": 0.0,
           "false_alarm_ratio_percent": 100.0,
@@ -2893,9 +2947,9 @@
       "retention_note": "Le metriche cumulative v2 sono conservate separatamente dal rolling window di 300 risultati. La baseline v1 resta visibile ma non viene sommata perché usa una definizione precedente dell'evento locale."
     },
     "latest_result": {
-      "snapshot_id": "20261029T121308Z",
-      "issued_at": "2026-10-29T12:13:08+00:00",
-      "verified_at": "2026-10-29T14:33:44+00:00",
+      "snapshot_id": "20261029T124314Z",
+      "issued_at": "2026-10-29T12:43:14+00:00",
+      "verified_at": "2026-10-29T14:44:29+00:00",
       "horizon_minutes": 120,
       "outcome": "correct",
       "predicted_event": false,
@@ -2935,17 +2989,17 @@
       "metric_version": "local-precipitation-v1",
       "semantic": "rain_presence_not_severity",
       "cumulative": {
-        "samples": 1888,
+        "samples": 1890,
         "true_positive": 41,
-        "true_negative": 1642,
+        "true_negative": 1644,
         "false_positive": 203,
         "false_negative": 2,
         "rain_samples": 43,
-        "dry_samples": 1845,
+        "dry_samples": 1847,
         "rain_detection_percent": 95.3,
         "precision_percent": 16.8,
         "false_alarm_ratio_percent": 83.2,
-        "accuracy_percent": 89.1
+        "accuracy_percent": 89.2
       },
       "by_horizon": {
         "30": {
@@ -2962,26 +3016,26 @@
           "accuracy_percent": 95.1
         },
         "60": {
-          "samples": 630,
+          "samples": 631,
           "true_positive": 14,
-          "true_negative": 567,
+          "true_negative": 568,
           "false_positive": 49,
           "false_negative": 0,
           "rain_samples": 14,
-          "dry_samples": 616,
+          "dry_samples": 617,
           "rain_detection_percent": 100.0,
           "precision_percent": 22.2,
           "false_alarm_ratio_percent": 77.8,
           "accuracy_percent": 92.2
         },
         "120": {
-          "samples": 625,
+          "samples": 626,
           "true_positive": 22,
-          "true_negative": 478,
+          "true_negative": 479,
           "false_positive": 125,
           "false_negative": 0,
           "rain_samples": 22,
-          "dry_samples": 603,
+          "dry_samples": 604,
           "rain_detection_percent": 100.0,
           "precision_percent": 15.0,
           "false_alarm_ratio_percent": 85.0,
