@@ -19,27 +19,27 @@ def test_candidate_times_are_latest_first():
 
 def test_daily_energy_integrates_only_new_short_gap():
     previous = {
-        'observation': {
-            'observed_at': '2026-10-29T08:00:00Z',
-            'total_shortwave_wm2': 400.0,
-        },
+        'observation': {'observed_at': '2026-10-29T08:00:00Z', 'total_shortwave_wm2': 400.0},
         'daily': {
-            'local_date': '2026-10-29',
-            'energy_kwh_m2': 1.0,
-            'coverage_minutes': 60,
-            'samples': 4,
-            'first_observed_at': '2026-10-29T07:00:00Z',
-            'last_observed_at': '2026-10-29T08:00:00Z',
+            'local_date': '2026-10-29', 'energy_kwh_m2': 1.0, 'coverage_minutes': 60, 'samples': 4,
+            'first_observed_at': '2026-10-29T07:00:00Z', 'last_observed_at': '2026-10-29T08:00:00Z',
         },
     }
-    observation = {
-        'observed_at': '2026-10-29T08:15:00Z',
-        'total_shortwave_wm2': 600.0,
-    }
+    observation = {'observed_at': '2026-10-29T08:15:00Z', 'total_shortwave_wm2': 600.0}
     daily = solar_monitoring.update_daily_summary(previous, observation, 'Europe/Rome')
     assert daily['energy_kwh_m2'] == 1.125
     assert daily['coverage_minutes'] == 75
     assert daily['samples'] == 5
+
+
+def _disable_ground_network(monkeypatch):
+    monkeypatch.setattr(
+        solar_monitoring,
+        'collect_ground_observations',
+        lambda reference, now_utc=None: [
+            {'id': 'pace-del-mela', 'name': 'Pace del Mela', 'status': 'unavailable', 'solar_wm2': None, 'uv_index': None}
+        ],
+    )
 
 
 def test_update_data_without_credentials_is_explicit_and_nonfatal(tmp_path, monkeypatch):
@@ -47,15 +47,14 @@ def test_update_data_without_credentials_is_explicit_and_nonfatal(tmp_path, monk
     data_path.write_text('{"meta":{"collector_status":"ok"}}\n', encoding='utf-8')
     monkeypatch.delenv('LSASAF_USERNAME', raising=False)
     monkeypatch.delenv('LSASAF_PASSWORD', raising=False)
+    _disable_ground_network(monkeypatch)
 
-    payload = solar_monitoring.update_data(
-        data_path,
-        now_utc=datetime(2026, 10, 29, 8, 0, tzinfo=timezone.utc),
-    )
+    payload = solar_monitoring.update_data(data_path, now_utc=datetime(2026, 10, 29, 8, 0, tzinfo=timezone.utc))
 
     assert payload['status'] == 'credentials_missing'
     assert payload['observation'] is None
     assert payload['reference']['name'] == 'Giammoro'
+    assert payload['ground_observations'][0]['id'] == 'pace-del-mela'
     text = data_path.read_text(encoding='utf-8')
     assert 'solar_monitoring' in text
     assert 'collector_status' in text
@@ -71,6 +70,7 @@ def test_update_data_can_reuse_previous_cycle_solar_state(tmp_path, monkeypatch)
     )
     monkeypatch.delenv('LSASAF_USERNAME', raising=False)
     monkeypatch.delenv('LSASAF_PASSWORD', raising=False)
+    _disable_ground_network(monkeypatch)
 
     payload = solar_monitoring.update_data(
         current,
@@ -81,3 +81,23 @@ def test_update_data_can_reuse_previous_cycle_solar_state(tmp_path, monkeypatch)
     assert payload['status'] == 'credentials_missing'
     assert payload['observation']['total_shortwave_wm2'] == 300
     assert payload['daily']['energy_kwh_m2'] == 0.5
+
+
+def test_ground_observations_survive_when_lsasaf_credentials_are_missing(tmp_path, monkeypatch):
+    data_path = tmp_path / 'data.json'
+    data_path.write_text('{}\n', encoding='utf-8')
+    monkeypatch.delenv('LSASAF_USERNAME', raising=False)
+    monkeypatch.delenv('LSASAF_PASSWORD', raising=False)
+    monkeypatch.setattr(
+        solar_monitoring,
+        'collect_ground_observations',
+        lambda reference, now_utc=None: [
+            {'id': 'scl087', 'name': 'Barcellona P.G. NE', 'status': 'ok', 'solar_wm2': 420.0, 'uv_index': 2.1}
+        ],
+    )
+
+    payload = solar_monitoring.update_data(data_path, now_utc=datetime(2026, 10, 29, 10, 0, tzinfo=timezone.utc))
+
+    assert payload['status'] == 'credentials_missing'
+    assert payload['ground_observations'][0]['status'] == 'ok'
+    assert payload['ground_observations'][0]['solar_wm2'] == 420.0
