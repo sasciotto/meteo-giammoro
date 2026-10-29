@@ -29,9 +29,11 @@
       ? 'events'
       : document.body.classList.contains('mode-radar')
         ? 'radar'
-        : document.body.classList.contains('mode-expert')
-          ? 'expert'
-          : 'home';
+        : document.body.classList.contains('mode-solar')
+          ? 'solar'
+          : document.body.classList.contains('mode-expert')
+            ? 'expert'
+            : 'home';
     const radarSource = document.querySelector('.radar-source-tab.active')?.dataset.radarSource || null;
     return {
       mode,
@@ -68,6 +70,8 @@
       if (state.radarSource) {
         document.querySelector(`[data-radar-source="${CSS.escape(state.radarSource)}"]`)?.click();
       }
+    } else if (state.mode === 'solar') {
+      document.getElementById('solarBtn')?.click();
     } else if (state.mode === 'expert') {
       document.getElementById('expertBtn')?.click();
     } else {
