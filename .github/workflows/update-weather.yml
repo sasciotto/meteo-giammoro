@@ -21,6 +21,7 @@ on:
       - "radar_ui.js"
       - "site_prepare.py"
       - "solar_monitoring.py"
+      - "ground_solar.py"
       - "solar_monitoring_ui.js"
       - "collector.py"
       - "home_forecast.py"
@@ -68,196 +69,92 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Verifica se serve un nuovo ciclo
+      - name: Verifica aggiornamento necessario
         id: freshness
-        shell: bash
         run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "should_run=true" >> "$GITHUB_OUTPUT"
-            echo "Push di codice/configurazione: eseguo sempre il ciclo"
-            exit 0
+          set -euo pipefail
+          git fetch origin data-state || true
+          SHOULD_RUN=true
+          if git show-ref --verify --quiet refs/remotes/origin/data-state; then
+            LAST_DATA_TS=$(git show -s --format=%ct origin/data-state)
+            NOW_TS=$(date +%s)
+            AGE=$((NOW_TS - LAST_DATA_TS))
+            if [ "$AGE" -lt 540 ]; then
+              SHOULD_RUN=false
+              echo "Ultimo ciclo dati ${AGE}s fa: salto questo run ridondante."
+            fi
           fi
+          echo "should_run=$SHOULD_RUN" >> "$GITHUB_OUTPUT"
 
-          python3 - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          should_run = True
-          age = 9999
-          try:
-              data = json.loads(Path('data.json').read_text(encoding='utf-8'))
-              raw = (data.get('meta') or {}).get('last_check_iso')
-              if raw:
-                  dt = datetime.fromisoformat(raw)
-                  if dt.tzinfo is None:
-                      dt = dt.replace(tzinfo=timezone.utc)
-                  age = max(0, int((datetime.now(timezone.utc) - dt.astimezone(timezone.utc)).total_seconds() / 60))
-                  should_run = age >= 10
-          except Exception:
-              should_run = True
-
-          print(f"age_minutes={age}")
-          print(f"should_run={'true' if should_run else 'false'}")
-          PY
-
-      - name: Mostra decisione ciclo
-        if: github.event_name != 'push'
-        run: echo "Età dati = ${{ steps.freshness.outputs.age_minutes }} min; esegui = ${{ steps.freshness.outputs.should_run }}"
-
-      - name: Python
+      - name: Configura Python
         if: steps.freshness.outputs.should_run == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
 
-      - name: Dipendenze
+      - name: Installa dipendenze
         if: steps.freshness.outputs.should_run == 'true'
         run: pip install -r requirements.txt
 
       - name: Test
         if: steps.freshness.outputs.should_run == 'true'
-        run: python -m pytest -q
+        run: pytest -q
 
-      - name: Conserva ciclo precedente
-        if: steps.freshness.outputs.should_run == 'true'
-        run: cp data.json /tmp/data-previous.json
-
-      - name: Aggiorna dati base e conserva cache modelli
+      - name: Recupera ciclo precedente
         if: steps.freshness.outputs.should_run == 'true'
         run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          import collector
-          import station_fallback
+          git show origin/data-state:data.json > /tmp/data-previous.json 2>/dev/null || cp data.json /tmp/data-previous.json
+          git show origin/data-state:history.json > /tmp/history-previous.json 2>/dev/null || cp history.json /tmp/history-previous.json
+          git show origin/data-state:verification.json > /tmp/verification-previous.json 2>/dev/null || cp verification.json /tmp/verification-previous.json
+          git show origin/data-state:events.json > /tmp/events-previous.json 2>/dev/null || cp events.json /tmp/events-previous.json
+          git show origin/data-state:seismic_events.json > /tmp/seismic-previous.json 2>/dev/null || cp seismic_events.json /tmp/seismic-previous.json
 
-          original_fetch_json = collector.fetch_json
-          original_fetch_stations = collector.fetch_stations
-          model_cache = {}
-          station_feed_failure = {}
-
-          def caching_fetch_json(url, params, timeout=30):
-              raw = original_fetch_json(url, params, timeout)
-              model_id = str((params or {}).get('models') or '')
-              if url == collector.OPEN_METEO and model_id:
-                  model_cache[model_id] = raw
-              return raw
-
-          def guarded_fetch_stations():
-              try:
-                  return original_fetch_stations()
-              except Exception as exc:
-                  reason = str(exc)
-                  now = collector.now_local()
-                  previous = collector.load_previous()
-                  station_feed_failure['reason'] = reason
-                  station_feed_failure['metadata'] = station_fallback.metadata(reason, now)
-                  stations = station_fallback.previous_cycle_stations(previous, now, reason)
-                  return stations, station_feed_failure['metadata']
-
-          collector.fetch_json = caching_fetch_json
-          collector.fetch_stations = guarded_fetch_stations
-          rc = collector.main()
-
-          if station_feed_failure:
-              data_path = Path('data.json')
-              data = json.loads(data_path.read_text(encoding='utf-8'))
-              reason = station_feed_failure['reason']
-              message = f"stazioni: {reason}"
-              meta = data.setdefault('meta', {})
-              errors = [str(x) for x in (meta.get('collector_errors') or [])]
-              if message not in errors:
-                  errors.append(message)
-              meta['collector_errors'] = errors
-              meta['collector_status'] = 'degraded'
-              data['station_feed'] = station_feed_failure['metadata']
-              data.setdefault('nowcast_evidence', {})['rain_gauges'] = (
-                  "Feed stazioni non disponibile nel ciclo corrente; l'ultimo dato noto resta visibile "
-                  "solo per riferimento ed è escluso dall'analisi."
-              )
-              data_path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-              print(f"Fallback stazioni attivo: {reason}")
-
-          Path('/tmp/open-meteo-model-cache.json').write_text(
-              json.dumps(model_cache, ensure_ascii=False), encoding='utf-8'
-          )
-          if rc:
-              raise SystemExit(rc)
-          print(f"Modelli deterministici conservati in cache: {len(model_cache)}")
-          PY
+      - name: Aggiorna dati meteo base
+        if: steps.freshness.outputs.should_run == 'true'
+        run: python collector.py
 
       - name: Aggiorna monitoraggio solare LSA SAF
         if: steps.freshness.outputs.should_run == 'true'
         run: python solar_monitoring.py --data data.json --previous /tmp/data-previous.json
 
-      - name: Tracking multi-cella, multi-frame e fulminazioni
+      - name: Aggiorna tracking fenomeni
         if: steps.freshness.outputs.should_run == 'true'
-        run: python nowcast_v4.py --data data.json --previous /tmp/data-previous.json --history history.json
+        run: python nowcast_v4.py
 
-      - name: Separa qualità dati e affidabilità traiettoria
+      - name: Aggiorna qualita analisi
         if: steps.freshness.outputs.should_run == 'true'
-        run: python analysis_quality_update.py --data data.json
+        run: python analysis_quality_update.py
 
-      - name: Sintesi home e previsione breve
+      - name: Aggiorna previsione home
         if: steps.freshness.outputs.should_run == 'true'
-        run: |
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          import collector
-          import home_forecast_v2 as home_forecast
+        run: python home_forecast_v2.py
 
-          cache_path = Path('/tmp/open-meteo-model-cache.json')
-          model_cache = json.loads(cache_path.read_text(encoding='utf-8')) if cache_path.exists() else {}
-          original_fetch_json = collector.fetch_json
-
-          def reuse_fetch_json(url, params, timeout=30):
-              model_id = str((params or {}).get('models') or '')
-              if url == collector.OPEN_METEO and model_id in model_cache:
-                  print(f"Riutilizzo cache Open-Meteo per {model_id}")
-                  return model_cache[model_id]
-              return original_fetch_json(url, params, timeout)
-
-          collector.fetch_json = reuse_fetch_json
-          p = Path('data.json')
-          previous_path = Path('/tmp/data-previous.json')
-          previous = json.loads(previous_path.read_text(encoding='utf-8')) if previous_path.exists() else {}
-          data = json.loads(p.read_text(encoding='utf-8'))
-          data = home_forecast.apply(data, collector, previous=previous)
-          p.write_text(json.dumps(data, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
-
-      - name: Normalizza qualità runtime, allerte e pioggia locale
+      - name: Aggiorna qualita runtime
         if: steps.freshness.outputs.should_run == 'true'
-        run: python runtime_quality.py --data data.json --previous /tmp/data-previous.json
+        run: python runtime_quality.py
 
-      - name: Verifica ex-post e archivio eventi
+      - name: Aggiorna verifica ex-post
         if: steps.freshness.outputs.should_run == 'true'
-        run: python verification_engine_v2.py --data data.json --verification verification.json --events events.json
+        run: python verification_engine_v2.py
 
-      - name: Conserva metriche cumulative verifica
+      - name: Aggiorna verifica cumulativa
         if: steps.freshness.outputs.should_run == 'true'
-        run: python verification_history.py --data data.json --verification verification.json --events events.json
+        run: python verification_history.py
 
-      - name: Verifica presenza pioggia locale
+      - name: Aggiorna verifica precipitazioni
         if: steps.freshness.outputs.should_run == 'true'
-        run: python precipitation_verification.py --data data.json --verification verification.json --events events.json
+        run: python precipitation_verification.py
 
-      - name: Aggiorna stato calibrazione previsionale
+      - name: Ricalibra qualita analisi
         if: steps.freshness.outputs.should_run == 'true'
-        run: python analysis_quality_update.py --data data.json
+        run: python analysis_quality_update.py
 
-      - name: Prepara sito con previsione
+      - name: Prepara sito
         if: steps.freshness.outputs.should_run == 'true'
-        run: |
-          rm -rf _site
-          mkdir _site
-          cp forecast_dashboard.js data.json history.json verification.json events.json .nojekyll _site/
-          python site_prepare.py --source index.html --dest _site/index.html
+        run: python site_prepare.py
 
-      - name: Configura GitHub Pages
+      - name: Configura Pages
         if: steps.freshness.outputs.should_run == 'true'
         uses: actions/configure-pages@v5
 
@@ -265,63 +162,32 @@ jobs:
         if: steps.freshness.outputs.should_run == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
-          path: _site
+          path: .
 
       - name: Pubblica GitHub Pages
         if: steps.freshness.outputs.should_run == 'true'
         id: deployment
         uses: actions/deploy-pages@v4
 
-      - name: Salva dati aggiornati nel repository
+      - name: Salva dati persistenti
         if: steps.freshness.outputs.should_run == 'true'
         run: |
-          DATA_FILES="data.json history.json verification.json events.json seismic_events.json"
-          if git diff --quiet -- ${DATA_FILES} && git diff --cached --quiet -- ${DATA_FILES}; then
-            echo "Nessuna modifica ai dati"
+          set -euo pipefail
+          mkdir -p /tmp/persist
+          cp data.json history.json verification.json events.json seismic_events.json /tmp/persist/
+          git fetch origin data-state || true
+          if git show-ref --verify --quiet refs/remotes/origin/data-state; then
+            git switch -C data-state origin/data-state
+          else
+            git switch --orphan data-state
+            git rm -rf . || true
+          fi
+          cp /tmp/persist/* .
+          git add data.json history.json verification.json events.json seismic_events.json
+          if git diff --cached --quiet; then
             exit 0
           fi
-
           git config user.name "meteo-giammoro-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ${DATA_FILES}
           git commit -m "Aggiorna dati meteo, tracking, home, eventi e verifica ex-post"
-
-          for attempt in 1 2 3; do
-            if git push; then
-              echo "Persistenza dati completata al tentativo ${attempt}"
-              exit 0
-            fi
-
-            echo "Push rifiutato al tentativo ${attempt}: riallineo main e riprovo"
-            git fetch origin main
-            if ! git rebase origin/main; then
-              echo "::warning::Conflitto durante il rebase: Pages è già aggiornata, salto la persistenza di questo ciclo"
-              git rebase --abort || true
-              exit 0
-            fi
-            sleep $((attempt * 2))
-          done
-
-          echo "::warning::Pages è aggiornata ma non è stato possibile persistere i file dati dopo 3 tentativi"
-          exit 0
-
-# Heartbeat auto-rilanciante: richiama workflow_dispatch ogni 15 minuti senza dipendere dal cron GitHub.
-# Scheduler GitHub di backup: ogni 15 minuti ai minuti :07, :22, :37 e :52.
-# La guardia iniziale evita di eseguire il collector se i dati hanno meno di 10 minuti.
-# Le risposte Open-Meteo deterministiche del collector vengono riutilizzate dalla home senza una seconda richiesta.
-# Se il feed stazioni fallisce, l'ultimo ciclo valido resta consultabile ma è marcato precedente ed escluso dall'analisi.
-# Se il modello home fallisce, viene mantenuta fino a 6 h l'ultima previsione valida, marcata come dato precedente.
-# Il collector viene marcato degraded quando la previsione modellistica home o il feed stazioni non sono disponibili.
-# La pagina pubblica usa un solo fetch di data.json; forecast_dashboard.js e monitoraggio solare ricevono lo stesso oggetto dati.
-# Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
-# Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
-# Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
-# Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
-# Solare: EUMETSAT LSA SAF MDSSFTD, opzionale via LSASAF_USERNAME/LSASAF_PASSWORD; un errore non degrada il collector meteo.
-# Verifica ex-post eventi: orizzonti 30/60/120 min; impatto locale separato dal track radar e metriche cumulative v2 persistenti.
-# Verifica pioggia: metrica separata 30/60/120 min per presenza di precipitazione locale, non severità.
-# Pioggia locale: contesto radar 1/3/5 km + persistenza; i massimi areali non sono presentati come accumuli puntuali.
-# La baseline v1 resta separata dalla metrica v2 e non viene sommata dopo il cambio semantico.
-# Qualità tecnica e affidabilità traiettoria sono separate dalla confidenza probabilistica, che resta non calibrata.
-# Home: nowcasting 0–3 h semplificato dal backend + previsione oraria e Oggi/Domani; il consenso multi-modello resta nell'analisi dettagliata.
-# LTG/LAMPINET non è attualmente esposto tra i productType supportati dalla REST API Radar-DPC v2.
+          git push origin data-state
