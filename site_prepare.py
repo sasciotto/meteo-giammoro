@@ -22,6 +22,7 @@ RADAR_SOURCES_UI_PATH = Path(__file__).with_name("radar_sources_ui.js")
 HOME_POLISH_UI_PATH = Path(__file__).with_name("home_polish_ui.js")
 SEISMIC_EVENTS_UI_PATH = Path(__file__).with_name("seismic_events_ui.js")
 SOLAR_MONITORING_UI_PATH = Path(__file__).with_name("solar_monitoring_ui.js")
+SOLAR_HISTORY_UI_PATH = Path(__file__).with_name("solar_history_ui.js")
 AUTO_REFRESH_UI_PATH = Path(__file__).with_name("auto_refresh_ui.js")
 SEISMIC_DATA_PATH = Path(__file__).with_name("seismic_events.json")
 RADAR_APP_URL = "https://radar.protezionecivile.it/#/pages/dashboard?zoom=6"
@@ -38,6 +39,7 @@ def _dashboard_scripts() -> str:
         HOME_POLISH_UI_PATH,
         SEISMIC_EVENTS_UI_PATH,
         SOLAR_MONITORING_UI_PATH,
+        SOLAR_HISTORY_UI_PATH,
         AUTO_REFRESH_UI_PATH,
     ):
         if path.exists():
