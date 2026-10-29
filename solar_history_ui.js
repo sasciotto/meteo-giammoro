@@ -5,10 +5,11 @@
   const num = v => { const x = Number(v); return Number.isFinite(x) ? x : null; };
   const SERIES_COLORS = {
     'pace-del-mela': '#d97706',
+    'archi-isanfi5': '#7c3aed',
     'scl087': '#2563eb',
     'lsa-saf': '#16a34a',
   };
-  const FALLBACK_COLORS = ['#7c3aed', '#dc2626', '#0891b2', '#475569', '#be185d'];
+  const FALLBACK_COLORS = ['#dc2626', '#0891b2', '#475569', '#be185d', '#9333ea'];
   let historyCache = null;
   let historyPromise = null;
   let selectedHours = 24;
@@ -103,7 +104,7 @@
   function dailyTable(history) {
     const daily = (history?.daily || []).slice(-7).reverse();
     if (!daily.length) return '';
-    const ids = Object.keys(history?.catalog || {}).filter(id => id !== 'lsa-saf').slice(0,3);
+    const ids = Object.keys(history?.catalog || {}).filter(id => id !== 'lsa-saf').slice(0,4);
     if (!ids.length) return '';
     return `<div class="solar-daily-wrap"><table class="solar-daily-table"><thead><tr><th>Giorno</th>${ids.map(id=>`<th>${history.catalog[id]?.name || id}<br>max / kWh·m⁻²</th>`).join('')}</tr></thead><tbody>${daily.map(day=>`<tr><td>${day.date}</td>${ids.map(id=>{const s=day?.sources?.[id]||{}; const mx=num(s.solar_max_wm2); const e=num(s.energy_kwh_m2); return `<td>${mx==null?'—':Math.round(mx)+' W/m²'} / ${e==null?'—':e.toFixed(2)}</td>`}).join('')}</tr>`).join('')}</tbody></table></div>`;
   }

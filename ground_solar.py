@@ -3,6 +3,7 @@
 
 Sources are intentionally independent from the main meteorological collector:
 - Pace del Mela: standard Cumulus MX machine-readable files, when publicly exposed.
+- Archi / San Filippo del Mela (ISANFI5): Weather Underground public PWS dashboard.
 - Barcellona P.G. NE (SCL087): official MeteoNetwork public station page.
 
 Any failure is represented explicitly as unavailable; no value is fabricated.
@@ -22,13 +23,16 @@ from bs4 import BeautifulSoup
 PACE_SITE = "https://meteopacedelmela.altervista.org/"
 PACE_GAUGES_URL = f"{PACE_SITE}realtimegauges.txt"
 PACE_REALTIME_URL = f"{PACE_SITE}realtime.txt"
+ARCHI_URL = "https://www.wunderground.com/dashboard/pws/ISANFI5"
+ARCHI_LAT = 38.189
+ARCHI_LON = 15.275
 SCL087_URL = "https://www.meteonetwork.eu/it/weather-station/scl087-stazione-meteorologica-di-zona-nord-est"
 SCL087_LAT = 38.15593
 SCL087_LON = 15.22328
 
 SESSION = requests.Session()
 SESSION.headers.update({
-    "User-Agent": "MeteoGiammoroDashboard/0.4 (+public weather dashboard; respectful polling)",
+    "User-Agent": "MeteoGiammoroDashboard/0.5 (+public weather dashboard; respectful polling)",
 })
 
 
@@ -157,7 +161,7 @@ def collect_pace_del_mela(now_utc: datetime | None = None) -> dict[str, Any]:
                 **parsed,
                 "note": "Lettura da file standard Cumulus MX pubblicamente esposto dalla stazione.",
             }
-        except Exception as exc:  # best effort: one endpoint must not break the weather pipeline
+        except Exception as exc:
             errors.append(f"{url.rsplit('/', 1)[-1]}: {exc}")
 
     return {
@@ -174,6 +178,62 @@ def collect_pace_del_mela(now_utc: datetime | None = None) -> dict[str, Any]:
         "note": "Sensore Solare/UV noto, ma i file standard Cumulus MX non sono risultati leggibili in questo ciclo.",
         "diagnostic": "; ".join(errors)[:500],
     }
+
+
+def parse_wunderground_station_html(html: str, now_utc: datetime | None = None) -> dict[str, Any]:
+    text = " ".join(BeautifulSoup(html, "html.parser").stripped_strings)
+    # The public PWS dashboard exposes labelled UV and Radiation values. Keep the
+    # patterns strict enough not to confuse forecast UV/radiation text with the
+    # current-station observation block.
+    uv_match = re.search(r"(?:^|\s)UV\s+([-+]?\d+(?:[\.,]\d+)?)\b", text, flags=re.IGNORECASE)
+    solar_match = re.search(r"Radiation\s+([-+]?\d+(?:[\.,]\d+)?)\b", text, flags=re.IGNORECASE)
+    uv = _number(uv_match.group(1)) if uv_match else None
+    solar = _number(solar_match.group(1)) if solar_match else None
+    if solar is None and uv is None:
+        raise ValueError("Campi UV/Radiation non trovati nella dashboard Weather Underground")
+    now_utc = (now_utc or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    return {
+        "solar_wm2": round(solar, 1) if solar is not None else None,
+        "uv_index": round(uv, 2) if uv is not None else None,
+        "observed_at": None,
+        "retrieved_at": _iso(now_utc),
+        "method": "wunderground-public-pws-page",
+    }
+
+
+def collect_archi(reference: dict[str, Any], now_utc: datetime | None = None) -> dict[str, Any]:
+    now_utc = (now_utc or datetime.now(timezone.utc)).astimezone(timezone.utc)
+    base = {
+        "id": "archi-isanfi5",
+        "name": "Archi · San Filippo del Mela · ISANFI5",
+        "source": "Weather Underground PWS",
+        "source_url": ARCHI_URL,
+        "latitude": ARCHI_LAT,
+        "longitude": ARCHI_LON,
+        "distance_km": round(haversine_km(float(reference["latitude"]), float(reference["longitude"]), ARCHI_LAT, ARCHI_LON), 1),
+    }
+    try:
+        response = SESSION.get(ARCHI_URL, timeout=15)
+        response.raise_for_status()
+        parsed = parse_wunderground_station_html(response.text, now_utc=now_utc)
+        return {
+            **base,
+            "status": "ok",
+            **parsed,
+            "note": "Valori UV e radiazione letti dalla dashboard pubblica della PWS Archi; acquisizione best-effort e indipendente dalle altre fonti.",
+        }
+    except Exception as exc:
+        return {
+            **base,
+            "status": "unavailable",
+            "solar_wm2": None,
+            "uv_index": None,
+            "observed_at": None,
+            "retrieved_at": _iso(now_utc),
+            "method": "wunderground-public-pws-page",
+            "note": "Stazione Archi con UV/radiazione verificati sulla pagina pubblica, ma lettura automatica non disponibile in questo ciclo.",
+            "diagnostic": str(exc)[:500],
+        }
 
 
 def parse_meteonetwork_station_html(html: str, now_utc: datetime | None = None) -> dict[str, Any]:
@@ -233,5 +293,6 @@ def collect_ground_observations(reference: dict[str, Any], now_utc: datetime | N
     now_utc = (now_utc or datetime.now(timezone.utc)).astimezone(timezone.utc)
     return [
         collect_pace_del_mela(now_utc=now_utc),
+        collect_archi(reference, now_utc=now_utc),
         collect_scl087(reference, now_utc=now_utc),
     ]
