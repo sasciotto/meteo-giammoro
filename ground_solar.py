@@ -14,6 +14,7 @@ import json
 import math
 import re
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from typing import Any
 from zoneinfo import ZoneInfo
 
@@ -23,6 +24,7 @@ from bs4 import BeautifulSoup
 PACE_SITE = "https://meteopacedelmela.altervista.org/"
 PACE_GAUGES_URL = f"{PACE_SITE}realtimegauges.txt"
 PACE_REALTIME_URL = f"{PACE_SITE}realtime.txt"
+PACE_MAX_AGE_MINUTES = 45
 ARCHI_URL = "https://www.wunderground.com/dashboard/pws/ISANFI5"
 ARCHI_LAT = 38.189
 ARCHI_LON = 15.275
@@ -32,7 +34,7 @@ SCL087_LON = 15.22328
 
 SESSION = requests.Session()
 SESSION.headers.update({
-    "User-Agent": "MeteoGiammoroDashboard/0.5 (+public weather dashboard; respectful polling)",
+    "User-Agent": "MeteoGiammoroDashboard/0.6 (+public weather dashboard; respectful polling)",
 })
 
 
@@ -54,6 +56,18 @@ def _iso(dt: datetime) -> str:
     return dt.astimezone(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
+def _parse_iso(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    except (TypeError, ValueError):
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt.astimezone(timezone.utc)
+
+
 def _parse_local_datetime(date_text: str | None, time_text: str | None, timezone_name: str = "Europe/Rome") -> str | None:
     if not date_text or not time_text:
         return None
@@ -73,6 +87,26 @@ def _parse_local_datetime(date_text: str | None, time_text: str | None, timezone
         except ValueError:
             continue
     return None
+
+
+def _age_minutes(value: str | None, now_utc: datetime) -> float | None:
+    dt = _parse_iso(value)
+    if dt is None:
+        return None
+    return max(0.0, (now_utc - dt).total_seconds() / 60.0)
+
+
+def _http_last_modified(headers: Any) -> str | None:
+    raw = headers.get("Last-Modified") if headers is not None else None
+    if not raw:
+        return None
+    try:
+        dt = parsedate_to_datetime(raw)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return _iso(dt)
 
 
 def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
@@ -137,12 +171,33 @@ def parse_cumulus_realtime(text: str, now_utc: datetime | None = None) -> dict[s
     }
 
 
+def _pace_sample_is_fresh(parsed: dict[str, Any], response: requests.Response, now_utc: datetime) -> bool:
+    """Reject old static Cumulus files instead of presenting them as current."""
+    observed_age = _age_minutes(parsed.get("observed_at"), now_utc)
+    if observed_age is not None:
+        return observed_age <= PACE_MAX_AGE_MINUTES
+
+    modified_at = _http_last_modified(response.headers)
+    modified_age = _age_minutes(modified_at, now_utc)
+    if modified_age is not None:
+        if parsed.get("observed_at") is None:
+            parsed["observed_at"] = modified_at
+        return modified_age <= PACE_MAX_AGE_MINUTES
+
+    # A timestamp-less realtimegauges file cannot be proven current. This is
+    # deliberately not accepted after the stale 1 W/m² case observed in Oct 2026.
+    return parsed.get("method") != "cumulus-realtimegauges"
+
+
 def collect_pace_del_mela(now_utc: datetime | None = None) -> dict[str, Any]:
     now_utc = (now_utc or datetime.now(timezone.utc)).astimezone(timezone.utc)
     errors: list[str] = []
+
+    # realtime.txt is preferred because it carries the actual Cumulus observation
+    # date/time. realtimegauges.txt is only a fallback and must prove freshness.
     attempts = (
-        (PACE_GAUGES_URL, parse_cumulus_gauges),
         (PACE_REALTIME_URL, parse_cumulus_realtime),
+        (PACE_GAUGES_URL, parse_cumulus_gauges),
     )
     for url, parser in attempts:
         try:
@@ -152,6 +207,9 @@ def collect_pace_del_mela(now_utc: datetime | None = None) -> dict[str, Any]:
                 continue
             response.raise_for_status()
             parsed = parser(response.text, now_utc=now_utc)
+            if not _pace_sample_is_fresh(parsed, response, now_utc):
+                errors.append(f"{url.rsplit('/', 1)[-1]}: dato non sufficientemente fresco")
+                continue
             return {
                 "id": "pace-del-mela",
                 "name": "Pace del Mela · Pace Alta",
@@ -159,7 +217,7 @@ def collect_pace_del_mela(now_utc: datetime | None = None) -> dict[str, Any]:
                 "source_url": PACE_SITE,
                 "status": "ok",
                 **parsed,
-                "note": "Lettura da file standard Cumulus MX pubblicamente esposto dalla stazione.",
+                "note": "Lettura dal feed Cumulus MX corrente della stazione; i file privi di prova di freschezza vengono scartati.",
             }
         except Exception as exc:
             errors.append(f"{url.rsplit('/', 1)[-1]}: {exc}")
@@ -175,16 +233,13 @@ def collect_pace_del_mela(now_utc: datetime | None = None) -> dict[str, Any]:
         "observed_at": None,
         "retrieved_at": _iso(now_utc),
         "method": "cumulus-discovery",
-        "note": "Sensore Solare/UV noto, ma i file standard Cumulus MX non sono risultati leggibili in questo ciclo.",
+        "note": "Il sito espone Solare/UV, ma in questo ciclo i file Cumulus pubblici non hanno fornito un campione corrente verificabile.",
         "diagnostic": "; ".join(errors)[:500],
     }
 
 
 def parse_wunderground_station_html(html: str, now_utc: datetime | None = None) -> dict[str, Any]:
     text = " ".join(BeautifulSoup(html, "html.parser").stripped_strings)
-    # The public PWS dashboard exposes labelled UV and Radiation values. Keep the
-    # patterns strict enough not to confuse forecast UV/radiation text with the
-    # current-station observation block.
     uv_match = re.search(r"(?:^|\s)UV\s+([-+]?\d+(?:[\.,]\d+)?)\b", text, flags=re.IGNORECASE)
     solar_match = re.search(r"Radiation\s+([-+]?\d+(?:[\.,]\d+)?)\b", text, flags=re.IGNORECASE)
     uv = _number(uv_match.group(1)) if uv_match else None
