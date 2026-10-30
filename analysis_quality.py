@@ -224,11 +224,20 @@ def trajectory_reliability(data: dict) -> dict:
     }
 
 
+def _event_samples_for_calibration(data: dict) -> tuple[int, str]:
+    """Preferisce la metrica cumulativa v2; il rolling window resta solo fallback."""
+    summary = ((data.get("verification", {}) or {}).get("summary", {}) or {})
+    cumulative = summary.get("cumulative_event_metrics", {}) or {}
+    cumulative_samples = _num(cumulative.get("event_samples"))
+    if cumulative_samples is not None:
+        return max(0, int(cumulative_samples)), "cumulative_event_metrics"
+    rolling = summary.get("event_metrics", {}) or {}
+    return max(0, int(_num(rolling.get("event_samples")) or 0)), "event_metrics"
+
+
 def predictive_confidence(data: dict) -> dict:
     """Non inventa una probabilità finché il sistema non dispone di una calibrazione probabilistica."""
-    summary = ((data.get("verification", {}) or {}).get("summary", {}) or {})
-    event_metrics = summary.get("event_metrics", {}) or {}
-    event_samples = int(_num(event_metrics.get("event_samples")) or 0)
+    event_samples, sample_source = _event_samples_for_calibration(data)
     progress = min(100, int(round(100 * event_samples / MIN_EVENT_SAMPLES_FOR_CALIBRATION)))
     ready = event_samples >= MIN_EVENT_SAMPLES_FOR_CALIBRATION
     return {
@@ -237,12 +246,14 @@ def predictive_confidence(data: dict) -> dict:
         "status": "calibration_ready" if ready else "uncalibrated",
         "semantic": "predictive_probability",
         "event_samples": event_samples,
+        "event_samples_source": sample_source,
         "minimum_event_samples": MIN_EVENT_SAMPLES_FOR_CALIBRATION,
         "calibration_progress_percent": progress,
         "note": (
             "Confidenza previsionale non espressa in percentuale: il progetto non dispone ancora di una "
             "calibrazione probabilistica affidabile. "
-            f"Campioni evento disponibili: {event_samples}/{MIN_EVENT_SAMPLES_FOR_CALIBRATION} come soglia minima di studio."
+            f"Campioni evento cumulativi v2 disponibili: {event_samples}/{MIN_EVENT_SAMPLES_FOR_CALIBRATION} "
+            "come soglia minima di studio; il superamento della soglia non equivale a una probabilità calibrata."
         ),
     }
 
