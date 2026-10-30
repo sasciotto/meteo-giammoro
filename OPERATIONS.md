@@ -38,6 +38,10 @@ La pipeline pubblica GitHub Pages prima della persistenza dei JSON su `main`. Il
 
 La branch `main` riceve quindi commit automatici del bot. Qualunque futura branch protection deve consentire esplicitamente questo flusso oppure spostare i dati runtime su una branch/storage separato prima di vietare i push diretti.
 
+## Validazione
+
+Le modifiche alla policy stazioni devono essere accompagnate dai test in `tests/test_station_policy.py` e dalla suite completa `pytest` prima del merge.
+
 ## Sicurezza rollback
 
 Backup precedente al consolidamento del 30 ottobre 2026:
