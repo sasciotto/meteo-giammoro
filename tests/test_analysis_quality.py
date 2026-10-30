@@ -87,6 +87,27 @@ def test_predictive_confidence_uses_event_samples_only_as_calibration_progress()
     assert predictive["status"] == "uncalibrated"
     assert predictive["calibration_progress_percent"] == 25
     assert predictive["event_samples"] == 5
+    assert predictive["event_samples_source"] == "event_metrics"
+
+
+def test_predictive_confidence_prefers_cumulative_v2_metrics():
+    data = {
+        "verification": {
+            "summary": {
+                "event_metrics": {"event_samples": 0},
+                "cumulative_event_metrics": {"event_samples": 42},
+            }
+        }
+    }
+
+    predictive = analysis_quality.predictive_confidence(data)
+
+    assert predictive["score"] is None
+    assert predictive["status"] == "calibration_ready"
+    assert predictive["calibration_progress_percent"] == 100
+    assert predictive["event_samples"] == 42
+    assert predictive["event_samples_source"] == "cumulative_event_metrics"
+    assert "non equivale" in predictive["note"]
 
 
 def test_legacy_alias_is_explicitly_deprecated():
