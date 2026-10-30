@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Archivio storico compatto del monitoraggio solare.
 
-Conserva campioni grezzi per 31 giorni, sufficienti per i grafici 24 h / 7 d / 30 d,
-e riepiloghi giornalieri per 10 anni. I buchi superiori a 45 minuti non vengono
-interpolati e i dati non disponibili restano esplicitamente mancanti.
+Conserva campioni grezzi per 31 giorni e riepiloghi giornalieri per 10 anni.
+Ogni sorgente usa il proprio timestamp osservativo quando disponibile; i buchi
+superiori a 45 minuti non vengono interpolati e i dati mancanti restano tali.
 """
 from __future__ import annotations
 
@@ -18,11 +18,12 @@ from zoneinfo import ZoneInfo
 ROOT = Path(__file__).resolve().parent
 DATA_PATH = ROOT / "data.json"
 HISTORY_PATH = ROOT / "solar_history.json"
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
 RAW_RETENTION_DAYS = 31
 DAILY_RETENTION_DAYS = 3660
 MAX_INTEGRATION_GAP_MINUTES = 45
 TIMEZONE_NAME = "Europe/Rome"
+PACE_STALE_FIX_CUTOFF = datetime(2026, 10, 30, 7, 47, tzinfo=timezone.utc)
 
 
 def parse_dt(value: str | None) -> datetime | None:
@@ -105,6 +106,7 @@ def empty_history() -> dict[str, Any]:
         "catalog": {},
         "samples": [],
         "daily": [],
+        "data_quality_notes": [],
     }
 
 
@@ -122,11 +124,22 @@ def load_history(path: Path) -> dict[str, Any]:
     result["samples"] = list(raw.get("samples") or [])
     result["daily"] = list(raw.get("daily") or [])
     result["catalog"] = dict(raw.get("catalog") or {})
+    result["data_quality_notes"] = list(raw.get("data_quality_notes") or [])
     return result
 
 
-def _local_date(timestamp: str, timezone_name: str = TIMEZONE_NAME) -> str | None:
-    dt = parse_dt(timestamp)
+def _source_dt(sample: dict[str, Any], source: dict[str, Any] | None) -> datetime | None:
+    if not isinstance(source, dict):
+        return parse_dt(sample.get("timestamp"))
+    return (
+        parse_dt(source.get("observed_at"))
+        or parse_dt(source.get("retrieved_at"))
+        or parse_dt(sample.get("timestamp"))
+    )
+
+
+def _source_local_date(sample: dict[str, Any], source: dict[str, Any] | None, timezone_name: str = TIMEZONE_NAME) -> str | None:
+    dt = _source_dt(sample, source)
     if not dt:
         return None
     return dt.astimezone(ZoneInfo(timezone_name)).date().isoformat()
@@ -136,11 +149,62 @@ def _valid_source_point(source: dict[str, Any] | None) -> bool:
     return isinstance(source, dict) and source.get("status") == "ok"
 
 
+def _invalidate_known_bad_history(samples: list[dict[str, Any]]) -> int:
+    """Marca la vecchia lettura Pace 1 W/m² priva di timestamp come non valida."""
+    changed = 0
+    for sample in samples:
+        stamp = parse_dt(sample.get("timestamp"))
+        source = (sample.get("sources") or {}).get("pace-del-mela")
+        if not stamp or not isinstance(source, dict):
+            continue
+        solar = finite_number(source.get("solar_wm2"))
+        if (
+            stamp < PACE_STALE_FIX_CUTOFF
+            and source.get("status") == "ok"
+            and source.get("observed_at") is None
+            and solar == 1.0
+        ):
+            source["status"] = "invalidated"
+            source["quality"] = "invalidated_stale_feed"
+            source["quality_note"] = "Campione storico escluso: vecchio feed Cumulus senza prova di freschezza."
+            changed += 1
+    return changed
+
+
+def _deduplicate_sources(samples: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], int]:
+    """Deduplica per sorgente+timestamposservativo, evitando repliche dello stesso prodotto LSA."""
+    seen: set[tuple[str, str]] = set()
+    removed = 0
+    output: list[dict[str, Any]] = []
+    for sample in sorted(samples, key=lambda item: parse_dt(item.get("timestamp")) or datetime.min.replace(tzinfo=timezone.utc)):
+        sources = dict(sample.get("sources") or {})
+        kept: dict[str, Any] = {}
+        for source_id, source in sources.items():
+            if not isinstance(source, dict):
+                continue
+            source_dt = _source_dt(sample, source)
+            if source_dt is None:
+                kept[source_id] = source
+                continue
+            key = (str(source_id), iso_utc(source_dt))
+            if key in seen:
+                removed += 1
+                continue
+            seen.add(key)
+            kept[source_id] = source
+        if kept:
+            item = dict(sample)
+            item["sources"] = kept
+            output.append(item)
+    return output, removed
+
+
 def summarize_day(samples: list[dict[str, Any]], local_day: str, timezone_name: str = TIMEZONE_NAME) -> dict[str, Any]:
-    day_samples = [sample for sample in samples if _local_date(str(sample.get("timestamp") or ""), timezone_name) == local_day]
     source_ids: set[str] = set()
-    for sample in day_samples:
-        source_ids.update((sample.get("sources") or {}).keys())
+    for sample in samples:
+        for source_id, source in (sample.get("sources") or {}).items():
+            if _source_local_date(sample, source, timezone_name) == local_day:
+                source_ids.add(source_id)
 
     summaries: dict[str, Any] = {}
     for source_id in sorted(source_ids):
@@ -150,10 +214,12 @@ def summarize_day(samples: list[dict[str, Any]], local_day: str, timezone_name: 
         source_label = None
         valid_sample_times: list[datetime] = []
 
-        for sample in day_samples:
-            stamp = parse_dt(sample.get("timestamp"))
+        for sample in samples:
             source = (sample.get("sources") or {}).get(source_id)
-            if not stamp or not _valid_source_point(source):
+            if _source_local_date(sample, source, timezone_name) != local_day or not _valid_source_point(source):
+                continue
+            stamp = _source_dt(sample, source)
+            if stamp is None:
                 continue
             source_name = str(source.get("name") or source_name)
             source_label = source.get("source") or source_label
@@ -200,10 +266,7 @@ def _catalog_from_samples(samples: list[dict[str, Any]], existing: dict[str, Any
         for source_id, source in (sample.get("sources") or {}).items():
             if not isinstance(source, dict):
                 continue
-            catalog[source_id] = {
-                "name": source.get("name") or source_id,
-                "source": source.get("source"),
-            }
+            catalog[source_id] = {"name": source.get("name") or source_id, "source": source.get("source")}
     return catalog
 
 
@@ -220,15 +283,27 @@ def update_history(data_path: Path = DATA_PATH, history_path: Path = HISTORY_PAT
         if parse_dt(stamp):
             samples_by_timestamp[stamp] = existing
     samples_by_timestamp[sample["timestamp"]] = sample
-    all_samples = sorted(samples_by_timestamp.values(), key=lambda item: parse_dt(item.get("timestamp")) or datetime.min.replace(tzinfo=timezone.utc))
+    all_samples = list(samples_by_timestamp.values())
+
+    invalidated = _invalidate_known_bad_history(all_samples)
+    all_samples, deduplicated = _deduplicate_sources(all_samples)
+
+    affected_days: set[str] = set()
+    for item in all_samples:
+        for source in (item.get("sources") or {}).values():
+            local_day = _source_local_date(item, source, TIMEZONE_NAME)
+            if local_day:
+                affected_days.add(local_day)
 
     daily_by_date = {str(item.get("date")): item for item in history.get("daily") or [] if isinstance(item, dict) and item.get("date")}
-    affected_days = sorted({_local_date(str(item.get("timestamp") or ""), TIMEZONE_NAME) for item in all_samples} - {None})
-    for local_day in affected_days:
-        daily_by_date[str(local_day)] = summarize_day(all_samples, str(local_day), TIMEZONE_NAME)
+    for local_day in sorted(affected_days):
+        daily_by_date[local_day] = summarize_day(all_samples, local_day, TIMEZONE_NAME)
 
     raw_cutoff = now_utc - timedelta(days=RAW_RETENTION_DAYS)
-    retained_samples = [item for item in all_samples if (parse_dt(item.get("timestamp")) or datetime.min.replace(tzinfo=timezone.utc)) >= raw_cutoff]
+    retained_samples = [
+        item for item in all_samples
+        if any((_source_dt(item, source) or datetime.min.replace(tzinfo=timezone.utc)) >= raw_cutoff for source in (item.get("sources") or {}).values())
+    ]
 
     local_today = now_utc.astimezone(ZoneInfo(TIMEZONE_NAME)).date()
     daily_cutoff = local_today - timedelta(days=DAILY_RETENTION_DAYS)
@@ -242,7 +317,12 @@ def update_history(data_path: Path = DATA_PATH, history_path: Path = HISTORY_PAT
             retained_daily.append(item)
     retained_daily.sort(key=lambda item: item["date"])
 
-    started_at = history.get("started_at") or (all_samples[0]["timestamp"] if all_samples else sample["timestamp"])
+    started_at = history.get("started_at") or (retained_samples[0]["timestamp"] if retained_samples else sample["timestamp"])
+    notes = [
+        "Le serie usano observed_at della singola sorgente quando disponibile; retrieved_at è solo fallback.",
+        "I prodotti LSA SAF ripetuti con lo stesso observed_at vengono deduplicati.",
+        "I campioni Pace del Mela storici a 1 W/m² privi di prova di freschezza prima del 30/10/2026 07:47 UTC sono invalidati.",
+    ]
     payload = {
         "schema_version": SCHEMA_VERSION,
         "updated_at": iso_utc(now_utc),
@@ -251,9 +331,11 @@ def update_history(data_path: Path = DATA_PATH, history_path: Path = HISTORY_PAT
         "raw_retention_days": RAW_RETENTION_DAYS,
         "daily_retention_days": DAILY_RETENTION_DAYS,
         "integration_gap_max_minutes": MAX_INTEGRATION_GAP_MINUTES,
-        "catalog": _catalog_from_samples(all_samples, history.get("catalog")),
+        "catalog": _catalog_from_samples(retained_samples, history.get("catalog")),
         "samples": retained_samples,
         "daily": retained_daily,
+        "data_quality_notes": notes,
+        "maintenance": {"invalidated_samples_this_run": invalidated, "deduplicated_source_points_this_run": deduplicated},
     }
 
     tmp = history_path.with_suffix(history_path.suffix + ".tmp")
@@ -271,7 +353,8 @@ def main() -> int:
     print(
         "Storico solare: "
         f"{len(payload['samples'])} campioni grezzi, {len(payload['daily'])} giorni, "
-        f"fonti={len(payload['catalog'])}"
+        f"fonti={len(payload['catalog'])}, dedup={payload['maintenance']['deduplicated_source_points_this_run']}, "
+        f"invalidati={payload['maintenance']['invalidated_samples_this_run']}"
     )
     return 0
 
