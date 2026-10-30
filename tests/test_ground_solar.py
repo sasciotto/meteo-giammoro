@@ -20,6 +20,36 @@ def test_parse_cumulus_realtime_standard_fields():
     result = ground_solar.parse_cumulus_realtime(' '.join(fields), now_utc=datetime(2026, 10, 29, 11, 16, tzinfo=timezone.utc))
     assert result['solar_wm2'] == 488.0
     assert result['uv_index'] == 2.7
+    assert result['observed_at'] == '2026-10-29T11:15:00Z'
+
+
+def test_pace_freshness_accepts_current_realtime_timestamp():
+    parsed = {'observed_at': '2026-10-30T07:20:00Z', 'method': 'cumulus-realtime'}
+    response = type('R', (), {'headers': {}})()
+    now = datetime(2026, 10, 30, 7, 30, tzinfo=timezone.utc)
+    assert ground_solar._pace_sample_is_fresh(parsed, response, now)
+
+
+def test_pace_freshness_rejects_old_realtime_timestamp():
+    parsed = {'observed_at': '2026-10-30T05:00:00Z', 'method': 'cumulus-realtime'}
+    response = type('R', (), {'headers': {}})()
+    now = datetime(2026, 10, 30, 7, 30, tzinfo=timezone.utc)
+    assert not ground_solar._pace_sample_is_fresh(parsed, response, now)
+
+
+def test_pace_freshness_uses_http_last_modified_for_gauges():
+    parsed = {'observed_at': None, 'method': 'cumulus-realtimegauges'}
+    response = type('R', (), {'headers': {'Last-Modified': 'Fri, 30 Oct 2026 07:25:00 GMT'}})()
+    now = datetime(2026, 10, 30, 7, 30, tzinfo=timezone.utc)
+    assert ground_solar._pace_sample_is_fresh(parsed, response, now)
+    assert parsed['observed_at'] == '2026-10-30T07:25:00Z'
+
+
+def test_pace_freshness_rejects_timestamp_less_gauges():
+    parsed = {'observed_at': None, 'method': 'cumulus-realtimegauges'}
+    response = type('R', (), {'headers': {}})()
+    now = datetime(2026, 10, 30, 7, 30, tzinfo=timezone.utc)
+    assert not ground_solar._pace_sample_is_fresh(parsed, response, now)
 
 
 def test_parse_wunderground_station_html_reads_uv_and_radiation():
