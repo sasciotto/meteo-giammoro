@@ -2,8 +2,6 @@ name: Heartbeat Meteo Giammoro
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "14,29,44,59 * * * *"
   push:
     branches:
       - main
@@ -16,15 +14,15 @@ permissions:
 
 concurrency:
   group: meteo-giammoro-heartbeat
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   heartbeat:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 25
     steps:
-      - name: Controlla aggiornamenti già in corso
-        id: active
+      - name: Controlla aggiornamenti meteo già attivi
+        id: active_update
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -36,14 +34,10 @@ jobs:
 
           active=$(printf '%s' "$payload" | jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress")] | length')
           echo "active=${active}" >> "$GITHUB_OUTPUT"
-          if [ "$active" -gt 0 ]; then
-            echo "Un aggiornamento meteo è già queued/in_progress: nessun dispatch duplicato"
-          else
-            echo "Nessun aggiornamento attivo: il watchdog può richiedere un nuovo ciclo"
-          fi
+          echo "Aggiornamenti meteo queued/in_progress: ${active}"
 
       - name: Avvia aggiornamento meteo se necessario
-        if: steps.active.outputs.active == '0'
+        if: steps.active_update.outputs.active == '0'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -55,7 +49,7 @@ jobs:
               -H "X-GitHub-Api-Version: 2022-11-28" \
               https://api.github.com/repos/${{ github.repository }}/actions/workflows/update-weather.yml/dispatches \
               -d '{"ref":"main"}'; then
-              echo "Aggiornamento meteo richiesto dal watchdog"
+              echo "Aggiornamento meteo richiesto"
               exit 0
             fi
             echo "Tentativo ${attempt} fallito, riprovo"
@@ -65,10 +59,51 @@ jobs:
           echo "::error::Impossibile avviare update-weather.yml dopo 3 tentativi"
           exit 1
 
-# Watchdog ridondante one-shot: non mantiene runner in sleep.
-# Il workflow principale resta schedulato ai minuti :07, :22, :37, :52.
-# Il watchdog prova ai minuti :14, :29, :44, :59, sette minuti dopo ogni slot principale.
-# Se un update è già queued/in_progress non genera duplicati.
-# Se il cron principale è stato saltato, il watchdog effettua workflow_dispatch.
-# Se i dati sono ancora freschi, la guardia iniziale di update-weather.yml interrompe il ciclo senza collector.
-# Il trigger push sul solo file heartbeat permette di testare immediatamente ogni modifica a questa logica.
+      - name: Attendi 15 minuti
+        if: always()
+        run: sleep 900
+
+      - name: Mantieni un solo heartbeat auto-rilanciante
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CURRENT_RUN_ID: ${{ github.run_id }}
+        run: |
+          payload=$(curl --fail-with-body -sS -L \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/actions/workflows/weather-heartbeat.yml/runs?per_page=20")
+
+          other_active=$(printf '%s' "$payload" | jq --argjson current "${CURRENT_RUN_ID}" '[.workflow_runs[] | select(.id != $current and (.status == "queued" or .status == "in_progress"))] | length')
+          if [ "${other_active}" -gt 0 ]; then
+            echo "Esiste già un altro heartbeat queued/in_progress: non creo una seconda catena"
+            exit 0
+          fi
+
+          for attempt in 1 2 3 4 5; do
+            if curl --fail-with-body -L \
+              -X POST \
+              -H "Accept: application/vnd.github+json" \
+              -H "Authorization: Bearer ${GH_TOKEN}" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              https://api.github.com/repos/${{ github.repository }}/actions/workflows/weather-heartbeat.yml/dispatches \
+              -d '{"ref":"main"}'; then
+              echo "Heartbeat successivo richiesto"
+              exit 0
+            fi
+            echo "Rilancio heartbeat fallito al tentativo ${attempt}"
+            sleep $((attempt * 15))
+          done
+
+          echo "::error::Impossibile rilanciare heartbeat dopo 5 tentativi"
+          exit 1
+
+# Heartbeat primario indipendente dallo scheduler cron di GitHub.
+# Il primo avvio avviene automaticamente quando questo file viene modificato su main.
+# Ogni ciclo controlla gli update già attivi, avvia update-weather.yml se necessario,
+# attende 15 minuti e poi richiama se stesso via workflow_dispatch.
+# Prima del self-dispatch verifica che non esista già un altro heartbeat attivo/accodato,
+# evitando la moltiplicazione delle catene in caso di avvii manuali o trigger concorrenti.
+# Il cron di update-weather.yml resta come backup opportunistico.
+# La freshness guard del workflow principale evita collector duplicati inutili.
