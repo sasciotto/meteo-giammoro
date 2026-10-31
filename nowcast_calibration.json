@@ -1,48 +1,48 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-10-31T10:21:00+00:00",
+  "updated_at": "2026-10-31T14:46:46+00:00",
   "status": "calibration_ready",
   "minimum_event_samples": 20,
-  "cumulative_event_samples_reference": 48,
-  "dataset_event_samples": 6,
+  "cumulative_event_samples_reference": 54,
+  "dataset_event_samples": 12,
   "dataset_scope_note": "Le metriche diagnostiche usano solo le righe effettivamente presenti in calibration_history.json. Lo stato di maturita' usa invece il conteggio cumulativo v2 quando disponibile, senza ricostruire casi storici mancanti.",
   "note": "Diagnostica osservativa: non rappresenta una probabilita' calibrata e non modifica le soglie operative.",
   "overall": {
-    "samples": 298,
+    "samples": 355,
     "true_positive": 0,
-    "true_negative": 290,
-    "false_positive": 2,
-    "false_negative": 6,
-    "event_samples": 6,
+    "true_negative": 339,
+    "false_positive": 4,
+    "false_negative": 12,
+    "event_samples": 12,
     "pod_percent": 0.0,
     "precision_percent": 0.0,
     "far_percent": 100.0,
-    "specificity_percent": 99.3,
+    "specificity_percent": 98.8,
     "csi_percent": 0.0,
-    "balanced_accuracy_percent": 49.6
+    "balanced_accuracy_percent": 49.4
   },
   "by_horizon": {
     "30": {
-      "samples": 100,
+      "samples": 119,
       "true_positive": 0,
-      "true_negative": 96,
-      "false_positive": 2,
-      "false_negative": 2,
-      "event_samples": 2,
+      "true_negative": 111,
+      "false_positive": 4,
+      "false_negative": 4,
+      "event_samples": 4,
       "pod_percent": 0.0,
       "precision_percent": 0.0,
       "far_percent": 100.0,
-      "specificity_percent": 98.0,
+      "specificity_percent": 96.5,
       "csi_percent": 0.0,
-      "balanced_accuracy_percent": 49.0
+      "balanced_accuracy_percent": 48.2
     },
     "60": {
-      "samples": 98,
+      "samples": 117,
       "true_positive": 0,
-      "true_negative": 96,
+      "true_negative": 113,
       "false_positive": 0,
-      "false_negative": 2,
-      "event_samples": 2,
+      "false_negative": 4,
+      "event_samples": 4,
       "pod_percent": 0.0,
       "precision_percent": null,
       "far_percent": null,
@@ -51,12 +51,12 @@
       "balanced_accuracy_percent": 50.0
     },
     "120": {
-      "samples": 100,
+      "samples": 119,
       "true_positive": 0,
-      "true_negative": 98,
+      "true_negative": 115,
       "false_positive": 0,
-      "false_negative": 2,
-      "event_samples": 2,
+      "false_negative": 4,
+      "event_samples": 4,
       "pod_percent": 0.0,
       "precision_percent": null,
       "far_percent": null,
@@ -68,20 +68,23 @@
   "diagnostics": {
     "prediction_reasons_true_positive": {},
     "prediction_reasons_false_positive": {
-      "flash già entro 20 km": 2
+      "flash già entro 20 km": 2,
+      "nucleo radar locale già entro 15 km": 2
     },
     "event_drivers_false_negative": {
-      "lightning_20km": 6
+      "lightning_20km": 6,
+      "radar_15km": 6
     },
     "watch": {
-      "positive_samples": 150,
-      "false_positive_samples": 146,
-      "false_positive_ratio_percent": 97.3,
+      "positive_samples": 188,
+      "false_positive_samples": 180,
+      "false_positive_ratio_percent": 95.7,
       "reasons_false_positive": {
-        "sintesi nowcasting in monitoraggio": 146,
-        "nucleo radar significativo entro 25 km": 12,
+        "sintesi nowcasting in monitoraggio": 180,
+        "nucleo radar significativo entro 25 km": 27,
         "attività elettrica entro 30 km": 12,
-        "flash già entro 20 km": 2
+        "flash già entro 20 km": 2,
+        "nucleo radar locale già entro 15 km": 2
       }
     }
   }
