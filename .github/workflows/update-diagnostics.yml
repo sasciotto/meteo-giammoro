@@ -39,6 +39,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Dipendenze test diagnostici
+        run: python -m pip install pytest
+
       - name: Test diagnostici mirati
         run: python -m pytest -q tests/test_nowcast_calibration.py tests/test_solar_validation.py
 
