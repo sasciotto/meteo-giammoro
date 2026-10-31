@@ -1,0 +1,84 @@
+name: Aggiorna diagnostica Meteo Giammoro
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: ["Aggiorna Meteo Giammoro"]
+    types: [completed]
+  push:
+    branches:
+      - main
+    paths:
+      - "nowcast_calibration.py"
+      - "solar_validation.py"
+      - "tests/test_nowcast_calibration.py"
+      - "tests/test_solar_validation.py"
+      - ".github/workflows/update-diagnostics.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meteo-giammoro-diagnostics
+  cancel-in-progress: false
+
+jobs:
+  diagnostics:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main aggiornato
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Test diagnostici mirati
+        run: python -m pytest -q tests/test_nowcast_calibration.py tests/test_solar_validation.py
+
+      - name: Aggiorna archivio e report calibrazione nowcast
+        run: python nowcast_calibration.py --verification verification.json --history calibration_history.json --report nowcast_calibration.json
+
+      - name: Aggiorna report validazione solare
+        run: python solar_validation.py --history solar_history.json --report solar_validation.json
+
+      - name: Persisti diagnostica
+        run: |
+          FILES="calibration_history.json nowcast_calibration.json solar_validation.json"
+          if git diff --quiet -- ${FILES} && git diff --cached --quiet -- ${FILES}; then
+            echo "Nessuna modifica diagnostica"
+            exit 0
+          fi
+
+          git config user.name "meteo-giammoro-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ${FILES}
+          git commit -m "Aggiorna diagnostica calibrazione e validazione solare"
+
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Diagnostica persistita al tentativo ${attempt}"
+              exit 0
+            fi
+            echo "Push diagnostica rifiutato: riallineo main"
+            git fetch origin main
+            if ! git rebase origin/main; then
+              echo "::warning::Conflitto diagnostico: annullo questo ciclo, il successivo ricostruirà i report"
+              git rebase --abort || true
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+
+          echo "::warning::Impossibile persistere la diagnostica dopo 3 tentativi"
+          exit 0
+
+# Workflow separato dalla pubblicazione: un errore diagnostico non blocca Pages.
+# calibration_history.json conserva fino a 5000 verifiche compatte per la futura calibrazione.
+# nowcast_calibration.json e solar_validation.json sono diagnostici e non alterano soglie o allerte operative.
