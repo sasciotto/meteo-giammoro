@@ -33,7 +33,6 @@ def missing_quarter_hours(previous_at: str | None, current_at: str | None, max_h
     if previous is None or current is None or current <= previous + timedelta(minutes=15):
         return []
     earliest = max(previous + timedelta(minutes=15), current - timedelta(hours=max_hours))
-    # allinea in avanti al quarto d'ora successivo se necessario
     minute = (earliest.minute // 15) * 15
     stamp = earliest.replace(minute=minute, second=0, microsecond=0)
     if stamp < earliest:
@@ -112,14 +111,18 @@ def update_history_with_backfill(data_path: Path, previous_path: Path, history_p
     password = os.getenv("LSASAF_PASSWORD", "").strip()
     backfilled: list[dict[str, Any]] = []
     if username and password and current_obs.get("observed_at") and previous_obs.get("observed_at"):
-        reference = solar.get("reference") or solar_monitoring.load_reference()
-        backfilled = fetch_intermediate_observations(
-            reference,
-            previous_obs.get("observed_at"),
-            current_obs.get("observed_at"),
-            username,
-            password,
-        )
+        try:
+            reference = solar.get("reference") or solar_monitoring.load_reference()
+            backfilled = fetch_intermediate_observations(
+                reference,
+                previous_obs.get("observed_at"),
+                current_obs.get("observed_at"),
+                username,
+                password,
+            )
+        except Exception as exc:
+            print(f"::warning::Backfill LSA non disponibile, salvo comunque il campione corrente: {exc}")
+            backfilled = []
 
     for observation in backfilled:
         temp_path = _write_temp_payload(data, observation)
