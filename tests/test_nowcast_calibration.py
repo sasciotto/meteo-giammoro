@@ -36,3 +36,16 @@ def test_report_keeps_probability_uncalibrated_and_exposes_diagnostics():
     assert "probabilita' calibrata" in report["note"]
     assert report["diagnostics"]["prediction_reasons_true_positive"]["radar vicino"] == 20
     assert report["diagnostics"]["watch"]["false_positive_samples"] == 1
+
+
+def test_update_uses_cumulative_event_count_only_for_maturity_status():
+    verification = {
+        "updated_at": "2026-10-31T10:00:00+00:00",
+        "summary": {"cumulative_event_metrics": {"event_samples": 48}},
+        "results": [_row("a", 30, False, True, driver="lightning_20km")],
+    }
+    _, report = update(verification, {})
+    assert report["status"] == "calibration_ready"
+    assert report["cumulative_event_samples_reference"] == 48
+    assert report["dataset_event_samples"] == 1
+    assert report["overall"]["event_samples"] == 1

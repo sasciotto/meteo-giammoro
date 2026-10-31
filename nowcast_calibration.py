@@ -70,15 +70,23 @@ def _metrics(rows: list[dict[str, Any]]) -> dict[str, Any]:
     tn = sum(1 for r in rows if not r["predicted_event"] and not r["observed_event"])
     fp = sum(1 for r in rows if r["predicted_event"] and not r["observed_event"])
     fn = sum(1 for r in rows if not r["predicted_event"] and r["observed_event"])
+
     def pct(a: int, b: int) -> float | None:
         return round(100.0 * a / b, 1) if b else None
+
     pod = pct(tp, tp + fn)
     spec = pct(tn, tn + fp)
     return {
-        "samples": len(rows), "true_positive": tp, "true_negative": tn,
-        "false_positive": fp, "false_negative": fn, "event_samples": tp + fn,
-        "pod_percent": pod, "precision_percent": pct(tp, tp + fp),
-        "far_percent": pct(fp, tp + fp), "specificity_percent": spec,
+        "samples": len(rows),
+        "true_positive": tp,
+        "true_negative": tn,
+        "false_positive": fp,
+        "false_negative": fn,
+        "event_samples": tp + fn,
+        "pod_percent": pod,
+        "precision_percent": pct(tp, tp + fp),
+        "far_percent": pct(fp, tp + fp),
+        "specificity_percent": spec,
         "csi_percent": pct(tp, tp + fp + fn),
         "balanced_accuracy_percent": round((pod + spec) / 2, 1) if pod is not None and spec is not None else None,
     }
@@ -95,17 +103,27 @@ def _counter(rows: list[dict[str, Any]], field: str, predicate) -> dict[str, int
     return dict(c.most_common())
 
 
-def build_report(rows: list[dict[str, Any]], updated_at: str | None = None) -> dict[str, Any]:
+def build_report(
+    rows: list[dict[str, Any]],
+    updated_at: str | None = None,
+    cumulative_event_samples: int | None = None,
+) -> dict[str, Any]:
     by_horizon = {str(h): _metrics([r for r in rows if r.get("horizon_minutes") == h]) for h in HORIZONS}
     overall = _metrics(rows)
-    event_samples = overall["event_samples"]
+    maturity_events = cumulative_event_samples if cumulative_event_samples is not None else overall["event_samples"]
     watch_positive = [r for r in rows if r.get("predicted_watch")]
     watch_false = [r for r in watch_positive if not r.get("observed_event")]
     return {
         "schema_version": SCHEMA_VERSION,
         "updated_at": updated_at,
-        "status": "calibration_ready" if event_samples >= 20 else "collecting",
+        "status": "calibration_ready" if maturity_events >= 20 else "collecting",
         "minimum_event_samples": 20,
+        "cumulative_event_samples_reference": cumulative_event_samples,
+        "dataset_event_samples": overall["event_samples"],
+        "dataset_scope_note": (
+            "Le metriche diagnostiche usano solo le righe effettivamente presenti in calibration_history.json. "
+            "Lo stato di maturita' usa invece il conteggio cumulativo v2 quando disponibile, senza ricostruire casi storici mancanti."
+        ),
         "note": "Diagnostica osservativa: non rappresenta una probabilita' calibrata e non modifica le soglie operative.",
         "overall": overall,
         "by_horizon": by_horizon,
@@ -136,8 +154,10 @@ def update(verification: dict[str, Any], history: dict[str, Any] | None = None) 
                 merged[row["key"]] = row
     rows = sorted(merged.values(), key=lambda r: _dt(r.get("verified_at")) or datetime.min.replace(tzinfo=timezone.utc))[-MAX_ROWS:]
     updated_at = verification.get("updated_at") or datetime.now(timezone.utc).isoformat()
+    cumulative = ((verification.get("summary") or {}).get("cumulative_event_metrics") or {})
+    cumulative_event_samples = int(_num(cumulative.get("event_samples")) or 0) if cumulative else None
     payload = {"schema_version": SCHEMA_VERSION, "updated_at": updated_at, "max_rows": MAX_ROWS, "rows": rows}
-    return payload, build_report(rows, updated_at)
+    return payload, build_report(rows, updated_at, cumulative_event_samples)
 
 
 def _read(path: Path, default: dict[str, Any]) -> dict[str, Any]:
@@ -158,7 +178,11 @@ def main() -> int:
     history, report = update(verification, history)
     Path(args.history).write_text(json.dumps(history, ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
     Path(args.report).write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"Calibrazione diagnostica: {len(history['rows'])} righe, eventi={report['overall']['event_samples']}, stato={report['status']}")
+    print(
+        f"Calibrazione diagnostica: {len(history['rows'])} righe, "
+        f"eventi_dataset={report['dataset_event_samples']}, "
+        f"eventi_cumulativi={report['cumulative_event_samples_reference']}, stato={report['status']}"
+    )
     return 0
 
 
