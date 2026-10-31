@@ -54,14 +54,14 @@ jobs:
       - name: Persisti diagnostica
         run: |
           FILES="calibration_history.json nowcast_calibration.json solar_validation.json"
-          if git diff --quiet -- ${FILES} && git diff --cached --quiet -- ${FILES}; then
+          git add ${FILES}
+          if git diff --cached --quiet -- ${FILES}; then
             echo "Nessuna modifica diagnostica"
             exit 0
           fi
 
           git config user.name "meteo-giammoro-bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ${FILES}
           git commit -m "Aggiorna diagnostica calibrazione e validazione solare"
 
           for attempt in 1 2 3; do
