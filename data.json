@@ -1,7 +1,7 @@
 {
   "meta": {
     "schema_version": "2.1",
-    "last_check": "02/11/2026 00:37 CET",
+    "last_check": "02/11/2026 00:52 CET",
     "analysis_engine": "collector Python + regole deterministiche",
     "reference_area": "Giammoro, Pace del Mela (ME)",
     "coordinates": [
@@ -10,7 +10,7 @@
     ],
     "collector_status": "ok",
     "collector_errors": [],
-    "last_check_iso": "2026-11-02T00:37:17+01:00"
+    "last_check_iso": "2026-11-02T00:52:28+01:00"
   },
   "primary_station": {
     "name": "MeteoGiammoro",
@@ -22,7 +22,7 @@
   "nowcast": {
     "label": "Moderato (radar vicino)",
     "level": "moderato",
-    "note": "Eco/precipitazioni rilevati entro ~30 km; traiettoria non dedotta automaticamente: SRI max 5 km 0.0 mm/h, SRI max 15 km 0.0 mm/h, SRI max 30 km 8.9 mm/h, SRT1 max 5 km 0.0 mm.  Nucleo radar a circa 37.4 km SSE di Giammoro, picco 11.36 mm/h; movimento E a ~15.7 km/h. Traiettoria non diretta verso Giammoro. EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile."
+    "note": "Eco/precipitazioni rilevati entro ~30 km; traiettoria non dedotta automaticamente: SRI max 5 km 0.0 mm/h, SRI max 15 km 0.9 mm/h, SRI max 30 km 23.8 mm/h, SRT1 max 5 km 0.0 mm.  Nucleo radar a circa 42.1 km SE di Giammoro, picco 18.79 mm/h. Movimento non ancora stimabile con confidenza: serve un secondo frame coerente. EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile."
   },
   "risk_48h": {
     "label": "Pioggia probabile",
@@ -59,18 +59,18 @@
         "quality": "non disponibile: temperatura e umidità da fonti diverse"
       },
       "humidity": {
-        "value": 86.0,
+        "value": 85.0,
         "unit": " %",
         "quality": "ItaliaMeteo ICON-2I"
       },
       "pressure": {
-        "value": 1009.5,
+        "value": 1009.2,
         "unit": " hPa",
-        "trend": "in calo · Δ1h -0.9 hPa · Δ3h -1.9 hPa",
+        "trend": "in calo · Δ1h -1.1 hPa · Δ3h -2.1 hPa",
         "trend_quality": "trend modellistico sul punto"
       },
       "wind": {
-        "value": 8.3,
+        "value": 7.9,
         "unit": " km/h",
         "direction": 158
       },
@@ -84,7 +84,7 @@
         "quality": "Radar-DPC SRT1"
       },
       "rain_24h": {
-        "value": 6.73,
+        "value": 7.26,
         "unit": " mm",
         "quality": "Radar-DPC CUM24"
       },
@@ -104,7 +104,7 @@
     "source": "CFD/DRPC Sicilia + DPC nazionale",
     "url": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/26305_AVVISO%20DRPC_2026_11_01_51253.pdf",
     "parser_note": "livello zona A validato dal bollettino nazionale DPC; avviso regionale mantenuto come fonte primaria di dettaglio",
-    "retrieved_at": "2026-11-02T00:37+01:00",
+    "retrieved_at": "2026-11-02T00:52+01:00",
     "national_validation": {
       "level_class": "warning",
       "level_label": "Gialla (oggi 02/11)",
@@ -372,8 +372,8 @@
       "SRI": {
         "product": "SRI",
         "ok": true,
-        "timestamp": "2026-11-02T00:30+01:00",
-        "age_minutes": 6,
+        "timestamp": "2026-11-02T00:40+01:00",
+        "age_minutes": 12,
         "period": "PT5M",
         "stats": [
           {
@@ -388,25 +388,25 @@
             "radius_km": 15,
             "count": 961,
             "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
+            "max": 0.94,
+            "mean": 0.01,
             "p90": 0.0
           },
           {
             "radius_km": 30,
             "count": 3844,
             "point": 0.0,
-            "max": 8.95,
-            "mean": 0.26,
-            "p90": 0.37
+            "max": 23.75,
+            "mean": 0.34,
+            "p90": 0.0
           }
         ]
       },
       "SRT1": {
         "product": "SRT1",
         "ok": true,
-        "timestamp": "2026-11-02T00:25+01:00",
-        "age_minutes": 11,
+        "timestamp": "2026-11-02T00:40+01:00",
+        "age_minutes": 12,
         "period": "PT5M",
         "stats": [
           {
@@ -421,7 +421,7 @@
             "radius_km": 15,
             "count": 961,
             "point": 0.0,
-            "max": 3.31,
+            "max": 3.17,
             "mean": 0.04,
             "p90": 0.0
           },
@@ -429,26 +429,26 @@
             "radius_km": 30,
             "count": 3844,
             "point": 0.0,
-            "max": 17.09,
-            "mean": 0.45,
-            "p90": 1.5
+            "max": 13.77,
+            "mean": 0.48,
+            "p90": 1.88
           }
         ]
       },
       "CUM24": {
         "product": "CUM24",
         "ok": true,
-        "timestamp": "2026-11-02T00:00+01:00",
-        "age_minutes": 37,
+        "timestamp": "2026-11-02T00:30+01:00",
+        "age_minutes": 22,
         "period": "PT30M",
         "stats": [
           {
             "radius_km": 5,
             "count": 99,
-            "point": 6.73,
-            "max": 9.08,
-            "mean": 5.94,
-            "p90": 8.31
+            "point": 7.26,
+            "max": 7.91,
+            "mean": 5.82,
+            "p90": 7.6
           }
         ]
       },
@@ -456,7 +456,7 @@
         "product": "TEMP",
         "ok": true,
         "timestamp": "2026-11-02T00:00+01:00",
-        "age_minutes": 37,
+        "age_minutes": 52,
         "period": "PT1H",
         "stats": [
           {
@@ -472,7 +472,7 @@
       "VMI": {
         "product": "VMI",
         "ok": true,
-        "timestamp": "2026-11-02T00:30+01:00",
+        "timestamp": "2026-11-02T00:45+01:00",
         "age_minutes": 7,
         "period": "PT5M",
         "stats": [
@@ -494,11 +494,11 @@
           },
           {
             "radius_km": 30,
-            "count": 416,
+            "count": 316,
             "point": null,
-            "max": 45.5,
-            "mean": 22.98,
-            "p90": 31.25
+            "max": 42.0,
+            "mean": 20.52,
+            "p90": 32.5
           }
         ]
       },
@@ -506,7 +506,7 @@
         "product": "IR_108",
         "ok": true,
         "timestamp": "2026-10-30T01:20+01:00",
-        "age_minutes": 4277,
+        "age_minutes": 4292,
         "period": "PT5M",
         "stats": [
           {
@@ -524,14 +524,14 @@
     "source": "Radar-DPC / Dipartimento Protezione Civile"
   },
   "nowcast_evidence": {
-    "radar": "Radar-DPC: SRI max 5 km: 0 mm/h; SRI max 15 km: 0 mm/h; SRI max 30 km: 8.95 mm/h; SRT1 max 5 km: 0 mm · aggiornamento 2026-11-02T00:30+01:00",
+    "radar": "Radar-DPC: SRI max 5 km: 0 mm/h; SRI max 15 km: 0.94 mm/h; SRI max 30 km: 23.75 mm/h; SRT1 max 5 km: 0 mm · aggiornamento 2026-11-02T00:40+01:00",
     "rain_gauges": "Stazioni/pluviometri raccolti dal feed locale: 0 righe disponibili; vengono mostrate solo le stazioni selezionate e la rete originaria.",
     "lightning": "EUMETSAT MTG-LI: nessun flash osservato entro 30 km nel granulo recente disponibile.",
     "satellite": "Prodotto satellitare DPC IR10.8 disponibile · aggiornamento 2026-10-30T01:20+01:00. Il valore raw non viene trasformato in copertura percentuale senza una conversione validata.",
-    "wind_pressure": "Pressione sul punto: in calo; Δ1h -0.9 hPa; Δ3h -1.9 hPa. Trend modellistico, non misura barometrica locale.",
+    "wind_pressure": "Pressione sul punto: in calo; Δ1h -1.1 hPa; Δ3h -2.1 hPa. Trend modellistico, non misura barometrica locale.",
     "local_effects": "Giammoro viene valutata come area costiera della Valle del Mela, con possibili differenze rispetto a Milazzo, rilievi di Santa Lucia/Monforte e Stretto di Messina.",
     "tracking_quality": "Tracking radar coerente.",
-    "approaching_cells": "1 possibile/i cella/e in avvicinamento rilevata/e, ma la traiettoria non è ancora confermata su tre scansioni coerenti."
+    "approaching_cells": "Nessuna delle celle radar confermate risulta in avvicinamento verso Giammoro."
   },
   "models": [
     {
@@ -551,7 +551,7 @@
     {
       "horizon": "2–7 giorni",
       "models": "ECMWF ENS · ICON EPS · GEFS",
-      "signal": "ECMWF ENS: precip media 2–7g 12.0 mm · ICON EPS: precip media 2–7g 7.6 mm · GEFS: precip media 2–7g 25.6 mm",
+      "signal": "ECMWF ENS: precip media 2–7g 12.0 mm · ICON EPS: precip media 2–7g 7.6 mm · GEFS: precip media 2–7g 16.3 mm",
       "agreement": "spread T max 1.9 °C",
       "note": "Media e spread ensemble; serve a rappresentare l'incertezza, non a produrre una previsione puntuale deterministica."
     }
@@ -562,17 +562,17 @@
       "id": "italia_meteo_arpae_icon_2i",
       "ok": true,
       "current": {
-        "time": "2026-11-02T00:30",
+        "time": "2026-11-02T00:45",
         "interval": 900,
-        "temperature_2m": 13.6,
-        "relative_humidity_2m": 86,
+        "temperature_2m": 13.8,
+        "relative_humidity_2m": 85,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
         "cloud_cover": 100,
-        "pressure_msl": 1009.5,
-        "wind_speed_10m": 8.3,
+        "pressure_msl": 1009.2,
+        "wind_speed_10m": 7.9,
         "wind_direction_10m": 158,
         "wind_gusts_10m": 15.1
       },
@@ -614,18 +614,18 @@
       "id": "dwd_icon_seamless",
       "ok": true,
       "current": {
-        "time": "2026-11-02T00:30",
+        "time": "2026-11-02T00:45",
         "interval": 900,
-        "temperature_2m": 14.8,
-        "relative_humidity_2m": 82,
+        "temperature_2m": 14.9,
+        "relative_humidity_2m": 80,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
         "cloud_cover": 100,
-        "pressure_msl": 1009.0,
-        "wind_speed_10m": 8.3,
-        "wind_direction_10m": 146,
+        "pressure_msl": 1008.6,
+        "wind_speed_10m": 9.2,
+        "wind_direction_10m": 141,
         "wind_gusts_10m": 11.2
       },
       "next_0_3h": {
@@ -666,19 +666,19 @@
       "id": "ecmwf_ifs",
       "ok": true,
       "current": {
-        "time": "2026-11-02T00:30",
+        "time": "2026-11-02T00:45",
         "interval": 900,
-        "temperature_2m": 15.9,
-        "relative_humidity_2m": 97,
+        "temperature_2m": 16.1,
+        "relative_humidity_2m": 96,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
-        "cloud_cover": 98,
-        "pressure_msl": 1009.4,
-        "wind_speed_10m": 2.2,
-        "wind_direction_10m": 145,
-        "wind_gusts_10m": 11.2
+        "cloud_cover": 96,
+        "pressure_msl": 1009.1,
+        "wind_speed_10m": 1.8,
+        "wind_direction_10m": 96,
+        "wind_gusts_10m": 10.8
       },
       "next_0_3h": {
         "precip_sum": 1.8,
@@ -718,19 +718,19 @@
       "id": "ncep_gfs_seamless",
       "ok": true,
       "current": {
-        "time": "2026-11-02T00:30",
+        "time": "2026-11-02T00:45",
         "interval": 900,
-        "temperature_2m": 14.6,
+        "temperature_2m": 14.7,
         "relative_humidity_2m": 92,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 3,
         "cloud_cover": 100,
-        "pressure_msl": 1009.0,
-        "wind_speed_10m": 14.5,
-        "wind_direction_10m": 161,
-        "wind_gusts_10m": 14.4
+        "pressure_msl": 1008.9,
+        "wind_speed_10m": 14.9,
+        "wind_direction_10m": 160,
+        "wind_gusts_10m": 14.8
       },
       "next_0_3h": {
         "precip_sum": 0.2,
@@ -795,12 +795,12 @@
       "label": "GEFS",
       "id": "ncep_gefs_ensemble_mean_seamless",
       "ok": true,
-      "temp_spread_max": 1.3,
-      "precip_mean_sum_2_7d": 25.6,
-      "precip_spread_max": 0.8,
-      "gust_mean_max": 20.5,
-      "gust_spread_max": 9.0,
-      "cape_mean_max": 120.0,
+      "temp_spread_max": 1.6,
+      "precip_mean_sum_2_7d": 16.3,
+      "precip_spread_max": 1.2,
+      "gust_mean_max": 23.4,
+      "gust_spread_max": 9.4,
+      "cape_mean_max": 90.0,
       "cape_spread_max": 130.0
     }
   ],
@@ -1037,14 +1037,13 @@
         "name": "Pace del Mela · Pace Alta",
         "source": "Meteo Pace del Mela / Cumulus MX",
         "source_url": "https://meteopacedelmela.altervista.org/",
-        "status": "unavailable",
-        "solar_wm2": null,
-        "uv_index": null,
-        "observed_at": null,
-        "retrieved_at": "2026-11-01T23:37:08.038289Z",
-        "method": "cumulus-discovery",
-        "note": "Il sito espone Solare/UV, ma in questo ciclo i file Cumulus pubblici non hanno fornito un campione corrente verificabile.",
-        "diagnostic": "realtime.txt: realtime.txt Cumulus incompleto; realtimegauges.txt: dato non sufficientemente fresco"
+        "status": "ok",
+        "solar_wm2": 0.0,
+        "uv_index": 0.0,
+        "observed_at": "2026-11-01T23:52:02Z",
+        "retrieved_at": "2026-11-01T23:52:18.230348Z",
+        "method": "cumulus-realtime",
+        "note": "Lettura dal feed Cumulus MX corrente della stazione; i file privi di prova di freschezza vengono scartati."
       },
       {
         "id": "archi-isanfi5",
@@ -1058,7 +1057,7 @@
         "solar_wm2": 0.0,
         "uv_index": 0.0,
         "observed_at": null,
-        "retrieved_at": "2026-11-01T23:37:08.038289Z",
+        "retrieved_at": "2026-11-01T23:52:18.230348Z",
         "method": "wunderground-public-pws-page",
         "note": "Valori UV e radiazione letti dalla dashboard pubblica della PWS Archi; acquisizione best-effort e indipendente dalle altre fonti."
       },
@@ -1074,14 +1073,14 @@
         "solar_wm2": 0.0,
         "uv_index": 0.0,
         "observed_at": null,
-        "retrieved_at": "2026-11-01T23:37:08.038289Z",
+        "retrieved_at": "2026-11-01T23:52:18.230348Z",
         "method": "meteonetwork-public-page",
         "note": "Valore letto dalla pagina pubblica ufficiale MeteoNetwork; il timestamp della misura non è esposto in modo affidabile dal parser, quindi viene mostrato il tempo di acquisizione."
       }
     ],
     "status": "ok",
     "message": "Osservazione satellitare LSA SAF disponibile.",
-    "updated_at": "2026-11-01T23:37:08.038289Z",
+    "updated_at": "2026-11-01T23:52:18.230348Z",
     "observation": {
       "source": "EUMETSAT LSA SAF MDSSFTD (LSA-207)",
       "source_url": "https://lsa-saf.eumetsat.int/en/data/products/radiation/",
@@ -1099,7 +1098,7 @@
       "aod_550nm": null,
       "opacity_index": null,
       "quality_flag": null,
-      "age_minutes": 37
+      "age_minutes": 52
     },
     "daily": {
       "local_date": "2026-11-02",
@@ -1114,130 +1113,92 @@
     "status": "detected",
     "product": "SRI",
     "unit": "mm/h",
-    "threshold": 8.91,
-    "peak_value": 11.36,
-    "scene_peak_value": 19.8,
+    "threshold": 8.46,
+    "peak_value": 18.79,
+    "scene_peak_value": 18.79,
     "candidate_count": 2,
     "candidates": [
       {
-        "lat": 37.90074,
-        "lon": 15.50813,
-        "distance_km": 37.4,
-        "bearing_deg": 153.5,
-        "bearing": "SSE",
-        "pixels": 5,
-        "peak_value": 11.36,
-        "mean_value": 11.08,
-        "relevance": 8.26
+        "lat": 37.97508,
+        "lon": 15.70282,
+        "distance_km": 42.1,
+        "bearing_deg": 126.7,
+        "bearing": "SE",
+        "pixels": 92,
+        "peak_value": 18.79,
+        "mean_value": 13.51,
+        "relevance": 54.017
       },
       {
-        "lat": 37.95983,
-        "lon": 15.65789,
-        "distance_km": 40.1,
-        "bearing_deg": 132.0,
-        "bearing": "SE",
-        "pixels": 7,
-        "peak_value": 8.95,
-        "mean_value": 8.94,
-        "relevance": 7.34
+        "lat": 38.13403,
+        "lon": 15.83583,
+        "distance_km": 45.9,
+        "bearing_deg": 99.3,
+        "bearing": "E",
+        "pixels": 2,
+        "peak_value": 8.55,
+        "mean_value": 8.55,
+        "relevance": 3.407
       }
     ],
     "cell": {
-      "lat": 37.90074,
-      "lon": 15.50813,
-      "distance_km": 37.4,
-      "bearing_deg": 153.5,
-      "bearing": "SSE",
-      "pixels": 5,
-      "peak_value": 11.36,
-      "mean_value": 11.08
+      "lat": 37.97508,
+      "lon": 15.70282,
+      "distance_km": 42.1,
+      "bearing_deg": 126.7,
+      "bearing": "SE",
+      "pixels": 92,
+      "peak_value": 18.79,
+      "mean_value": 13.51
     },
-    "timestamp": "2026-11-02T00:30+01:00",
+    "timestamp": "2026-11-02T00:45+01:00",
     "age_minutes": 7,
-    "track_id": "SRI-202611012040-S46",
+    "track_id": "SRI-202611020045-SE42",
     "association": {
-      "status": "matched",
-      "score": 9.29,
-      "predicted_error_km": 1.7,
-      "implied_speed_kmh": 10.8,
-      "candidates_evaluated": 2
+      "status": "new_track",
+      "reason": "associazione debole",
+      "best_score": 22.29
     },
     "track_history": [
       {
-        "track_id": "SRI-202611012040-S46",
-        "timestamp": "2026-11-01T23:40+01:00",
-        "lat": 37.91961,
-        "lon": 15.3632,
-        "peak_value": 57.37,
-        "pixels": 88
-      },
-      {
-        "track_id": "SRI-202611012040-S46",
-        "timestamp": "2026-11-01T23:55+01:00",
-        "lat": 37.90751,
-        "lon": 15.41035,
-        "peak_value": 64.3,
-        "pixels": 61
-      },
-      {
-        "track_id": "SRI-202611012040-S46",
-        "timestamp": "2026-11-02T00:10+01:00",
-        "lat": 37.90223,
-        "lon": 15.46727,
-        "peak_value": 27.83,
-        "pixels": 71
-      },
-      {
-        "track_id": "SRI-202611012040-S46",
-        "timestamp": "2026-11-02T00:30+01:00",
-        "lat": 37.90074,
-        "lon": 15.50813,
-        "peak_value": 11.36,
-        "pixels": 5
+        "track_id": "SRI-202611020045-SE42",
+        "timestamp": "2026-11-02T00:45+01:00",
+        "lat": 37.97508,
+        "lon": 15.70282,
+        "peak_value": 18.79,
+        "pixels": 92
       }
     ],
     "motion": {
-      "status": "tracked",
-      "method": "multi_frame_linear_fit",
-      "frames": 4,
-      "interval_minutes": 50.0,
-      "speed_kmh": 15.7,
-      "direction_deg": 98.9,
-      "direction": "E",
-      "approach_rate_kmh": -9.1,
-      "approaching": false,
-      "closest_approach_km": 37.4,
-      "closest_approach_minutes": null,
-      "eta_minutes": null,
-      "fit_residual_km": 0.7
+      "status": "new_cell"
     },
     "tracked_cell": {
-      "lat": 37.90074,
-      "lon": 15.50813,
-      "distance_km": 37.4,
-      "bearing_deg": 153.5,
-      "bearing": "SSE",
-      "pixels": 5,
-      "peak_value": 11.36,
-      "mean_value": 11.08
+      "lat": 37.97508,
+      "lon": 15.70282,
+      "distance_km": 42.1,
+      "bearing_deg": 126.7,
+      "bearing": "SE",
+      "pixels": 92,
+      "peak_value": 18.79,
+      "mean_value": 13.51
     },
     "hazard_cell": {
-      "lat": 37.90074,
-      "lon": 15.50813,
-      "distance_km": 37.4,
-      "bearing_deg": 153.5,
-      "bearing": "SSE",
-      "pixels": 5,
-      "peak_value": 11.36,
-      "mean_value": 11.08,
-      "hazard_score": 1.111
+      "lat": 37.97508,
+      "lon": 15.70282,
+      "distance_km": 42.1,
+      "bearing_deg": 126.7,
+      "bearing": "SE",
+      "pixels": 92,
+      "peak_value": 18.79,
+      "mean_value": 13.51,
+      "hazard_score": 6.281
     },
     "hazard_same_as_tracked": true,
     "hazard_note": "La cella di pericolo locale coincide con la cella tracciata.",
     "track_quality": {
       "status": "good",
       "penalty_points": 0,
-      "latest_interval_minutes": 20.0,
+      "latest_interval_minutes": null,
       "reasons": []
     }
   },
@@ -1261,12 +1222,12 @@
     "source": "EUMETSAT MTG Lightning Imager L2 Lightning Flashes",
     "collection": "EO:EUM:DAT:0691",
     "quality": "satellite_observation",
-    "timestamp": "2026-11-01T23:30+00:00",
-    "age_minutes": 7,
-    "product_id": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--x-x--ARC-x_C_EUMT_20261101233019_L2PF_OPE_20261101232001_20261101233001_N__O_0141_0000",
-    "entry": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--CHK-BODY--ARC-NC4E_C_EUMT_20261101233017_L2PF_OPE_20261101232001_20261101233001_N__O_0141_0001.nc",
-    "flash_count_total": 10047,
-    "nearest_km": 47.1,
+    "timestamp": "2026-11-01T23:50+00:00",
+    "age_minutes": 2,
+    "product_id": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--x-x--ARC-x_C_EUMT_20261101235017_L2PF_OPE_20261101234001_20261101235001_N__O_0143_0000",
+    "entry": "W_XX-EUMETSAT-Darmstadt,IMG+SAT,MTI1+LI-2-LFL--FD--CHK-BODY--ARC-NC4E_C_EUMT_20261101235015_L2PF_OPE_20261101234001_20261101235001_N__O_0143_0001.nc",
+    "flash_count_total": 10912,
+    "nearest_km": 52.3,
     "radii": {
       "5": {
         "flash_count": 0,
@@ -1291,38 +1252,24 @@
     }
   },
   "approaching_cells": {
-    "status": "unconfirmed",
-    "timestamp": "2026-11-02T00:30+01:00",
+    "status": "none",
+    "timestamp": "2026-11-02T00:45+01:00",
     "product": "SRI",
     "unit": "mm/h",
     "reference": "Giammoro, Pace del Mela (ME)",
     "observed_cells": 2,
-    "matched_cells": 2,
+    "matched_cells": 1,
     "count": 0,
-    "unconfirmed_count": 1,
+    "unconfirmed_count": 0,
     "suppressed_by_main_track": 0,
     "dominant_from": null,
     "dominant_from_label": null,
     "cells": [],
-    "unconfirmed_cells": [
-      {
-        "approach_from": "SE",
-        "approach_from_label": "sud-est",
-        "bearing_deg": 132.0,
-        "distance_km": 40.1,
-        "movement_toward": "W",
-        "movement_direction_deg": 268.7,
-        "reason": "servono tre scansioni coerenti per confermare una cella secondaria"
-      }
-    ],
+    "unconfirmed_cells": [],
     "policy": "track principale multi-frame autoritativo; celle secondarie confermate solo dopo tre scansioni coerenti",
-    "summary": "1 possibile/i cella/e in avvicinamento rilevata/e, ma la traiettoria non è ancora confermata su tre scansioni coerenti."
+    "summary": "Nessuna delle celle radar confermate risulta in avvicinamento verso Giammoro."
   },
   "pressure_history": [
-    {
-      "timestamp": "2026-11-01T18:48:55+01:00",
-      "hpa": 1011.5
-    },
     {
       "timestamp": "2026-11-01T19:03:53+01:00",
       "hpa": 1011.6
@@ -1414,13 +1361,17 @@
     {
       "timestamp": "2026-11-02T00:37:17+01:00",
       "hpa": 1009.5
+    },
+    {
+      "timestamp": "2026-11-02T00:52:28+01:00",
+      "hpa": 1009.2
     }
   ],
   "pressure_trend": {
     "status": "ready",
     "tendency": "in calo",
-    "delta_1h_hpa": -0.9,
-    "delta_3h_hpa": -1.9,
+    "delta_1h_hpa": -1.1,
+    "delta_3h_hpa": -2.1,
     "samples": 24,
     "source": "pressione sul punto da modello; non misura barometrica locale"
   },
@@ -1516,20 +1467,12 @@
     "note": "Punteggio di qualità dell'analisi: misura freschezza e disponibilità di radar, cross-check, stazioni, modelli e fulminazioni. Non è una probabilità di previsione corretta."
   },
   "trajectory_reliability": {
-    "score": 94,
-    "label": "Molto alta",
-    "status": "good",
+    "score": null,
+    "label": "In acquisizione",
+    "status": "collecting",
     "semantic": "trajectory_reliability",
-    "frames": 4,
-    "method": "multi_frame_linear_fit",
-    "components": {
-      "frame_continuity": 30,
-      "track_quality": 30,
-      "association": 14,
-      "fit_residual": 20,
-      "two_frame_conflict_adjustment": 0
-    },
-    "note": "Affidabilità geometrica della traiettoria radar corrente. Non rappresenta la probabilità che un evento colpisca Giammoro."
+    "components": {},
+    "note": "La cella è rilevata, ma non ci sono ancora abbastanza frame coerenti per una traiettoria affidabile."
   },
   "predictive_confidence": {
     "score": null,
@@ -1543,7 +1486,7 @@
     "note": "Confidenza previsionale non espressa in percentuale: il progetto non dispone ancora di una calibrazione probabilistica affidabile. Campioni evento cumulativi v2 disponibili: 129/20 come soglia minima di studio; il superamento della soglia non equivale a una probabilità calibrata."
   },
   "home_summary": {
-    "generated_at": "2026-11-02T00:37:22+01:00",
+    "generated_at": "2026-11-02T00:52:36+01:00",
     "source": "Consenso multi-modello (ICON-2I · DWD ICON · ECMWF IFS · NOAA GFS)",
     "current": {
       "icon": "☁",
@@ -1558,7 +1501,7 @@
       },
       "storm": {
         "title": "Fenomeni lontani da Giammoro",
-        "text": "La cella radar più rilevante è a circa 37.4 km; nessun fulmine entro 20 km nel dato disponibile.",
+        "text": "La cella radar più rilevante è a circa 42.1 km; nessun fulmine entro 20 km nel dato disponibile.",
         "icon": "↗"
       },
       "condition_available": true,
@@ -2296,9 +2239,9 @@
       "nearest_signal_km": null,
       "indicators": {
         "radar": "Pioggia rilevata entro ~30 km",
-        "trajectory": "Nessun arrivo confermato",
+        "trajectory": "Non definita",
         "lightning": "Assenti entro 30 km",
-        "distance": "Nucleo tracciabile ~37 km",
+        "distance": "Nucleo tracciabile ~42 km",
         "pioggia_locale": "Nessuna pioggia locale rilevata ora",
         "modelli_0_3h": "Pioggia possibile"
       }
@@ -2317,7 +2260,7 @@
     }
   },
   "local_precipitation": {
-    "generated_at": "2026-11-02T00:37:22+01:00",
+    "generated_at": "2026-11-02T00:52:36+01:00",
     "status": "dry",
     "label": "Nessuna pioggia locale rilevata ora",
     "observation_basis": "Radar-DPC multi-raggio 1/3/5 km + persistenza temporale",
@@ -2328,7 +2271,7 @@
     "recent_accumulation_signal": false,
     "radar": {
       "sri": {
-        "timestamp": "2026-11-02T00:30+01:00",
+        "timestamp": "2026-11-02T00:45+01:00",
         "age_minutes": 7,
         "1": {
           "point": 0.0,
@@ -2350,7 +2293,7 @@
         }
       },
       "srt1": {
-        "timestamp": "2026-11-02T00:30+01:00",
+        "timestamp": "2026-11-02T00:45+01:00",
         "age_minutes": 7,
         "1": {
           "point": 0.0,
@@ -2405,56 +2348,6 @@
     },
     "impact_level": "moderato",
     "history": [
-      {
-        "timestamp": "2026-11-01T21:50+01:00",
-        "rain_detected": false,
-        "recent_accumulation": false,
-        "basis": "nessun segnale radar locale coerente",
-        "sri": {
-          "timestamp": "2026-11-01T21:40+01:00",
-          "age_minutes": 10,
-          "1": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "3": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "5": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          }
-        },
-        "srt1": {
-          "timestamp": "2026-11-01T21:40+01:00",
-          "age_minutes": 10,
-          "1": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "3": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          },
-          "5": {
-            "point": 0.0,
-            "max": 0.0,
-            "mean": 0.0,
-            "p90": 0.0
-          }
-        }
-      },
       {
         "timestamp": "2026-11-01T22:05+01:00",
         "rain_detected": false,
@@ -3004,13 +2897,63 @@
             "p90": 0.0
           }
         }
+      },
+      {
+        "timestamp": "2026-11-02T00:52+01:00",
+        "rain_detected": false,
+        "recent_accumulation": false,
+        "basis": "nessun segnale radar locale coerente",
+        "sri": {
+          "timestamp": "2026-11-02T00:45+01:00",
+          "age_minutes": 7,
+          "1": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "3": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "5": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          }
+        },
+        "srt1": {
+          "timestamp": "2026-11-02T00:45+01:00",
+          "age_minutes": 7,
+          "1": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "3": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          },
+          "5": {
+            "point": 0.0,
+            "max": 0.0,
+            "mean": 0.0,
+            "p90": 0.0
+          }
+        }
       }
     ],
     "errors": [],
     "note": "La presenza di pioggia e l'impatto sono separati. I valori areali entro 1/3/5 km servono a riconoscere rovesci locali che possono sfuggire al singolo pixel e non vengono presentati come accumulo esatto su Giammoro."
   },
   "verification": {
-    "updated_at": "2026-11-01T23:37:24+00:00",
+    "updated_at": "2026-11-01T23:52:39+00:00",
     "summary": {
       "total_results": 300,
       "evaluable_results": 300,
@@ -3119,13 +3062,13 @@
       },
       "metric_version": "local-event-v2",
       "cumulative_event_metrics": {
-        "samples": 2919,
+        "samples": 2922,
         "true_positive": 25,
-        "true_negative": 2731,
+        "true_negative": 2734,
         "false_positive": 59,
         "false_negative": 104,
         "event_samples": 129,
-        "no_event_samples": 2790,
+        "no_event_samples": 2793,
         "event_detection_percent": 19.4,
         "precision_percent": 29.8,
         "false_alarm_ratio_percent": 70.2,
@@ -3136,13 +3079,13 @@
       },
       "cumulative_by_horizon": {
         "30": {
-          "samples": 975,
+          "samples": 976,
           "true_positive": 17,
-          "true_negative": 906,
+          "true_negative": 907,
           "false_positive": 26,
           "false_negative": 26,
           "event_samples": 43,
-          "no_event_samples": 932,
+          "no_event_samples": 933,
           "event_detection_percent": 39.5,
           "precision_percent": 39.5,
           "false_alarm_ratio_percent": 60.5,
@@ -3152,13 +3095,13 @@
           "accuracy_percent": 94.7
         },
         "60": {
-          "samples": 972,
+          "samples": 973,
           "true_positive": 6,
-          "true_negative": 901,
+          "true_negative": 902,
           "false_positive": 29,
           "false_negative": 36,
           "event_samples": 42,
-          "no_event_samples": 930,
+          "no_event_samples": 931,
           "event_detection_percent": 14.3,
           "precision_percent": 17.1,
           "false_alarm_ratio_percent": 82.9,
@@ -3168,13 +3111,13 @@
           "accuracy_percent": 93.3
         },
         "120": {
-          "samples": 972,
+          "samples": 973,
           "true_positive": 2,
-          "true_negative": 924,
+          "true_negative": 925,
           "false_positive": 4,
           "false_negative": 42,
           "event_samples": 44,
-          "no_event_samples": 928,
+          "no_event_samples": 929,
           "event_detection_percent": 4.5,
           "precision_percent": 33.3,
           "false_alarm_ratio_percent": 66.7,
@@ -3209,9 +3152,9 @@
       "retention_note": "Le metriche cumulative v2 sono conservate separatamente dal rolling window di 300 risultati. La baseline v1 resta visibile ma non viene sommata perché usa una definizione precedente dell'evento locale."
     },
     "latest_result": {
-      "snapshot_id": "20261101T213823Z",
-      "issued_at": "2026-11-01T21:38:23+00:00",
-      "verified_at": "2026-11-01T23:37:24+00:00",
+      "snapshot_id": "20261101T215342Z",
+      "issued_at": "2026-11-01T21:53:42+00:00",
+      "verified_at": "2026-11-01T23:52:39+00:00",
       "horizon_minutes": 120,
       "outcome": "correct",
       "predicted_event": false,
@@ -3223,25 +3166,25 @@
       "confidence_score": null,
       "eta_predicted_minutes": null,
       "eta_error_minutes": null,
-      "trajectory_error_km": 16.5,
+      "trajectory_error_km": null,
       "observation": {
         "evaluable": true,
         "event": false,
         "nearby_signal": false,
         "event_drivers": [],
-        "radar_distance_km": 37.4,
+        "radar_distance_km": 42.1,
         "radar_fresh": true,
         "radar_candidate_count": 2,
         "rain_1h_mm": 0.0,
         "lightning_20km": 0,
         "lightning_30km": 0,
         "lightning_fresh": true,
-        "track_id": "SRI-202611012040-S46",
-        "cell_lat": 37.90074,
-        "cell_lon": 15.50813,
+        "track_id": "SRI-202611020045-SE42",
+        "cell_lat": 37.97508,
+        "cell_lon": 15.70282,
         "cell_role": "nearest_candidate",
-        "tracked_cell_lat": 37.90074,
-        "tracked_cell_lon": 15.50813
+        "tracked_cell_lat": 37.97508,
+        "tracked_cell_lon": 15.70282
       }
     },
     "active_event": null,
@@ -3251,13 +3194,13 @@
       "metric_version": "local-precipitation-v1",
       "semantic": "rain_presence_not_severity",
       "cumulative": {
-        "samples": 2840,
+        "samples": 2843,
         "true_positive": 131,
-        "true_negative": 2221,
-        "false_positive": 467,
+        "true_negative": 2223,
+        "false_positive": 468,
         "false_negative": 21,
         "rain_samples": 152,
-        "dry_samples": 2688,
+        "dry_samples": 2691,
         "rain_detection_percent": 86.2,
         "precision_percent": 21.9,
         "false_alarm_ratio_percent": 78.1,
@@ -3265,39 +3208,39 @@
       },
       "by_horizon": {
         "30": {
-          "samples": 951,
+          "samples": 952,
           "true_positive": 26,
-          "true_negative": 828,
+          "true_negative": 829,
           "false_positive": 89,
           "false_negative": 8,
           "rain_samples": 34,
-          "dry_samples": 917,
+          "dry_samples": 918,
           "rain_detection_percent": 76.5,
           "precision_percent": 22.6,
           "false_alarm_ratio_percent": 77.4,
           "accuracy_percent": 89.8
         },
         "60": {
-          "samples": 946,
+          "samples": 947,
           "true_positive": 38,
           "true_negative": 772,
-          "false_positive": 125,
+          "false_positive": 126,
           "false_negative": 11,
           "rain_samples": 49,
-          "dry_samples": 897,
+          "dry_samples": 898,
           "rain_detection_percent": 77.6,
-          "precision_percent": 23.3,
-          "false_alarm_ratio_percent": 76.7,
-          "accuracy_percent": 85.6
+          "precision_percent": 23.2,
+          "false_alarm_ratio_percent": 76.8,
+          "accuracy_percent": 85.5
         },
         "120": {
-          "samples": 943,
+          "samples": 944,
           "true_positive": 67,
-          "true_negative": 621,
+          "true_negative": 622,
           "false_positive": 253,
           "false_negative": 2,
           "rain_samples": 69,
-          "dry_samples": 874,
+          "dry_samples": 875,
           "rain_detection_percent": 97.1,
           "precision_percent": 20.9,
           "false_alarm_ratio_percent": 79.1,
