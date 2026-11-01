@@ -1,62 +1,62 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-10-31T21:51:30+00:00",
+  "updated_at": "2026-11-01T00:53:30+00:00",
   "status": "calibration_ready",
   "minimum_event_samples": 20,
-  "cumulative_event_samples_reference": 54,
-  "dataset_event_samples": 12,
+  "cumulative_event_samples_reference": 63,
+  "dataset_event_samples": 21,
   "dataset_scope_note": "Le metriche diagnostiche usano solo le righe effettivamente presenti in calibration_history.json. Lo stato di maturita' usa invece il conteggio cumulativo v2 quando disponibile, senza ricostruire casi storici mancanti.",
   "note": "Diagnostica osservativa: non rappresenta una probabilita' calibrata e non modifica le soglie operative.",
   "overall": {
-    "samples": 439,
-    "true_positive": 0,
-    "true_negative": 421,
+    "samples": 475,
+    "true_positive": 1,
+    "true_negative": 448,
     "false_positive": 6,
-    "false_negative": 12,
-    "event_samples": 12,
-    "pod_percent": 0.0,
-    "precision_percent": 0.0,
-    "far_percent": 100.0,
-    "specificity_percent": 98.6,
-    "csi_percent": 0.0,
-    "balanced_accuracy_percent": 49.3
+    "false_negative": 20,
+    "event_samples": 21,
+    "pod_percent": 4.8,
+    "precision_percent": 14.3,
+    "far_percent": 85.7,
+    "specificity_percent": 98.7,
+    "csi_percent": 3.7,
+    "balanced_accuracy_percent": 51.8
   },
   "by_horizon": {
     "30": {
-      "samples": 147,
-      "true_positive": 0,
-      "true_negative": 139,
+      "samples": 159,
+      "true_positive": 1,
+      "true_negative": 148,
       "false_positive": 4,
-      "false_negative": 4,
-      "event_samples": 4,
-      "pod_percent": 0.0,
-      "precision_percent": 0.0,
-      "far_percent": 100.0,
-      "specificity_percent": 97.2,
-      "csi_percent": 0.0,
-      "balanced_accuracy_percent": 48.6
+      "false_negative": 6,
+      "event_samples": 7,
+      "pod_percent": 14.3,
+      "precision_percent": 20.0,
+      "far_percent": 80.0,
+      "specificity_percent": 97.4,
+      "csi_percent": 9.1,
+      "balanced_accuracy_percent": 55.9
     },
     "60": {
-      "samples": 145,
+      "samples": 157,
       "true_positive": 0,
-      "true_negative": 139,
+      "true_negative": 148,
       "false_positive": 2,
-      "false_negative": 4,
-      "event_samples": 4,
+      "false_negative": 7,
+      "event_samples": 7,
       "pod_percent": 0.0,
       "precision_percent": 0.0,
       "far_percent": 100.0,
-      "specificity_percent": 98.6,
+      "specificity_percent": 98.7,
       "csi_percent": 0.0,
-      "balanced_accuracy_percent": 49.3
+      "balanced_accuracy_percent": 49.4
     },
     "120": {
-      "samples": 147,
+      "samples": 159,
       "true_positive": 0,
-      "true_negative": 143,
+      "true_negative": 152,
       "false_positive": 0,
-      "false_negative": 4,
-      "event_samples": 4,
+      "false_negative": 7,
+      "event_samples": 7,
       "pod_percent": 0.0,
       "precision_percent": null,
       "far_percent": null,
@@ -66,23 +66,25 @@
     }
   },
   "diagnostics": {
-    "prediction_reasons_true_positive": {},
+    "prediction_reasons_true_positive": {
+      "flash già entro 20 km": 1
+    },
     "prediction_reasons_false_positive": {
       "nucleo radar locale già entro 15 km": 4,
       "flash già entro 20 km": 2
     },
     "event_drivers_false_negative": {
-      "lightning_20km": 6,
+      "lightning_20km": 14,
       "radar_15km": 6
     },
     "watch": {
-      "positive_samples": 244,
-      "false_positive_samples": 236,
-      "false_positive_ratio_percent": 96.7,
+      "positive_samples": 268,
+      "false_positive_samples": 254,
+      "false_positive_ratio_percent": 94.8,
       "reasons_false_positive": {
-        "sintesi nowcasting in monitoraggio": 236,
+        "sintesi nowcasting in monitoraggio": 254,
         "nucleo radar significativo entro 25 km": 31,
-        "attività elettrica entro 30 km": 12,
+        "attività elettrica entro 30 km": 20,
         "nucleo radar locale già entro 15 km": 4,
         "flash già entro 20 km": 2
       }
