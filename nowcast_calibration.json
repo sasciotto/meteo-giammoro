@@ -1,92 +1,100 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-11-01T00:53:30+00:00",
+  "updated_at": "2026-11-01T07:13:25+00:00",
   "status": "calibration_ready",
   "minimum_event_samples": 20,
-  "cumulative_event_samples_reference": 63,
-  "dataset_event_samples": 21,
+  "cumulative_event_samples_reference": 102,
+  "dataset_event_samples": 60,
   "dataset_scope_note": "Le metriche diagnostiche usano solo le righe effettivamente presenti in calibration_history.json. Lo stato di maturita' usa invece il conteggio cumulativo v2 quando disponibile, senza ricostruire casi storici mancanti.",
   "note": "Diagnostica osservativa: non rappresenta una probabilita' calibrata e non modifica le soglie operative.",
   "overall": {
-    "samples": 475,
-    "true_positive": 1,
-    "true_negative": 448,
-    "false_positive": 6,
-    "false_negative": 20,
-    "event_samples": 21,
-    "pod_percent": 4.8,
-    "precision_percent": 14.3,
-    "far_percent": 85.7,
-    "specificity_percent": 98.7,
-    "csi_percent": 3.7,
-    "balanced_accuracy_percent": 51.8
+    "samples": 550,
+    "true_positive": 15,
+    "true_negative": 476,
+    "false_positive": 14,
+    "false_negative": 45,
+    "event_samples": 60,
+    "pod_percent": 25.0,
+    "precision_percent": 51.7,
+    "far_percent": 48.3,
+    "specificity_percent": 97.1,
+    "csi_percent": 20.3,
+    "balanced_accuracy_percent": 61.0
   },
   "by_horizon": {
     "30": {
-      "samples": 159,
-      "true_positive": 1,
-      "true_negative": 148,
-      "false_positive": 4,
-      "false_negative": 6,
-      "event_samples": 7,
-      "pod_percent": 14.3,
-      "precision_percent": 20.0,
-      "far_percent": 80.0,
-      "specificity_percent": 97.4,
-      "csi_percent": 9.1,
-      "balanced_accuracy_percent": 55.9
+      "samples": 184,
+      "true_positive": 10,
+      "true_negative": 156,
+      "false_positive": 8,
+      "false_negative": 10,
+      "event_samples": 20,
+      "pod_percent": 50.0,
+      "precision_percent": 55.6,
+      "far_percent": 44.4,
+      "specificity_percent": 95.1,
+      "csi_percent": 35.7,
+      "balanced_accuracy_percent": 72.5
     },
     "60": {
-      "samples": 157,
-      "true_positive": 0,
-      "true_negative": 148,
-      "false_positive": 2,
-      "false_negative": 7,
-      "event_samples": 7,
-      "pod_percent": 0.0,
-      "precision_percent": 0.0,
-      "far_percent": 100.0,
-      "specificity_percent": 98.7,
-      "csi_percent": 0.0,
-      "balanced_accuracy_percent": 49.4
+      "samples": 182,
+      "true_positive": 3,
+      "true_negative": 156,
+      "false_positive": 6,
+      "false_negative": 17,
+      "event_samples": 20,
+      "pod_percent": 15.0,
+      "precision_percent": 33.3,
+      "far_percent": 66.7,
+      "specificity_percent": 96.3,
+      "csi_percent": 11.5,
+      "balanced_accuracy_percent": 55.6
     },
     "120": {
-      "samples": 159,
-      "true_positive": 0,
-      "true_negative": 152,
+      "samples": 184,
+      "true_positive": 2,
+      "true_negative": 164,
       "false_positive": 0,
-      "false_negative": 7,
-      "event_samples": 7,
-      "pod_percent": 0.0,
-      "precision_percent": null,
-      "far_percent": null,
+      "false_negative": 18,
+      "event_samples": 20,
+      "pod_percent": 10.0,
+      "precision_percent": 100.0,
+      "far_percent": 0.0,
       "specificity_percent": 100.0,
-      "csi_percent": 0.0,
-      "balanced_accuracy_percent": 50.0
+      "csi_percent": 10.0,
+      "balanced_accuracy_percent": 55.0
     }
   },
   "diagnostics": {
     "prediction_reasons_true_positive": {
-      "flash già entro 20 km": 1
+      "nucleo radar locale già entro 15 km": 10,
+      "ETA 0 min": 4,
+      "flash già entro 20 km": 3,
+      "traiettoria verso Giammoro": 2
     },
     "prediction_reasons_false_positive": {
-      "nucleo radar locale già entro 15 km": 4,
-      "flash già entro 20 km": 2
+      "nucleo radar locale già entro 15 km": 10,
+      "flash già entro 20 km": 4,
+      "ETA 0 min": 2,
+      "traiettoria verso Giammoro": 1
     },
     "event_drivers_false_negative": {
-      "lightning_20km": 14,
-      "radar_15km": 6
+      "radar_15km": 27,
+      "lightning_20km": 18
     },
     "watch": {
-      "positive_samples": 268,
-      "false_positive_samples": 254,
-      "false_positive_ratio_percent": 94.8,
+      "positive_samples": 320,
+      "false_positive_samples": 278,
+      "false_positive_ratio_percent": 86.9,
       "reasons_false_positive": {
-        "sintesi nowcasting in monitoraggio": 254,
-        "nucleo radar significativo entro 25 km": 31,
-        "attività elettrica entro 30 km": 20,
-        "nucleo radar locale già entro 15 km": 4,
-        "flash già entro 20 km": 2
+        "sintesi nowcasting in monitoraggio": 278,
+        "nucleo radar significativo entro 25 km": 41,
+        "attività elettrica entro 30 km": 26,
+        "nucleo radar locale già entro 15 km": 10,
+        "flash già entro 20 km": 4,
+        "ETA 0 min": 2,
+        "traiettoria verso Giammoro": 1,
+        "traiettoria con passaggio entro 15 km": 1
       }
     }
   }
