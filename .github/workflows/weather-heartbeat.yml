@@ -2,6 +2,8 @@ name: Heartbeat Meteo Giammoro
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: "13 * * * *"
   push:
     branches:
       - main
@@ -75,9 +77,12 @@ jobs:
             -H "X-GitHub-Api-Version: 2022-11-28" \
             "https://api.github.com/repos/${{ github.repository }}/actions/workflows/weather-heartbeat.yml/runs?per_page=20")
 
-          other_active=$(printf '%s' "$payload" | jq --argjson current "${CURRENT_RUN_ID}" '[.workflow_runs[] | select(.id != $current and (.status == "queued" or .status == "in_progress"))] | length')
-          if [ "${other_active}" -gt 0 ]; then
-            echo "Esiste già un altro heartbeat queued/in_progress: non creo una seconda catena"
+          # GitHub puo' mostrare il predecessore come in_progress anche dopo
+          # che ha gia' avviato questo run. Solo un run PIU' NUOVO puo'
+          # assumere la responsabilita' del rilancio.
+          newer_active=$(printf '%s' "$payload" | jq --argjson current "${CURRENT_RUN_ID}" '[.workflow_runs[] | select(.id > $current and (.status == "queued" or .status == "in_progress"))] | length')
+          if [ "${newer_active}" -gt 0 ]; then
+            echo "Esiste un heartbeat piu' nuovo queued/in_progress: evito un rilancio duplicato"
             exit 0
           fi
 
@@ -99,11 +104,11 @@ jobs:
           echo "::error::Impossibile rilanciare heartbeat dopo 5 tentativi"
           exit 1
 
-# Heartbeat primario indipendente dallo scheduler cron di GitHub.
+# Heartbeat primario auto-rilanciante, con watchdog orario schedulato per riavviarlo se la catena si interrompe.
 # Il primo avvio avviene automaticamente quando questo file viene modificato su main.
 # Ogni ciclo controlla gli update già attivi, avvia update-weather.yml se necessario,
 # attende 15 minuti e poi richiama se stesso via workflow_dispatch.
-# Prima del self-dispatch verifica che non esista già un altro heartbeat attivo/accodato,
-# evitando la moltiplicazione delle catene in caso di avvii manuali o trigger concorrenti.
+# Prima del self-dispatch verifica che non esista un heartbeat PIU' NUOVO attivo/accodato,
+# evitando di scambiare il predecessore (potenzialmente mostrato ancora attivo) per un successore.
 # Il cron di update-weather.yml resta come backup opportunistico.
 # La freshness guard del workflow principale evita collector duplicati inutili.
