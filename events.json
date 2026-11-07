@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-11-07T12:06:06+00:00",
+  "updated_at": "2026-11-07T12:21:39+00:00",
   "active_event": null,
   "events": [
     {
@@ -634,34 +634,31 @@
     "semantics_commit": "b63ae2becaf09e42cbfa7568bb368fa52232ece1",
     "counts": {
       "true_positive": 68,
-      "true_negative": 3592,
+      "true_negative": 3595,
       "false_positive": 120,
       "false_negative": 205
     },
     "by_horizon": {
       "30": {
         "true_positive": 40,
-        "true_negative": 1192,
+        "true_negative": 1193,
         "false_positive": 50,
         "false_negative": 51
       },
       "60": {
         "true_positive": 23,
-        "true_negative": 1178,
+        "true_negative": 1179,
         "false_positive": 60,
         "false_negative": 67
       },
       "120": {
         "true_positive": 5,
-        "true_negative": 1222,
+        "true_negative": 1223,
         "false_positive": 10,
         "false_negative": 87
       }
     },
     "processed_keys": [
-      "20261102T124746Z:60",
-      "20261102T131804Z:30",
-      "20261102T120156Z:120",
       "20261102T130304Z:60",
       "20261102T133318Z:30",
       "20261102T121720Z:120",
@@ -1558,9 +1555,12 @@
       "20261107T112129Z:30",
       "20261107T100514Z:120",
       "20261107T110543Z:60",
-      "20261107T113639Z:30"
+      "20261107T113639Z:30",
+      "20261107T102034Z:120",
+      "20261107T112129Z:60",
+      "20261107T115105Z:30"
     ],
-    "latest_verified_at": "2026-11-07T12:06:06+00:00"
+    "latest_verified_at": "2026-11-07T12:21:39+00:00"
   },
   "verification_event_archive": [
     {
@@ -17720,27 +17720,6 @@
     "metric_version": "local-precipitation-v1",
     "pending": [
       {
-        "id": "20261107T101955Z",
-        "issued_at": "2026-11-07T10:19:55+00:00",
-        "prediction": {
-          "by_horizon": {
-            "30": false,
-            "60": false,
-            "120": true
-          },
-          "forecast_status": "weak",
-          "wet_models": 2,
-          "current_wet_models": 1,
-          "notable_models": 1,
-          "max_precip_0_3h_mm": 1.2,
-          "observed_at_issue": false
-        },
-        "evaluated_horizons": [
-          30,
-          60
-        ]
-      },
-      {
         "id": "20261107T103501Z",
         "issued_at": "2026-11-07T10:35:01+00:00",
         "prediction": {
@@ -17820,7 +17799,8 @@
           "observed_at_issue": false
         },
         "evaluated_horizons": [
-          30
+          30,
+          60
         ]
       },
       {
@@ -17859,7 +17839,9 @@
           "max_precip_0_3h_mm": 1.0,
           "observed_at_issue": false
         },
-        "evaluated_horizons": []
+        "evaluated_horizons": [
+          30
+        ]
       },
       {
         "id": "20261107T120556Z",
@@ -17878,45 +17860,27 @@
           "observed_at_issue": false
         },
         "evaluated_horizons": []
+      },
+      {
+        "id": "20261107T122111Z",
+        "issued_at": "2026-11-07T12:21:11+00:00",
+        "prediction": {
+          "by_horizon": {
+            "30": false,
+            "60": true,
+            "120": true
+          },
+          "forecast_status": "supported",
+          "wet_models": 3,
+          "current_wet_models": 0,
+          "notable_models": 1,
+          "max_precip_0_3h_mm": 1.0,
+          "observed_at_issue": false
+        },
+        "evaluated_horizons": []
       }
     ],
     "results": [
-      {
-        "snapshot_id": "20261103T130754Z",
-        "issued_at": "2026-11-03T13:07:54+00:00",
-        "verified_at": "2026-11-03T15:08:51+00:00",
-        "horizon_minutes": 120,
-        "predicted_rain": true,
-        "observed_rain": false,
-        "outcome": "false_positive",
-        "forecast_status": "weak",
-        "wet_models": 2,
-        "current_wet_models": 1
-      },
-      {
-        "snapshot_id": "20261103T141114Z",
-        "issued_at": "2026-11-03T14:11:14+00:00",
-        "verified_at": "2026-11-03T15:08:51+00:00",
-        "horizon_minutes": 60,
-        "predicted_rain": false,
-        "observed_rain": false,
-        "outcome": "true_negative",
-        "forecast_status": "weak",
-        "wet_models": 2,
-        "current_wet_models": 1
-      },
-      {
-        "snapshot_id": "20261103T143816Z",
-        "issued_at": "2026-11-03T14:38:16+00:00",
-        "verified_at": "2026-11-03T15:08:51+00:00",
-        "horizon_minutes": 30,
-        "predicted_rain": false,
-        "observed_rain": false,
-        "outcome": "true_negative",
-        "forecast_status": "weak",
-        "wet_models": 2,
-        "current_wet_models": 1
-      },
       {
         "snapshot_id": "20261103T132257Z",
         "issued_at": "2026-11-03T13:22:57+00:00",
@@ -25080,38 +25044,71 @@
         "forecast_status": "supported",
         "wet_models": 3,
         "current_wet_models": 1
+      },
+      {
+        "snapshot_id": "20261107T101955Z",
+        "issued_at": "2026-11-07T10:19:55+00:00",
+        "verified_at": "2026-11-07T12:21:11+00:00",
+        "horizon_minutes": 120,
+        "predicted_rain": true,
+        "observed_rain": false,
+        "outcome": "false_positive",
+        "forecast_status": "weak",
+        "wet_models": 2,
+        "current_wet_models": 1
+      },
+      {
+        "snapshot_id": "20261107T112114Z",
+        "issued_at": "2026-11-07T11:21:14+00:00",
+        "verified_at": "2026-11-07T12:21:11+00:00",
+        "horizon_minutes": 60,
+        "predicted_rain": false,
+        "observed_rain": false,
+        "outcome": "true_negative",
+        "forecast_status": "weak",
+        "wet_models": 1,
+        "current_wet_models": 1
+      },
+      {
+        "snapshot_id": "20261107T115048Z",
+        "issued_at": "2026-11-07T11:50:48+00:00",
+        "verified_at": "2026-11-07T12:21:11+00:00",
+        "horizon_minutes": 30,
+        "predicted_rain": false,
+        "observed_rain": false,
+        "outcome": "true_negative",
+        "forecast_status": "supported",
+        "wet_models": 3,
+        "current_wet_models": 1
       }
     ],
     "counts": {
       "true_positive": 433,
-      "true_negative": 2613,
-      "false_positive": 798,
+      "true_negative": 2615,
+      "false_positive": 799,
       "false_negative": 61
     },
     "by_horizon": {
       "30": {
         "true_positive": 102,
-        "true_negative": 1009,
+        "true_negative": 1010,
         "false_positive": 177,
         "false_negative": 21
       },
       "60": {
         "true_positive": 138,
-        "true_negative": 903,
+        "true_negative": 904,
         "false_positive": 236,
         "false_negative": 25
       },
       "120": {
         "true_positive": 193,
         "true_negative": 701,
-        "false_positive": 385,
+        "false_positive": 386,
         "false_negative": 15
       }
     },
     "processed_keys": [
-      "20261101T102915Z:120",
-      "20261101T112950Z:60",
-      "20261101T120005Z:30",
       "20261101T104420Z:120",
       "20261101T114457Z:60",
       "20261101T121519Z:30",
@@ -26308,7 +26305,10 @@
       "20261107T112114Z:30",
       "20261107T100452Z:120",
       "20261107T110525Z:60",
-      "20261107T113620Z:30"
+      "20261107T113620Z:30",
+      "20261107T101955Z:120",
+      "20261107T112114Z:60",
+      "20261107T115048Z:30"
     ]
   }
 }
