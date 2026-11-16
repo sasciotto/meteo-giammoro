@@ -105,3 +105,41 @@ def test_normalize_data_records_policy_without_relabeling_station():
     assert out["stations"][0]["name"] == "Santa Lucia del Mela (DRPC)"
     assert out["stations"][0]["display_name"] == "Santa Lucia del Mela"
     assert out["station_selection_policy"]["groups"][0]["allow_substitute"] is False
+
+
+def test_recommissioned_primary_station_is_not_mistaken_for_verified_live_measurements():
+    import collector
+
+    station = collector.primary_station_metadata()
+    assert station["status"] == "test"
+    assert station["status_label"] == "Riattivata · in verifica"
+    assert station["excluded_from_analysis"] is True
+    assert station["source_url"] == "https://meteogiammoro.altervista.org/"
+    assert station["verification_status"] == "pending_live_feed"
+
+
+def test_primary_station_refuses_online_without_a_validated_observation_feed(monkeypatch):
+    import collector
+
+    config = dict(collector.CONFIG)
+    config["primary_station"] = {
+        "name": "MeteoGiammoro", "status": "online",
+        "excluded": False, "source_url": "https://meteogiammoro.altervista.org/"
+    }
+    monkeypatch.setattr(collector, "CONFIG", config)
+    metadata = collector.primary_station_metadata()
+    assert metadata["status"] == "test"
+    assert metadata["excluded_from_analysis"] is True
+
+
+def test_live_station_entry_is_visible_but_has_no_unverified_values(monkeypatch):
+    import collector
+
+    monkeypatch.setattr(collector, "fetch_text", lambda url: "<table><tr><td>non disponibile</td></tr></table>")
+    stations, _ = collector.fetch_stations()
+    primary = stations[0]
+    assert primary["name"] == "MeteoGiammoro"
+    assert primary["status"] == "test"
+    assert primary["excluded_from_analysis"] is True
+    assert primary["temperature"] is None
+    assert primary["rain_day"] is None
