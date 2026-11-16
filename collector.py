@@ -191,7 +191,7 @@ def primary_station_metadata() -> dict[str, Any]:
     primary = CONFIG["primary_station"]
     status = str(primary.get("status") or "maintenance")
     excluded = bool(primary.get("excluded", True))
-    if not excluded:
+    if status == "online" or not excluded:
         # Senza un connettore osservativo con timestamp validato non è
         # possibile pubblicare la stazione come sorgente meteo primaria.
         status = "test"
