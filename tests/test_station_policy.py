@@ -135,7 +135,7 @@ def test_primary_station_refuses_online_without_a_validated_observation_feed(mon
 def test_live_station_entry_is_visible_but_has_no_unverified_values(monkeypatch):
     import collector
 
-    monkeypatch.setattr(collector, "fetch_text", lambda url: "<table><tr><td>non disponibile</td></tr></table>")
+    monkeypatch.setattr(collector, "fetch_text", lambda url: "<table><tr><th>Nome Stazione</th><th>Temp</th></tr><tr><td>Non disponibile</td><td>--</td></tr></table>")
     stations, _ = collector.fetch_stations()
     primary = stations[0]
     assert primary["name"] == "MeteoGiammoro"
