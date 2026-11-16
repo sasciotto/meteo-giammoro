@@ -89,10 +89,18 @@ def previous_cycle_stations(
         item = copy.deepcopy(station)
         is_primary = item.get("name") == "MeteoGiammoro" or item.get("source_quality") == "primary"
         if is_primary:
-            item["status"] = "maintenance"
-            item["status_label"] = "Manutenzione / test"
-            item["updated"] = "esclusa"
+            # Non riportare la stazione a manutenzione dopo una riattivazione
+            # segnalata. Senza dati live verificati resta comunque esclusa.
+            if item.get("status") == "test":
+                item["status_label"] = "Riattivata · in verifica"
+            else:
+                item["status"] = "maintenance"
+                item["status_label"] = "Fuori servizio"
+            item["updated"] = "misure da verificare"
             item["excluded_from_analysis"] = True
+            for field in ("temperature", "dew_point", "humidity", "pressure", "wind", "gust",
+                          "wind_direction", "rain_1h", "rain_24h", "rain_day"):
+                item[field] = None
             out.append(item)
             continue
 
