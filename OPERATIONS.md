@@ -1,10 +1,12 @@
 # Meteo Giammoro — note operative
 
-Aggiornato: 30 ottobre 2026
+Aggiornato: 16 novembre 2026
 
 ## Integrità delle stazioni
 
-La stazione primaria `MeteoGiammoro` resta esclusa dall'analisi finché è in manutenzione/test.
+La stazione primaria `MeteoGiammoro` è stata segnalata riattivata il 16 novembre 2026. Sito comunicato: https://meteogiammoro.altervista.org/. Il feed non è ancora stato validato automaticamente: lo stato è `test` / «Riattivata · in verifica», con valori strumentali `null` ed esclusione dai calcoli. La segnalazione di riattivazione non costituisce conferma di freschezza osservativa.
+
+Per passare a `online` servono un endpoint effettivamente leggibile, timestamp osservativo, verifica di plausibilità dei valori e controllo su più cicli. Finché manca questa verifica, la dashboard continua a distinguere la stima modellistica territoriale dalle osservazioni delle stazioni limitrofe e non presenta nessuna misura locale inventata.
 
 `config/stations.json` distingue:
 
@@ -30,7 +32,7 @@ L'inferenza viene marcata con `network_inferred: true` e con una nota dedicata. 
 
 Il workflow principale `update-weather.yml` mantiene lo schedule di backup ogni 15 minuti ai minuti `:07`, `:22`, `:37`, `:52` e la guardia di freschezza evita cicli duplicati troppo ravvicinati.
 
-`weather-heartbeat.yml` è un trigger manuale one-shot: avvia il workflow principale e termina. Non mantiene più un runner GitHub occupato per 15 minuti in attesa di rilanciarsi.
+`weather-heartbeat.yml` è un heartbeat auto-rilanciante con attesa di 15 minuti e schedule orario di recupero; controlla che non esistano heartbeat successori già attivi. Il cron di `update-weather.yml` resta una ridondanza opportunistica. La continuità va verificata dagli ultimi run Actions, senza assumere una garanzia di scheduling.
 
 ## Persistenza e branch main
 
