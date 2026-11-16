@@ -3,7 +3,7 @@
 
 Principi:
 - Giammoro e' sempre il territorio di riferimento.
-- MeteoGiammoro resta esclusa finche' e' in manutenzione/test.
+- MeteoGiammoro e' segnalata riattivata ma resta in verifica ed esclusa finche' il feed non e' validato.
 - Le stazioni circostanti non vengono rinominate o mediate come dato di Giammoro.
 - I valori territoriali durante il guasto della stazione locale derivano dal modello sul punto
   (ItaliaMeteo ICON-2I come prima scelta) e sono esplicitamente etichettati come stima modellistica.
@@ -182,23 +182,53 @@ def fetch_json(url: str, params: dict[str, Any], timeout: int = 30) -> dict[str,
     return r.json()
 
 
+def primary_station_metadata() -> dict[str, Any]:
+    """Stato dichiarato della stazione locale, distinto da misure live verificate.
+
+    'test' significa riattivazione segnalata, NON feed acquisito né validato.
+    Il valore excluded in configurazione resta obbligatorio fino alla validazione.
+    """
+    primary = CONFIG["primary_station"]
+    status = str(primary.get("status") or "maintenance")
+    excluded = bool(primary.get("excluded", True))
+    if not excluded:
+        # Senza un connettore osservativo con timestamp validato non è
+        # possibile pubblicare la stazione come sorgente meteo primaria.
+        status = "test"
+        excluded = True
+    return {
+        "name": primary.get("name") or "MeteoGiammoro",
+        "status": status,
+        "status_label": (
+            "Riattivata · in verifica" if status == "test" else "Fuori servizio"
+        ),
+        "source_url": primary.get("source_url"),
+        "verification_status": primary.get("verification_status") or "pending_live_feed",
+        "excluded_from_analysis": excluded,
+        "note": primary.get("note") or "Misure non disponibili.",
+    }
+
+
 def fetch_stations() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     html = fetch_text(CMS_URL)
     rows = parse_cms_table(html)
     now = now_local()
+    primary = primary_station_metadata()
     stations: list[dict[str, Any]] = [{
-        "name": "MeteoGiammoro",
-        "display_name": "MeteoGiammoro",
+        "name": primary["name"],
+        "display_name": primary["name"],
         "network": "stazione locale",
         "source_quality": "primary",
-        "status": "maintenance",
-        "status_label": "Manutenzione / test",
-        "updated": "esclusa",
+        "status": primary["status"],
+        "status_label": primary["status_label"],
+        "updated": "misure da verificare",
         "temperature": None, "dew_point": None, "humidity": None, "pressure": None,
         "wind": None, "gust": None, "wind_direction": None, "rain_1h": None, "rain_24h": None,
         "rain_day": None,
+        "source_url": primary.get("source_url"),
+        "verification_status": primary.get("verification_status"),
         "excluded_from_analysis": True,
-        "note": CONFIG["primary_station"]["note"]
+        "note": primary["note"]
     }]
     found: dict[str, Any] = {}
 
@@ -1014,11 +1044,7 @@ def run(offline: bool = False) -> dict[str, Any]:
             "coordinates": [REF["latitude"], REF["longitude"]], "collector_status": "offline" if offline else ("degraded" if errors else "ok"),
             "collector_errors": errors
         },
-        "primary_station": {
-            "name": "MeteoGiammoro", "status": "maintenance", "status_label": "Fuori servizio",
-            "excluded_from_analysis": True,
-            "note": "Stazione esclusa dai calcoli perché in manutenzione, risoluzione guasto e test. Rientro previsto prima in TEST e poi ONLINE dopo validazione."
-        },
+        "primary_station": primary_station_metadata(),
         "nowcast": {"label": now_label, "level": now_level, "note": now_note + ". Fulminazioni non ancora acquisite automaticamente."},
         "risk_48h": {"label": risk_label, "level": risk_level, "note": risk_note},
         "territory": territory,
