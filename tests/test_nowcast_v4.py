@@ -138,7 +138,8 @@ def test_blitzortung_is_embedded_for_viewing_only():
     assert "https://map.blitzortung.org/index.php?" in html
     assert "Blitzortung.org" in html
     assert "non è una fonte per allerte" in html
-    assert "EUMETSAT MTG-LI" not in Path("nowcast_v4.py").read_text(encoding="utf-8")
+    assert "fetch_lightning(" not in Path("nowcast_v4.py").read_text(encoding="utf-8")
+    assert "lightning_mtg_li.read_snapshot()" in Path("nowcast_v4.py").read_text(encoding="utf-8")
 
 
 def test_workflow_has_no_eumetsat_lightning_keys_but_keeps_solar():
