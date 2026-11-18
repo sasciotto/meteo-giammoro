@@ -55,7 +55,10 @@ def test_home_does_not_render_technical_multi_model_consensus_block():
     assert "consenso multi-modello 3–48 h" not in js
     assert "modelli indicano pioggia ≥0,5 mm" not in js
     assert "model-values" not in js
-    assert "home?.multi_model" not in js
+    # Il riepilogo sintetico è consentito; non ripristinare il blocco tecnico.
+    assert "Tendenza 3–48 h · previsioni dai modelli" in js
+    assert "home-model-outlook" in js
+    assert "Previsioni, non osservazioni radar" in js
 
 
 def test_detailed_analysis_keeps_multi_model_technical_section():
@@ -75,3 +78,14 @@ def test_missing_radar_ui_does_not_claim_dry_or_repeat_local_rain_status():
     assert "radarUnknown" in js
     assert "!radarUnknown ? [['Pioggia locale', indicators.pioggia_locale]] : []" in js
     assert ".home-nowcast-signal b{padding-top:2px" in js
+
+
+def test_model_forecast_visible_without_radar_and_without_invented_probability():
+    js = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+    assert "function modelOutlookHtml(home)" in js
+    assert "outlook.models_count" in js
+    assert "outlook.precip_min_mm" in js
+    assert "outlook.precip_max_mm" in js
+    assert "${nowcastHtml}\\n      ${outlookHtml}\\n      ${staleHtml}" in js
+    assert "home?.stale || !outlook.available" in js
+    assert "nessuna probabilità" not in js.lower()
