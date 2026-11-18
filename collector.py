@@ -32,7 +32,7 @@ import requests
 from bs4 import BeautifulSoup
 from pypdf import PdfReader
 from rasterio.io import MemoryFile
-from rasterio.windows import from_bounds
+from rasterio.windows import Window, from_bounds
 from rasterio.warp import transform, transform_bounds
 import numpy as np
 
@@ -619,7 +619,12 @@ def _radius_bbox(lon: float, lat: float, radius_km: float) -> tuple[float, float
 
 
 def sample_geotiff_neighborhood(content: bytes, lon: float, lat: float, radius_km: float) -> dict[str, Any]:
-    """Restituisce statistiche sul raster in un intorno del punto senza assumere unità del prodotto."""
+    """Campiona solo pixel GeoTIFF reali e descrive il motivo di eventuale assenza dati.
+
+    La finestra viene intersecata con il raster: il padding boundless non e' mai
+    contato come osservazione. La diagnostica e' composta soltanto da metadati
+    geometrici e di validita', senza raster grezzo o credenziali.
+    """
     with MemoryFile(content) as mem:
         with mem.open() as ds:
             if not ds.crs:
@@ -640,23 +645,51 @@ def sample_geotiff_neighborhood(content: bytes, lon: float, lat: float, radius_k
 
             left, bottom, right, top = _radius_bbox(lon, lat, radius_km)
             if str(ds.crs).upper() not in {"EPSG:4326", "OGC:CRS84"}:
-                left, bottom, right, top = transform_bounds("EPSG:4326", ds.crs, left, bottom, right, top, densify_pts=21)
-            win = from_bounds(left, bottom, right, top, transform=ds.transform)
-            win = win.round_offsets().round_lengths()
-            arr = ds.read(1, window=win, boundless=True, masked=True)
+                left, bottom, right, top = transform_bounds(
+                    "EPSG:4326", ds.crs, left, bottom, right, top, densify_pts=21
+                )
+            requested = from_bounds(left, bottom, right, top, transform=ds.transform)
+            # Clip the requested window to actual raster bounds before reading.
+            # Outside-raster pixels must not be silently treated as dry or valid.
+            col0 = max(0, math.floor(requested.col_off))
+            row0 = max(0, math.floor(requested.row_off))
+            col1 = min(ds.width, math.ceil(requested.col_off + requested.width))
+            row1 = min(ds.height, math.ceil(requested.row_off + requested.height))
+            window_pixels = max(0, col1 - col0) * max(0, row1 - row0)
+            diag = {
+                "raster_crs": str(ds.crs),
+                "raster_width": int(ds.width),
+                "raster_height": int(ds.height),
+                "raster_nodata_defined": ds.nodata is not None,
+                "window_pixels": window_pixels,
+            }
+            if window_pixels == 0:
+                return {
+                    "radius_km": radius_km, "count": 0, "point": point_value,
+                    "max": None, "mean": None, "p90": None,
+                    "coverage": "outside_raster", "diagnostics": diag,
+                }
+
+            window = Window(col0, row0, col1 - col0, row1 - row0)
+            arr = ds.read(1, window=window, boundless=False, masked=True)
             vals = np.asarray(arr.compressed(), dtype=float)
-            vals = vals[np.isfinite(vals)]
-            # Numerosi prodotti usano valori negativi come nodata/fuori dominio.
-            vals = vals[vals > -9000]
+            vals = vals[np.isfinite(vals) & (vals > -9000)]
+            diag["valid_pixels"] = int(vals.size)
             if vals.size == 0:
-                return {"radius_km": radius_km, "count": 0, "point": point_value, "max": None, "mean": None, "p90": None}
+                return {
+                    "radius_km": radius_km, "count": 0, "point": point_value,
+                    "max": None, "mean": None, "p90": None,
+                    "coverage": "no_valid_pixels", "diagnostics": diag,
+                }
             return {
                 "radius_km": radius_km,
                 "count": int(vals.size),
                 "point": point_value,
-                "max": round(float(np.nanmax(vals)), 2),
-                "mean": round(float(np.nanmean(vals)), 2),
-                "p90": round(float(np.nanpercentile(vals, 90)), 2),
+                "max": round(float(np.max(vals)), 2),
+                "mean": round(float(np.mean(vals)), 2),
+                "p90": round(float(np.percentile(vals, 90)), 2),
+                "coverage": "valid_pixels",
+                "diagnostics": diag,
             }
 
 
