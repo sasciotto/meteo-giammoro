@@ -14,7 +14,6 @@ import json
 import io
 import math
 import os
-import time
 import tempfile
 import zipfile
 from datetime import datetime, timedelta, timezone
@@ -33,7 +32,7 @@ def _stage(name: str) -> None:
     """Persist only a finite phase label; safe to expose after an external timeout."""
     if name not in STAGES:
         name = "unknown"
-    STAGE_FILE.write_text(name + "\\n", encoding="utf-8")
+    STAGE_FILE.write_text(name + "\n", encoding="utf-8")
     print(f"MTG-LI phase: {name}", flush=True)
 
 
