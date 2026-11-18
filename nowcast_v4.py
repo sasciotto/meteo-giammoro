@@ -246,7 +246,7 @@ def external_lightning_map() -> dict:
     """La mappa Blitzortung non è un feed per il nowcast o per le allerte."""
     return {
         "name": "Blitzortung.org",
-        "url": "https://maps.blitzortung.org/#6/38.2018/15.31816",
+        "url": "https://map.blitzortung.org/#7/38.2018/15.31816",
         "role": "external_view_only",
         "used_for_nowcast": False,
         "note": "Mappa esterna per consultazione; dati non utilizzati per rischio, allerte o punteggi di confidenza.",
