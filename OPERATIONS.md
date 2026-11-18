@@ -28,6 +28,25 @@ Il feed CMS può non valorizzare la rete. Quando il nome della stazione contiene
 
 L'inferenza viene marcata con `network_inferred: true` e con una nota dedicata. Una rete già dichiarata dal feed non viene mai sovrascritta.
 
+## Fulminazioni e mappa Blitzortung (18 novembre 2026)
+
+Il download automatico EUMETSAT MTG-LI è stato rimosso dalla pipeline
+(nowcast_v4.py e segreti EUMETSAT_CONSUMER_* non più utilizzati). I dati
+di fulminazione analitici, quando effettivamente accessibili, provengono
+dal prodotto ufficiale Radar-DPC LTG/LAMPINET; il layer WMS di fallback è
+solo un'indicazione grafica e non viene convertito in conteggi di flash.
+
+Blitzortung.org viene mostrato in una mappa iframe come servizio
+esterno, con attribuzione e link alla mappa originale. La mappa **non**
+è acquisita da un'API e **non** è utilizzata per le allerte ufficiali,
+il nowcasting automatico, la calibrazione, gli eventi o i punteggi di
+rischio. I termini di Blitzortung limitano l'accesso ai dati grezzi e
+l'impiego per sistemi di allerta: https://www.blitzortung.org/it/contact.php
+Embed documentato: https://map.blitzortung.org/mapexample.html
+
+Le credenziali LSASAF_* e l'integrazione di radiazione solare LSA SAF
+restano distinte e non vengono eliminate da questa modifica.
+
 ## Scheduling GitHub Actions
 
 Il workflow principale `update-weather.yml` mantiene lo schedule di backup ogni 15 minuti ai minuti `:07`, `:22`, `:37`, `:52` e la guardia di freschezza evita cicli duplicati troppo ravvicinati.
