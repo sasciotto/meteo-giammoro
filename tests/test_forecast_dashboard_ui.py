@@ -44,8 +44,8 @@ def test_home_shows_simple_nowcast_before_hourly_forecast_with_indicators():
     assert "home-nowcast-signal" in js
     for label in ("Radar", "Traiettoria", "Fulmini", "Distanza"):
         assert f"['{label}'," in js
-    assert "${nowcastHtml}\n      ${staleHtml}\n      <div class=\"hourly-strip\"" in js
-    assert "${nowcastHtml}\n        <div class=\"forecast-unavailable\"" in js
+    assert "${nowcastHtml}\n      ${outlookHtml}\n      ${staleHtml}\n      <div class=\"hourly-strip\"" in js
+    assert "${nowcastHtml}\n        ${outlookHtml}\n        <div class=\"forecast-unavailable\"" in js
 
 
 def test_home_does_not_render_technical_multi_model_consensus_block():
@@ -86,6 +86,6 @@ def test_model_forecast_visible_without_radar_and_without_invented_probability()
     assert "outlook.models_count" in js
     assert "outlook.precip_min_mm" in js
     assert "outlook.precip_max_mm" in js
-    assert "${nowcastHtml}\\n      ${outlookHtml}\\n      ${staleHtml}" in js
+    assert "${nowcastHtml}\n      ${outlookHtml}\n      ${staleHtml}" in js
     assert "home?.stale || !outlook.available" in js
     assert "nessuna probabilità" not in js.lower()
