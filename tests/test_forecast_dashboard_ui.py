@@ -65,3 +65,13 @@ def test_detailed_analysis_keeps_multi_model_technical_section():
     assert 'id="models"' in html
     assert 'id="riskNote"' in html
     assert "3–48 h e 2–7+ giorni" in html
+
+
+def test_missing_radar_ui_does_not_claim_dry_or_repeat_local_rain_status():
+    js = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+    assert "if (local.status === 'unavailable')" in js
+    assert "Osservazioni pioggia non disponibili" in js
+    assert "Radar locale attualmente asciutto" not in js
+    assert "radarUnknown" in js
+    assert "!radarUnknown ? [['Pioggia locale', indicators.pioggia_locale]] : []" in js
+    assert ".home-nowcast-signal b{padding-top:2px" in js
