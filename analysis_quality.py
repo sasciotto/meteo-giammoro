@@ -54,9 +54,30 @@ def _radar_freshness_score(tracking: dict) -> int:
 
 
 def _radar_crosscheck_score(data: dict) -> int:
+    """Score observed pixels within 15 km, never just a successful HTTP download."""
     products = ((data.get("dpc_observations", {}) or {}).get("products", {}) or {})
-    available = sum(1 for name in ("SRI", "VMI") if (products.get(name, {}) or {}).get("ok"))
-    return 15 if available == 2 else 8 if available == 1 else 0
+    supported = 0
+    for name in ("SRI", "VMI"):
+        product = products.get(name, {}) or {}
+        if not product.get("ok"):
+            continue
+        age = _num(product.get("age_minutes"))
+        if age is None or not 0 <= age <= 35:
+            continue
+        for stat in product.get("stats", []) or []:
+            if not isinstance(stat, dict):
+                continue
+            try:
+                radius = int(stat.get("radius_km"))
+            except (TypeError, ValueError):
+                continue
+            count = _num(stat.get("count"))
+            if radius <= 15 and count is not None and count > 0 and any(
+                _num(stat.get(key)) is not None for key in ("point", "max", "mean", "p90")
+            ):
+                supported += 1
+                break
+    return 15 if supported == 2 else 8 if supported == 1 else 0
 
 
 def _station_support_score(data: dict) -> int:

@@ -271,6 +271,15 @@ def _compact_radar_context(product: dict) -> dict:
             "max": _num(row.get("max")),
             "mean": _num(row.get("mean")),
             "p90": _num(row.get("p90")),
+            "count": row.get("count") if isinstance(row.get("count"), int) else None,
+            "coverage": row.get("coverage") if row.get("coverage") in {
+                "valid_pixels", "no_valid_pixels", "outside_raster"
+            } else "unknown",
+            "diagnostics": {
+                key: value for key, value in (row.get("diagnostics") or {}).items()
+                if key in {"raster_crs", "raster_width", "raster_height",
+                           "raster_nodata_defined", "window_pixels", "valid_pixels"}
+            },
         }
     return out
 
