@@ -38,6 +38,9 @@
       .home-nowcast-detail{font-size:11px;font-weight:700;margin-top:8px;opacity:.82}
       .home-nowcast-signals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:11px}
       .home-nowcast-signal{min-width:0;padding:9px 10px;border:1px solid rgba(100,114,125,.2);border-radius:10px;background:rgba(255,255,255,.58)}
+      .home-nowcast-signal span,.home-nowcast-signal b{display:block;min-width:0}
+      .home-nowcast-signal span{margin-bottom:4px}
+      .home-nowcast-signal b{padding-top:2px;white-space:normal;overflow-wrap:break-word}
       .home-nowcast-signal span{display:block;font-size:9px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;opacity:.66}
       .home-nowcast-signal b{display:block;margin-top:2px;font-size:11px;line-height:1.35;overflow-wrap:anywhere}
       .hourly-strip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(128px,1fr);gap:9px;overflow-x:auto;padding-bottom:5px;scroll-snap-type:x proximity}
@@ -113,17 +116,25 @@
       stormIcon.textContent = '↗';
       return;
     }
+    if (local.status === 'unavailable') {
+      stormTitle.textContent = 'Osservazioni pioggia non disponibili';
+      stormText.textContent = 'I radar SRI/SRT1 non forniscono misure locali utilizzabili. I modelli non confermano le condizioni osservate.';
+      stormIcon.textContent = '◷';
+      return;
+    }
     if (['weak', 'supported'].includes(String(forecast.status || ''))) {
       stormTitle.textContent = 'Piovaschi possibili';
       const wet = num(forecast.wet_models) || 0;
       const available = num(forecast.available_models) || 0;
-      stormText.textContent = `Radar locale attualmente asciutto; ${wet}/${available} modelli mostrano un segnale di precipitazione nelle prossime 3 ore.`;
+      stormText.textContent = `Radar locale senza pioggia rilevata; ${wet}/${available} modelli mostrano un segnale di precipitazione nelle prossime 3 ore.`;
       stormIcon.textContent = '☂';
       return;
     }
-    stormTitle.textContent = 'Nessuna precipitazione radar vicina';
-    stormText.textContent = 'Il radar locale è attualmente asciutto; l’assenza di fulmini non è verificabile senza conteggi osservativi.';
-    stormIcon.textContent = '☂';
+    stormTitle.textContent = local.status === 'dry' ? 'Nessuna pioggia rilevata nel radar locale' : 'Pioggia locale non verificabile';
+    stormText.textContent = local.status === 'dry'
+      ? 'Le misure radar locali valide non rilevano pioggia al momento; l’attività dei fulmini resta non verificabile.'
+      : 'Non sono disponibili osservazioni radar locali sufficienti per confermare o escludere la pioggia.';
+    stormIcon.textContent = '◷';
   }
 
   function simpleNowcastHtml(home) {
@@ -132,9 +143,11 @@
     const allowed = new Set(['calm', 'watch', 'incoming', 'active']);
     const status = allowed.has(String(row.status || '')) ? row.status : 'watch';
     const indicators = row.indicators || {};
+    const radarUnknown = /(?:non verificabile|non disponibile|insufficiente)/i.test(String(indicators.radar || ''));
     const signalRows = [
       ['Radar', indicators.radar],
-      ['Pioggia locale', indicators.pioggia_locale],
+      // A missing local rain observation is already explained by the radar card.
+      ...(!radarUnknown ? [['Pioggia locale', indicators.pioggia_locale]] : []),
       ['Modelli 0–3 h', indicators.modelli_0_3h],
       ['Traiettoria', indicators.trajectory],
       ['Fulmini', indicators.lightning],
