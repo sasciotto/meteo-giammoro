@@ -217,3 +217,21 @@ def test_stale_valid_numbers_are_not_fresh_coverage(monkeypatch):
     data = {"nowcast": {"level": "low"}, "model_details": []}
     q.update_local_precipitation(data, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
     assert data["local_precipitation"]["status"] == "unavailable"
+
+
+def test_unknown_radar_nowcast_copy_is_concise_and_not_dry(monkeypatch):
+    missing = {
+        "ok": True, "timestamp": "2026-10-22T16:00+02:00", "age_minutes": 5,
+        "stats": [{"radius_km": r, "point": None, "max": None, "mean": None, "p90": None}
+                  for r in (1, 3, 5)],
+    }
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (missing, None))
+    data = {"nowcast": {"level": "low"}, "model_details": [],
+            "home_summary": {"nowcast_simple": {"status": "calm", "title": "", "text": "", "indicators": {}}}}
+    q.update_local_precipitation(data, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
+    simple = data["home_summary"]["nowcast_simple"]
+    assert simple["title"] == "Radar locale: dati non disponibili"
+    assert "non è verificabile" in simple["text"]
+    assert simple["indicators"]["pioggia_locale"] == "Non verificabile"
+    assert simple["indicators"]["radar"] == "SRI/SRT1: copertura non verificabile"
+    assert data["local_precipitation"]["status"] == "unavailable"
