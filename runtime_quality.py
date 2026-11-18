@@ -520,14 +520,44 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
         indicators["radar"] = "Pioggia recente nell'area"
     elif observation_status == "unavailable":
         if simple.get("status") != "active":
+            # Radar missing must not hide an available model forecast. A model
+            # prediction remains explicitly distinct from current observations.
             simple["status"] = "watch"
-            simple["title"] = "Radar locale: dati non disponibili"
-            simple["text"] = (
-                "Il radar SRI non fornisce campioni utilizzabili su Giammoro: "
-                "la pioggia in corso non è verificabile. I modelli descrivono "
-                "solo una previsione, non un'osservazione."
-            )
-            simple["detail"] = "Un dato mancante non equivale a zero precipitazioni."
+            available = model_signal["available_models"]
+            wet = model_signal["wet_models"]
+            maximum = model_signal["max_precip_0_3h_mm"]
+            if available:
+                if model_signal["status"] == "supported":
+                    simple["title"] = "Previsione 0–3 h: pioggia possibile"
+                elif model_signal["status"] == "weak":
+                    simple["title"] = "Previsione 0–3 h: possibili piovaschi"
+                else:
+                    simple["title"] = "Previsione 0–3 h: pioggia non significativa nei modelli"
+                if maximum == 0 and wet == 0:
+                    prediction = (
+                        f"Tutti i {available} modelli disponibili prevedono 0 mm "
+                        "di precipitazioni nelle prossime 3 ore."
+                    )
+                else:
+                    prediction = (
+                        f"{wet}/{available} modelli prevedono almeno 0,2 mm "
+                        f"nelle prossime 3 ore; accumulo massimo tra modelli: {maximum:.1f} mm."
+                    )
+                simple["text"] = (
+                    prediction + " Il radar SRI non permette di verificare la pioggia "
+                    "attuale su Giammoro."
+                )
+                simple["detail"] = (
+                    "Previsione modellistica, non osservazione. Il radar locale "
+                    "non è disponibile per una conferma in tempo reale."
+                )
+            else:
+                simple["title"] = "Radar locale: dati non disponibili"
+                simple["text"] = (
+                    "Non sono disponibili né misure radar locali né previsioni "
+                    "modellistiche 0–3 h valutabili; la pioggia attuale non è verificabile."
+                )
+                simple["detail"] = "Un dato mancante non equivale a zero precipitazioni."
         indicators["radar"] = (
             "SRI/SRT1: copertura non verificabile"
             if not srt1_valid else "SRI: copertura non verificabile; SRT1 disponibile"
@@ -544,7 +574,19 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
     indicators["pioggia_locale"] = (
         "Non verificabile" if observation_status == "unavailable" else observation_label
     )
-    indicators["modelli_0_3h"] = model_signal["label"]
+    if observation_status == "unavailable" and model_signal["available_models"]:
+        maximum = model_signal["max_precip_0_3h_mm"]
+        if maximum == 0 and model_signal["wet_models"] == 0:
+            indicators["modelli_0_3h"] = (
+                f"{model_signal['available_models']} modelli: 0 mm previsti"
+            )
+        else:
+            indicators["modelli_0_3h"] = (
+                f"{model_signal['wet_models']}/{model_signal['available_models']} "
+                "modelli con almeno 0,2 mm"
+            )
+    else:
+        indicators["modelli_0_3h"] = model_signal["label"]
     simple["indicators"] = indicators
     data.setdefault("home_summary", {})["nowcast_simple"] = simple
 
