@@ -96,3 +96,38 @@ def test_blitzortung_only_external_and_independent_workflow():
     assert "timeout --signal=TERM" in li_workflow
     assert "lightning_mtg_li.py" in li_workflow
     assert "Blitzortung" not in li_workflow
+
+
+def test_timeout_snapshot_records_only_safe_phase(tmp_path):
+    snapshot = li.write_snapshot(
+        tmp_path / "li.json", {"status": "timeout", "phase": "download"}, now=NOW
+    )
+    assert snapshot["status"] == "timeout"
+    assert snapshot["phase"] == "download"
+    assert "radii" not in snapshot
+
+
+def test_untrusted_phase_does_not_enter_public_json(tmp_path):
+    snapshot = li.write_snapshot(
+        tmp_path / "li.json",
+        {"status": "unavailable", "phase": "Bearer secret http://example.invalid"},
+        now=NOW,
+    )
+    assert snapshot["phase"] == "unknown"
+    assert "Bearer" not in (tmp_path / "li.json").read_text(encoding="utf-8")
+
+
+def test_phase_marker_is_whitelisted_and_newline_terminated(monkeypatch, tmp_path):
+    monkeypatch.setattr(li, "STAGE_FILE", tmp_path / "stage.txt")
+    li._stage("search")
+    assert li.STAGE_FILE.read_text(encoding="utf-8") == "search\n"
+    li._stage("untrusted-token")
+    assert li.STAGE_FILE.read_text(encoding="utf-8") == "unknown\n"
+
+
+def test_workflow_has_safe_error_categorization():
+    from pathlib import Path
+    workflow = Path(".github/workflows/update-mtg-li.yml").read_text(encoding="utf-8")
+    assert "--phase \"$phase\"" in workflow
+    assert "state=timeout" in workflow
+    assert "state=unavailable" in workflow
