@@ -1,0 +1,69 @@
+name: Aggiorna fulminazioni MTG-LI (indipendente)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "5,20,35,50 * * * *"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: meteo-giammoro-mtg-li
+  cancel-in-progress: false
+
+jobs:
+  collect-mtg-li:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      EUMETSAT_CONSUMER_KEY: ${{ secrets.EUMETSAT_CONSUMER_KEY }}
+      EUMETSAT_CONSUMER_SECRET: ${{ secrets.EUMETSAT_CONSUMER_SECRET }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dipendenze MTG-LI
+        run: pip install "numpy>=2,<3" "eumdac>=3.1,<4" "netCDF4>=1.7,<2"
+      - name: Raccolta MTG-LI con limite rigido
+        shell: bash
+        run: |
+          # Accesso satellitare isolato: il timeout non coinvolge update-weather.yml.
+          # Nessun token o errore HTTP contenente URL di accesso viene scritto nei JSON pubblici.
+          if timeout --signal=TERM --kill-after=5s 55s python lightning_mtg_li.py --output lightning_mtg_li.json; then
+            echo "Collector MTG-LI concluso"
+          else
+            echo "::warning::Collector MTG-LI oltre deadline o in errore: dati non disponibili"
+            python lightning_mtg_li.py --output lightning_mtg_li.json --mark-unavailable timeout
+          fi
+      - name: Salva snapshot MTG-LI senza modificare la pipeline meteo
+        shell: bash
+        run: |
+          git config user.name "meteo-giammoro-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lightning_mtg_li.json
+          if git diff --cached --quiet; then
+            echo "Nessuna modifica allo snapshot"
+            exit 0
+          fi
+          git commit -m "Aggiorna snapshot satellitare MTG-LI"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              echo "Snapshot MTG-LI persistito"
+              exit 0
+            fi
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo "::warning::Conflitto aggiornamento MTG-LI; il workflow meteo resta indipendente"
+              exit 0
+            fi
+            sleep $((attempt * 2))
+          done
+          echo "::warning::Persistenza MTG-LI non riuscita"
+          exit 0

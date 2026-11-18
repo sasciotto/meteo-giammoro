@@ -10,6 +10,7 @@ from datetime import datetime
 from pathlib import Path
 
 import approaching_cells
+import lightning_mtg_li
 import nowcast_v2 as v2
 import quality_guard
 
@@ -239,7 +240,7 @@ def refresh_runtime_text(data: dict) -> None:
     )
 
     sources = data.setdefault("sources", [])
-    sources[:] = [name for name in sources if "EUMETSAT MTG Lightning Imager" not in str(name)]
+    sources[:] = [name for name in sources if "EUMETSAT MTG Lightning Imager" not in str(name) or data.get("mtg_li", {}).get("status") == "ok"]
 
 
 def external_lightning_map() -> dict:
@@ -269,6 +270,15 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     # v2 ha già acquisito LTG/LAMPINET dalla Protezione Civile.
     # Blitzortung resta separata dai dati operativi, senza accessi alla sua API.
     data["external_lightning_map"] = external_lightning_map()
+    # MTG-LI is exclusively read from a local snapshot. No satellite network I/O here.
+    mtg_li = lightning_mtg_li.read_snapshot()
+    data["mtg_li"] = mtg_li
+    data.setdefault("nowcast_evidence", {})["mtg_li"] = lightning_mtg_li.snapshot_note(mtg_li)
+    if mtg_li["status"] == "ok":
+        source = lightning_mtg_li.SOURCE
+        sources = data.setdefault("sources", [])
+        if source not in sources:
+            sources.append(source)
 
     sanitize_territory_metrics(data)
     quality_guard.guard_alert_quality(data)

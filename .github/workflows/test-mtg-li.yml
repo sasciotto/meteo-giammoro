@@ -1,0 +1,42 @@
+name: Verifica integrazione MTG-LI
+
+on:
+  pull_request:
+    paths:
+      - "lightning_mtg_li.py"
+      - "lightning_mtg_li.json"
+      - "nowcast_v4.py"
+      - "index.html"
+      - "tests/**"
+      - ".github/workflows/update-mtg-li.yml"
+      - ".github/workflows/test-mtg-li.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Installa dipendenze
+        run: pip install -r requirements.txt
+      - name: Suite completa
+        run: python -m pytest -q
+      - name: Compilazione e build locale
+        run: |
+          python -m compileall -q lightning_mtg_li.py nowcast_v4.py
+          python - <<'PY'
+          import json
+          import lightning_mtg_li
+          from pathlib import Path
+          result = lightning_mtg_li.read_snapshot(Path("lightning_mtg_li.json"))
+          assert result["status"] != "ok"
+          print("Initial MTG-LI snapshot is unavailable, not a fake zero.")
+          PY
