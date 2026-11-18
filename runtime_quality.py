@@ -521,13 +521,17 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
     elif observation_status == "unavailable":
         if simple.get("status") != "active":
             simple["status"] = "watch"
-            simple["title"] = "Copertura radar locale insufficiente"
+            simple["title"] = "Radar locale: dati non disponibili"
             simple["text"] = (
-                "Non sono disponibili misure radar valide sul territorio: non si può confermare né escludere "
-                "pioggia a Giammoro. Il segnale dei modelli resta separato dalle osservazioni."
+                "Il radar SRI non fornisce campioni utilizzabili su Giammoro: "
+                "la pioggia in corso non è verificabile. I modelli descrivono "
+                "solo una previsione, non un'osservazione."
             )
-            simple["detail"] = "Assenza di campioni radar non significa assenza di precipitazione."
-        indicators["radar"] = "Copertura radar locale non verificabile"
+            simple["detail"] = "Un dato mancante non equivale a zero precipitazioni."
+        indicators["radar"] = (
+            "SRI/SRT1: copertura non verificabile"
+            if not srt1_valid else "SRI: copertura non verificabile; SRT1 disponibile"
+        )
     elif model_signal["status"] in {"weak", "supported"} and simple.get("status") == "calm":
         simple["status"] = "watch"
         simple["title"] = "Da monitorare"
@@ -537,7 +541,9 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
             "impatto previsto basso se non emergono nuovi segnali osservativi."
         )
 
-    indicators["pioggia_locale"] = observation_label
+    indicators["pioggia_locale"] = (
+        "Non verificabile" if observation_status == "unavailable" else observation_label
+    )
     indicators["modelli_0_3h"] = model_signal["label"]
     simple["indicators"] = indicators
     data.setdefault("home_summary", {})["nowcast_simple"] = simple
