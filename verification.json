@@ -1,6 +1,6 @@
 {
   "schema_version": "1.1",
-  "updated_at": "2026-11-18T00:53:47+00:00",
+  "updated_at": "2026-11-18T01:04:23+00:00",
   "horizons_minutes": [
     30,
     60,
@@ -8,12 +8,12 @@
   ],
   "summary": {
     "total_results": 300,
-    "evaluable_results": 286,
+    "evaluable_results": 285,
     "correct": 282,
     "partial": 0,
     "false_alarm": 2,
-    "missed_event": 2,
-    "accuracy_percent": 98.6,
+    "missed_event": 1,
+    "accuracy_percent": 98.9,
     "eta_samples": 0,
     "eta_mae_minutes": null,
     "trajectory_samples": 0,
@@ -24,12 +24,12 @@
     },
     "note": "Metriche sperimentali ex-post. L'accuracy globale è secondaria; POD, FAR, CSI e balanced accuracy sono ora disponibili anche separatamente a 30/60/120 minuti. Il watch registra precursori deboli senza trasformarli in eventi operativi. La confidenza probabilistica resta non calibrata.",
     "event_metrics": {
-      "samples": 286,
+      "samples": 285,
       "true_positive": 0,
       "true_negative": 282,
       "false_positive": 2,
-      "false_negative": 2,
-      "event_samples": 2,
+      "false_negative": 1,
+      "event_samples": 1,
       "no_event_samples": 284,
       "event_detection_percent": 0.0,
       "precision_percent": 0.0,
@@ -40,18 +40,18 @@
     },
     "by_horizon": {
       "30": {
-        "samples": 96,
+        "samples": 95,
         "true_positive": 0,
         "true_negative": 94,
         "false_positive": 1,
-        "false_negative": 1,
-        "event_samples": 1,
+        "false_negative": 0,
+        "event_samples": 0,
         "no_event_samples": 95,
-        "event_detection_percent": 0.0,
+        "event_detection_percent": null,
         "precision_percent": 0.0,
         "false_alarm_ratio_percent": 100.0,
         "specificity_percent": 98.9,
-        "balanced_accuracy_percent": 49.5,
+        "balanced_accuracy_percent": null,
         "csi_percent": 0.0
       },
       "60": {
@@ -86,14 +86,14 @@
       }
     },
     "miss_diagnostics": {
-      "false_negative_total": 2,
+      "false_negative_total": 1,
       "by_horizon": {
-        "30": 1,
+        "30": 0,
         "60": 1,
         "120": 0
       },
       "by_event_driver": {
-        "radar_15km": 2,
+        "radar_15km": 1,
         "rain_1h": 0,
         "lightning_20km": 0,
         "multiple": 0,
@@ -103,13 +103,13 @@
     },
     "watch_metrics": {
       "status": "collecting",
-      "samples": 286,
-      "event_samples": 2,
-      "covered_events": 2,
+      "samples": 285,
+      "event_samples": 1,
+      "covered_events": 1,
       "event_coverage_percent": 100.0,
-      "positive_samples": 88,
+      "positive_samples": 87,
       "false_positive_samples": 86,
-      "false_positive_ratio_percent": 97.7,
+      "false_positive_ratio_percent": 98.9,
       "note": "Il watch è un precursore diagnostico, non un'allerta né una probabilità calibrata."
     },
     "metric_version": "local-event-v2",
@@ -206,13 +206,13 @@
       "metric_version": "local-precipitation-v1",
       "semantic": "rain_presence_not_severity",
       "cumulative": {
-        "samples": 6733,
+        "samples": 6734,
         "true_positive": 452,
-        "true_negative": 5279,
+        "true_negative": 5280,
         "false_positive": 929,
         "false_negative": 73,
         "rain_samples": 525,
-        "dry_samples": 6208,
+        "dry_samples": 6209,
         "rain_detection_percent": 86.1,
         "precision_percent": 32.7,
         "false_alarm_ratio_percent": 67.3,
@@ -220,13 +220,13 @@
       },
       "by_horizon": {
         "30": {
-          "samples": 2255,
+          "samples": 2256,
           "true_positive": 105,
-          "true_negative": 1938,
+          "true_negative": 1939,
           "false_positive": 189,
           "false_negative": 23,
           "rain_samples": 128,
-          "dry_samples": 2127,
+          "dry_samples": 2128,
           "rain_detection_percent": 82.0,
           "precision_percent": 35.7,
           "false_alarm_ratio_percent": 64.3,
@@ -300,7 +300,9 @@
         "predictive_confidence_status": "uncalibrated",
         "watch_status": "watch"
       },
-      "evaluated_horizons": [],
+      "evaluated_horizons": [
+        30
+      ],
       "first_observed_event_minutes": null
     },
     {
@@ -342,9 +344,87 @@
       },
       "evaluated_horizons": [],
       "first_observed_event_minutes": null
+    },
+    {
+      "id": "20261118T010423Z",
+      "issued_at": "2026-11-18T01:04:23+00:00",
+      "prediction": {
+        "nowcast_level": "low",
+        "nowcast_label": "Basso",
+        "confidence_score": null,
+        "confidence_label": "Non calibrata",
+        "radar": {
+          "track_id": null,
+          "status": "no_data",
+          "lat": null,
+          "lon": null,
+          "distance_km": null,
+          "speed_kmh": null,
+          "direction_deg": null,
+          "approaching": false,
+          "closest_approach_km": null,
+          "closest_approach_minutes": null,
+          "eta_minutes": null,
+          "local_nearest_distance_km": null,
+          "local_nearest_lat": null,
+          "local_nearest_lon": null,
+          "local_nearest_peak_value": null,
+          "local_candidate_count": 0
+        },
+        "lightning": {
+          "status": "timeout",
+          "count_20km": null,
+          "count_30km": null
+        },
+        "risk_48h": "low",
+        "data_quality_score": 30.0,
+        "trajectory_reliability_score": null,
+        "predictive_confidence_status": "uncalibrated",
+        "watch_status": "watch"
+      },
+      "evaluated_horizons": [],
+      "first_observed_event_minutes": null
     }
   ],
   "results": [
+    {
+      "snapshot_id": "20261118T003431Z",
+      "issued_at": "2026-11-18T00:34:31+00:00",
+      "verified_at": "2026-11-18T01:04:23+00:00",
+      "horizon_minutes": 30,
+      "outcome": "inconclusive",
+      "predicted_event": false,
+      "predicted_watch": true,
+      "observed_event": null,
+      "nearby_signal": null,
+      "prediction_reasons": [],
+      "watch_reasons": [
+        "sintesi nowcasting in monitoraggio"
+      ],
+      "confidence_score": null,
+      "eta_predicted_minutes": null,
+      "eta_error_minutes": null,
+      "trajectory_error_km": null,
+      "observation": {
+        "evaluable": false,
+        "event": false,
+        "nearby_signal": false,
+        "event_drivers": [],
+        "radar_distance_km": null,
+        "radar_fresh": false,
+        "radar_candidate_count": 0,
+        "rain_1h_mm": null,
+        "lightning_20km": null,
+        "lightning_30km": null,
+        "lightning_fresh": false,
+        "track_id": null,
+        "cell_lat": null,
+        "cell_lon": null,
+        "cell_role": "none",
+        "tracked_cell_lat": null,
+        "tracked_cell_lon": null
+      }
+    },
     {
       "snapshot_id": "20261117T190002Z",
       "issued_at": "2026-11-17T19:00:02+00:00",
@@ -10910,46 +10990,6 @@
       "issued_at": "2026-11-16T19:36:37+00:00",
       "verified_at": "2026-11-16T20:36:51+00:00",
       "horizon_minutes": 60,
-      "outcome": "missed_event",
-      "predicted_event": false,
-      "predicted_watch": true,
-      "observed_event": true,
-      "nearby_signal": true,
-      "prediction_reasons": [],
-      "watch_reasons": [
-        "sintesi nowcasting in monitoraggio"
-      ],
-      "confidence_score": null,
-      "eta_predicted_minutes": null,
-      "eta_error_minutes": null,
-      "trajectory_error_km": null,
-      "observation": {
-        "evaluable": true,
-        "event": true,
-        "nearby_signal": true,
-        "event_drivers": [
-          "radar_15km"
-        ],
-        "radar_distance_km": 13.6,
-        "radar_fresh": true,
-        "radar_candidate_count": 1,
-        "rain_1h_mm": 0.0,
-        "lightning_20km": 0,
-        "lightning_30km": 0,
-        "lightning_fresh": true,
-        "track_id": "VMI-202611162125-ESE14",
-        "cell_lat": 38.16972,
-        "cell_lon": 15.46853,
-        "cell_role": "nearest_candidate",
-        "tracked_cell_lat": 38.16972,
-        "tracked_cell_lon": 15.46853
-      }
-    },
-    {
-      "snapshot_id": "20261116T200636Z",
-      "issued_at": "2026-11-16T20:06:36+00:00",
-      "verified_at": "2026-11-16T20:36:51+00:00",
-      "horizon_minutes": 30,
       "outcome": "missed_event",
       "predicted_event": false,
       "predicted_watch": true,
