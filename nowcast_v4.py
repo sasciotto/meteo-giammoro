@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
-"""Nowcasting v4: radar multi-cella/multi-frame + fulminazioni EUMETSAT MTG-LI opzionali."""
+"""Nowcasting v4: radar multi-cella/multi-frame + LTG/LAMPINET DPC; mappa Blitzortung esterna."""
 from __future__ import annotations
 
 import argparse
 import json
 import math
 import re
-import subprocess
-import sys
 from datetime import datetime
 from pathlib import Path
 
 import approaching_cells
-import lightning_eumetsat as eum_li
 import nowcast_v2 as v2
 import quality_guard
 
@@ -211,7 +208,7 @@ def calibrate_confidence(data: dict) -> None:
     status = quality.get("status", "unknown")
     conf["note"] = (
         "Confidenza nowcasting da freschezza radar, rilevamento celle, qualità del tracking, "
-        "cross-check radar, stazioni, modelli e fulminazioni EUMETSAT MTG-LI. "
+        "cross-check radar, stazioni, modelli e LTG/LAMPINET quando disponibile. "
         f"Qualità tracking: {status}."
     )
     data["analysis_confidence"] = conf
@@ -222,70 +219,38 @@ def refresh_runtime_text(data: dict) -> None:
     territory = data.get("territory", {}) or {}
     territory["summary"] = (
         "Stima territoriale automatica; nel nowcasting hanno priorità Radar-DPC, "
-        "fulminazioni EUMETSAT MTG-LI e osservazioni disponibili."
+        "osservazioni LTG/LAMPINET disponibili e altre misure verificate."
     )
 
     for row in data.get("models", []) or []:
         if row.get("horizon") == "0–3 h":
-            row["models"] = "Radar-DPC · EUMETSAT MTG-LI · stazioni locali · modelli sul punto"
+            row["models"] = "Radar-DPC · LTG/LAMPINET DPC · stazioni locali · modelli sul punto"
             row["signal"] = "Osservazioni prioritarie; modelli a supporto"
             row["agreement"] = "nowcasting osservativo"
-            row["note"] = "Radar e fulminazioni sono acquisiti automaticamente; il tracking radar usa più celle e più frame quando disponibili."
+            row["note"] = "Radar e LTG/LAMPINET vengono acquisiti dalla Protezione Civile quando disponibili; la mappa Blitzortung è solo per consultazione."
 
     reasoning = data.get("reasoning", {}) or {}
     reasoning["description"] = (
-        "Il backend acquisisce stazioni, modelli, prodotti Radar-DPC, fulminazioni EUMETSAT MTG-LI "
+        "Il backend acquisisce stazioni, modelli, prodotti Radar-DPC e LTG/LAMPINET quando disponibili, "
         "e allerte ufficiali. Giammoro resta il punto di riferimento; le stazioni vicine sono supporto separato. "
-        "Nel 0–3 h hanno priorità osservazioni, radar, fulmini e tracking; la cella tracciata è distinta dalla cella di pericolo locale. "
+        "Nel 0–3 h hanno priorità osservazioni verificate, radar e tracking; la cella tracciata è distinta dalla cella di pericolo locale. "
         "Le proiezioni del tracking vengono declassate quando l'associazione fra frame è poco coerente. "
         "Oltre il brevissimo termine vengono confrontati modelli ed ensemble."
     )
 
     sources = data.setdefault("sources", [])
-    eum_source = "EUMETSAT MTG Lightning Imager L2 Lightning Flashes"
-    if eum_source not in sources:
-        sources.append(eum_source)
+    sources[:] = [name for name in sources if "EUMETSAT MTG Lightning Imager" not in str(name)]
 
 
-LIGHTNING_TIMEOUT_SECONDS = 60
-
-
-def fetch_lightning_with_deadline(rlat: float, rlon: float, timeout: int = LIGHTNING_TIMEOUT_SECONDS) -> dict:
-    """Isola il client EUMETSAT, i cui retry di rete possono durare molti minuti.
-
-    In caso di timeout o errore la sorgente è *indisponibile*, mai un
-    conteggio di zero fulmini osservati. Radar e pipeline continuano.
-    """
-    if not eum_li._credentials():
-        return eum_li.fetch_lightning(rlat, rlon)
-
-    script = (
-        "import json, sys; import lightning_eumetsat as li; "
-        "print(json.dumps(li.fetch_lightning(float(sys.argv[1]), float(sys.argv[2]))))"
-    )
-    try:
-        result = subprocess.run(
-            [sys.executable, "-c", script, str(rlat), str(rlon)],
-            capture_output=True,
-            text=True,
-            timeout=timeout,
-            check=False,
-        )
-        if result.returncode != 0:
-            raise RuntimeError(f"processo MTG-LI terminato con codice {result.returncode}")
-        return json.loads(result.stdout.strip().splitlines()[-1])
-    except subprocess.TimeoutExpired:
-        return {
-            "status": "timeout", "source": eum_li.SOURCE,
-            "collection": eum_li.COLLECTION_ID,
-            "error": f"Download MTG-LI oltre {timeout}s: fonte esclusa dal ciclo corrente.",
-        }
-    except (OSError, ValueError, IndexError, RuntimeError) as exc:
-        return {
-            "status": "error", "source": eum_li.SOURCE,
-            "collection": eum_li.COLLECTION_ID,
-            "error": f"Acquisizione MTG-LI non disponibile: {exc}",
-        }
+def external_lightning_map() -> dict:
+    """La mappa Blitzortung non è un feed per il nowcast o per le allerte."""
+    return {
+        "name": "Blitzortung.org",
+        "url": "https://maps.blitzortung.org/#6/38.2018/15.31816",
+        "role": "external_view_only",
+        "used_for_nowcast": False,
+        "note": "Mappa esterna per consultazione; dati non utilizzati per rischio, allerte o punteggi di confidenza.",
+    }
 
 
 def run(data_path: Path, previous_path: Path | None = None, history_path: Path | None = None):
@@ -301,26 +266,9 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     assess_tracking_quality(data)
     approaching_cells.update(data, previous, rlat, rlon)
 
-    lightning = fetch_lightning_with_deadline(rlat, rlon)
-    data["lightning"] = lightning
-    data.setdefault("nowcast_evidence", {})["lightning"] = eum_li.summary(lightning)
-
-    tr = data.get("nowcast_tracking", {})
-    if lightning.get("status") == "ok":
-        data["analysis_confidence"] = v2.enhanced_confidence(data, tr, lightning)
-        v2.significant_lightning_change(data, previous, lightning)
-
-    note = str(data.get("nowcast", {}).get("note", "")).strip()
-    markers = [
-        "LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato.",
-        "Fulminazioni non ancora acquisite automaticamente.",
-    ]
-    for marker in markers:
-        note = note.replace(marker, "").strip()
-    li_text = eum_li.summary(lightning)
-    if li_text not in note:
-        note = (note + " " + li_text).strip()
-    data.setdefault("nowcast", {})["note"] = note
+    # v2 ha già acquisito LTG/LAMPINET dalla Protezione Civile.
+    # Blitzortung resta separata dai dati operativi, senza accessi alla sua API.
+    data["external_lightning_map"] = external_lightning_map()
 
     sanitize_territory_metrics(data)
     quality_guard.guard_alert_quality(data)
@@ -343,7 +291,7 @@ def main():
     p.add_argument("--history", default="history.json")
     a = p.parse_args()
     run(Path(a.data), Path(a.previous) if a.previous else None, Path(a.history) if a.history else None)
-    print("Nowcast v4: radar multi-frame + hazard locale + quality guard + EUMETSAT MTG-LI aggiornato")
+    print("Nowcast v4: radar multi-frame + hazard locale + LTG/LAMPINET DPC; Blitzortung solo consultazione")
     return 0
 
 
