@@ -154,7 +154,7 @@
       ['Distanza', indicators.distance]
     ].filter(([, value]) => value);
     const signalsHtml = signalRows.length
-      ? `<div class="home-nowcast-signals">${signalRows.map(([label, value]) => `<div class="home-nowcast-signal"><span>${esc(label)}</span><b>${esc(value)}</b></div>`).join('')}</div>`
+      ? `<div class="home-nowcast-signals">${signalRows.map(([label, value]) => `<div class="home-nowcast-signal"><span>${esc(label)}:</span><b>${esc(value)}</b></div>`).join('')}</div>`
       : (row.detail ? `<div class="home-nowcast-detail">${esc(row.detail)}</div>` : '');
     return `<div class="home-nowcast ${status}" id="homeNowcastSimple" aria-label="Nowcasting semplificato prossime 3 ore">
       <div class="home-nowcast-k">Prossime 3 ore</div>
