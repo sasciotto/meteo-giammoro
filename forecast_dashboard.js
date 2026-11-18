@@ -122,7 +122,7 @@
       return;
     }
     stormTitle.textContent = 'Nessuna pioggia o temporale vicino';
-    stormText.textContent = 'Il radar locale è attualmente asciutto; l'assenza di fulmini non è verificabile senza conteggi osservativi.';
+    stormText.textContent = 'Il radar locale è attualmente asciutto; l’assenza di fulmini non è verificabile senza conteggi osservativi.';
     stormIcon.textContent = '☂';
   }
 
