@@ -129,3 +129,23 @@ def test_tracking_quality_is_unavailable_without_cell():
     assert data["nowcast_evidence"]["tracking_quality"].startswith("Tracking radar non disponibile")
 
 
+
+
+def test_blitzortung_is_embedded_for_viewing_only():
+    from pathlib import Path
+
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert "https://map.blitzortung.org/index.php?" in html
+    assert "Blitzortung.org" in html
+    assert "non è una fonte per allerte" in html
+    assert "EUMETSAT MTG-LI" not in Path("nowcast_v4.py").read_text(encoding="utf-8")
+
+
+def test_workflow_has_no_eumetsat_lightning_keys_but_keeps_solar():
+    from pathlib import Path
+
+    workflow = Path(".github/workflows/update-weather.yml").read_text(encoding="utf-8")
+    assert "EUMETSAT_CONSUMER_KEY" not in workflow
+    assert "EUMETSAT_CONSUMER_SECRET" not in workflow
+    assert "LSASAF_USERNAME" in workflow
+    assert "LSASAF_PASSWORD" in workflow
