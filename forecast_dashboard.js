@@ -85,7 +85,7 @@
     const local = data?.local_precipitation || {};
     const forecast = local.forecast_0_3h || {};
     const lightning = data?.lightning || {};
-    const flashes20 = lightning.status === 'ok' ? (num(lightning?.radii?.['20']?.flash_count) || 0) : 0;
+    const flashes20 = lightning.status === 'ok' && lightning?.radii?.['20']?.flash_count != null ? (num(lightning.radii['20'].flash_count) || 0) : 0;
     const hazard = data?.nowcast_tracking?.hazard_cell || {};
     const distance = num(hazard.distance_km);
 
@@ -122,7 +122,7 @@
       return;
     }
     stormTitle.textContent = 'Nessuna pioggia o temporale vicino';
-    stormText.textContent = 'Il radar locale è attualmente asciutto e non risultano fulmini entro 20 km.';
+    stormText.textContent = 'Il radar locale è attualmente asciutto; l'assenza di fulmini non è verificabile senza conteggi osservativi.';
     stormIcon.textContent = '☂';
   }
 
@@ -242,7 +242,7 @@
       section.innerHTML = `
         <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Aggiornata a ogni ciclo</div></div></div>
         ${nowcastHtml}
-        <div class="forecast-unavailable"><strong>Previsione temporaneamente non disponibile</strong><br>I dati osservativi, radar e fulminazioni restano comunque aggiornati.</div>`;
+        <div class="forecast-unavailable"><strong>Previsione temporaneamente non disponibile</strong><br>I dati osservativi e radar disponibili restano consultabili; i fulmini potrebbero non essere disponibili.</div>`;
       return;
     }
 
