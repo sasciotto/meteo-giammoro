@@ -635,11 +635,12 @@ def sample_geotiff_neighborhood(content: bytes, lon: float, lat: float, radius_k
                 if str(ds.crs).upper() not in {"EPSG:4326", "OGC:CRS84"}:
                     xs, ys = transform("EPSG:4326", ds.crs, [lon], [lat])
                     px, py = xs[0], ys[0]
-                sampled = next(ds.sample([(px, py)], indexes=1, masked=True))
-                if len(sampled) and not np.ma.is_masked(sampled[0]):
-                    candidate = float(sampled[0])
-                    if math.isfinite(candidate) and candidate > -9000:
-                        point_value = round(candidate, 2)
+                if ds.bounds.left <= px < ds.bounds.right and ds.bounds.bottom < py <= ds.bounds.top:
+                    sampled = next(ds.sample([(px, py)], indexes=1, masked=True))
+                    if len(sampled) and not np.ma.is_masked(sampled[0]):
+                        candidate = float(sampled[0])
+                        if math.isfinite(candidate) and candidate > -9000:
+                            point_value = round(candidate, 2)
             except Exception:
                 point_value = None
 
