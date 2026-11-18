@@ -6,6 +6,8 @@ import argparse
 import json
 import math
 import re
+import subprocess
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -245,6 +247,47 @@ def refresh_runtime_text(data: dict) -> None:
         sources.append(eum_source)
 
 
+LIGHTNING_TIMEOUT_SECONDS = 60
+
+
+def fetch_lightning_with_deadline(rlat: float, rlon: float, timeout: int = LIGHTNING_TIMEOUT_SECONDS) -> dict:
+    """Isola il client EUMETSAT, i cui retry di rete possono durare molti minuti.
+
+    In caso di timeout o errore la sorgente è *indisponibile*, mai un
+    conteggio di zero fulmini osservati. Radar e pipeline continuano.
+    """
+    if not eum_li._credentials():
+        return eum_li.fetch_lightning(rlat, rlon)
+
+    script = (
+        "import json, sys; import lightning_eumetsat as li; "
+        "print(json.dumps(li.fetch_lightning(float(sys.argv[1]), float(sys.argv[2]))))"
+    )
+    try:
+        result = subprocess.run(
+            [sys.executable, "-c", script, str(rlat), str(rlon)],
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+            check=False,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"processo MTG-LI terminato con codice {result.returncode}")
+        return json.loads(result.stdout.strip().splitlines()[-1])
+    except subprocess.TimeoutExpired:
+        return {
+            "status": "timeout", "source": eum_li.SOURCE,
+            "collection": eum_li.COLLECTION_ID,
+            "error": f"Download MTG-LI oltre {timeout}s: fonte esclusa dal ciclo corrente.",
+        }
+    except (OSError, ValueError, IndexError, RuntimeError) as exc:
+        return {
+            "status": "error", "source": eum_li.SOURCE,
+            "collection": eum_li.COLLECTION_ID,
+            "error": f"Acquisizione MTG-LI non disponibile: {exc}",
+        }
+
+
 def run(data_path: Path, previous_path: Path | None = None, history_path: Path | None = None):
     import collector
 
@@ -258,7 +301,7 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     assess_tracking_quality(data)
     approaching_cells.update(data, previous, rlat, rlon)
 
-    lightning = eum_li.fetch_lightning(rlat, rlon)
+    lightning = fetch_lightning_with_deadline(rlat, rlon)
     data["lightning"] = lightning
     data.setdefault("nowcast_evidence", {})["lightning"] = eum_li.summary(lightning)
 
