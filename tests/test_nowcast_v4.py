@@ -122,3 +122,50 @@ def test_tracking_quality_is_unavailable_without_cell():
     quality = nowcast_v4.assess_tracking_quality(data)
     assert quality["status"] == "unavailable"
     assert data["nowcast_evidence"]["tracking_quality"].startswith("Tracking radar non disponibile")
+
+
+def test_lightning_deadline_returns_missing_signal_on_timeout(monkeypatch):
+    import subprocess
+
+    monkeypatch.setattr(nowcast_v4.eum_li, "_credentials", lambda: ("key", "secret"))
+
+    def fake_run(*args, **kwargs):
+        assert kwargs["timeout"] == 60
+        assert kwargs["capture_output"] is True
+        raise subprocess.TimeoutExpired(args[0], 60)
+
+    monkeypatch.setattr(nowcast_v4.subprocess, "run", fake_run)
+    out = nowcast_v4.fetch_lightning_with_deadline(38.2018, 15.31816)
+    assert out["status"] == "timeout"
+    assert "radii" not in out
+    assert "non disponibili" in nowcast_v4.eum_li.summary(out)
+
+
+def test_lightning_deadline_uses_valid_child_json(monkeypatch):
+    from subprocess import CompletedProcess
+
+    monkeypatch.setattr(nowcast_v4.eum_li, "_credentials", lambda: ("key", "secret"))
+    monkeypatch.setattr(
+        nowcast_v4.subprocess,
+        "run",
+        lambda *args, **kwargs: CompletedProcess(
+            args[0], 0, stdout='{"status":"ok","radii":{"30":{"flash_count":2}}}', stderr=""
+        ),
+    )
+    out = nowcast_v4.fetch_lightning_with_deadline(38.2018, 15.31816)
+    assert out["status"] == "ok"
+    assert out["radii"]["30"]["flash_count"] == 2
+
+
+def test_lightning_deadline_fails_closed_on_child_error(monkeypatch):
+    from subprocess import CompletedProcess
+
+    monkeypatch.setattr(nowcast_v4.eum_li, "_credentials", lambda: ("key", "secret"))
+    monkeypatch.setattr(
+        nowcast_v4.subprocess,
+        "run",
+        lambda *args, **kwargs: CompletedProcess(args[0], 1, stdout="", stderr="errore remoto"),
+    )
+    out = nowcast_v4.fetch_lightning_with_deadline(38.2018, 15.31816)
+    assert out["status"] == "error"
+    assert "radii" not in out
