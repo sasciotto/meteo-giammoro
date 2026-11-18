@@ -178,3 +178,42 @@ def test_weak_model_rain_signal_is_separate_from_impact_level(monkeypatch):
     assert local["impact_level"] == "low"
     assert data["home_summary"]["nowcast_simple"]["status"] == "watch"
     assert "piovaschi" in data["home_summary"]["nowcast_simple"]["text"].lower()
+
+
+def test_missing_radar_samples_are_unavailable_not_dry(monkeypatch):
+    missing = {
+        "ok": True, "timestamp": "2026-10-22T16:00+02:00", "age_minutes": 5,
+        "stats": [{"radius_km": r, "point": None, "max": None, "mean": None, "p90": None}
+                  for r in (1, 3, 5)],
+    }
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (missing, None))
+    data = {
+        "nowcast": {"level": "low"}, "model_details": [],
+        "home_summary": {"nowcast_simple": {"status": "calm", "title": "Tranquillo", "text": "", "indicators": {}}},
+    }
+    q.update_local_precipitation(data, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
+    local = data["local_precipitation"]
+    assert local["status"] == "unavailable"
+    assert local["observation_valid"] is False
+    assert local["history"][-1]["rain_detected"] is None
+    assert data["home_summary"]["nowcast_simple"]["status"] == "watch"
+    assert "non verificabile" in data["home_summary"]["nowcast_simple"]["indicators"]["radar"]
+
+
+def test_verified_zero_radar_is_dry(monkeypatch):
+    dry = local_product()
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (dry, None))
+    data = {"nowcast": {"level": "low"}, "model_details": []}
+    q.update_local_precipitation(data, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
+    assert data["local_precipitation"]["status"] == "dry"
+    assert data["local_precipitation"]["observation_valid"] is True
+    assert data["local_precipitation"]["history"][-1]["rain_detected"] is False
+
+
+def test_stale_valid_numbers_are_not_fresh_coverage(monkeypatch):
+    stale = local_product(point=0.0)
+    stale["age_minutes"] = 90
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (stale, None))
+    data = {"nowcast": {"level": "low"}, "model_details": []}
+    q.update_local_precipitation(data, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
+    assert data["local_precipitation"]["status"] == "unavailable"

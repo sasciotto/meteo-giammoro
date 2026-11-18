@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -19,7 +20,7 @@ LOCAL_HISTORY_MINUTES = 180
 def _num(value) -> float | None:
     try:
         number = float(value)
-        return number if number == number else None
+        return number if math.isfinite(number) else None
     except (TypeError, ValueError):
         return None
 
@@ -336,6 +337,20 @@ def _model_precipitation_signal(data: dict) -> dict:
     }
 
 
+def _has_usable_radar(product: dict, max_age_minutes: int) -> bool:
+    """Un prodotto scaricato non prova copertura su Giammoro: servono campioni e freschezza."""
+    if not isinstance(product, dict) or not product.get("ok") or not product.get("timestamp"):
+        return False
+    age = _num(product.get("age_minutes"))
+    if age is None or not 0 <= age <= max_age_minutes:
+        return False
+    for radius in (1, 3, 5):
+        row = _stat(product, radius)
+        if any(_num(row.get(metric)) is not None for metric in ("point", "max", "mean", "p90")):
+            return True
+    return False
+
+
 def _radar_local_detected(sri: dict) -> tuple[bool, str]:
     r1 = _stat(sri, 1)
     r3 = _stat(sri, 3)
@@ -399,13 +414,21 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
     previous = previous or {}
     sri, sri_error = _fetch_local_product(data, "SRI")
     srt1, srt_error = _fetch_local_product(data, "SRT1")
-    detected, detection_basis = _radar_local_detected(sri)
-    recent_accumulation = _recent_accumulation_signal(srt1)
+    sri_valid = _has_usable_radar(sri, max_age_minutes=35)
+    srt1_valid = _has_usable_radar(srt1, max_age_minutes=90)
+    detected, detection_basis = (
+        _radar_local_detected(sri) if sri_valid
+        else (None, "copertura radar locale non verificabile: campioni SRI mancanti o obsoleti")
+    )
+    recent_accumulation = _recent_accumulation_signal(srt1) if srt1_valid else None
 
     snapshot = {
         "timestamp": now.isoformat(timespec="minutes"),
         "rain_detected": detected,
+        "observation_valid": sri_valid,
         "recent_accumulation": recent_accumulation,
+        "sri_valid": sri_valid,
+        "srt1_valid": srt1_valid,
         "basis": detection_basis,
         "sri": _compact_radar_context(sri),
         "srt1": _compact_radar_context(srt1),
@@ -421,12 +444,15 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
         if now - stamp <= timedelta(minutes=75) and bool(row.get("rain_detected")):
             recent_detected_rows.append(row)
 
-    if detected:
+    if detected is True:
         observation_status = "active"
         observation_label = "Pioggia rilevata nell'area di Giammoro"
-    elif recent_detected_rows or recent_accumulation:
+    elif recent_detected_rows or recent_accumulation is True:
         observation_status = "recent"
         observation_label = "Pioggia rilevata recentemente nell'area"
+    elif detected is None:
+        observation_status = "unavailable"
+        observation_label = "Dato radar locale non disponibile: pioggia non verificabile"
     else:
         observation_status = "dry"
         observation_label = "Nessuna pioggia locale rilevata ora"
@@ -442,6 +468,8 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
         "generated_at": now.isoformat(timespec="seconds"),
         "status": observation_status,
         "label": observation_label,
+        "observation_valid": sri_valid,
+        "coverage_status": "verified" if sri_valid else "unavailable",
         "observation_basis": "Radar-DPC multi-raggio 1/3/5 km + persistenza temporale",
         "point_measurement_available": bool(_num(_stat(srt1, 1).get("point")) is not None),
         "area_values_are_not_point_measurements": True,
@@ -454,8 +482,9 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
         "history": history,
         "errors": [item for item in (sri_error, srt_error) if item],
         "note": (
-            "La presenza di pioggia e l'impatto sono separati. I valori areali entro 1/3/5 km servono a riconoscere "
-            "rovesci locali che possono sfuggire al singolo pixel e non vengono presentati come accumulo esatto su Giammoro."
+            "La presenza di pioggia e l'impatto sono separati. I valori areali entro 1/3/5 km non sono accumuli puntuali. "
+            + ("Copertura SRI non verificabile: non è possibile concludere che l'area sia asciutta."
+               if not sri_valid else "La copertura SRI contiene campioni validi e recenti.")
         ),
     }
 
@@ -472,10 +501,24 @@ def update_local_precipitation(data: dict, previous: dict | None = None, now: da
     elif observation_status == "recent":
         simple["status"] = "watch"
         simple["title"] = "Da monitorare"
-        simple["text"] = "Pioggia rilevata recentemente nell'area di Giammoro; al momento il segnale radar locale è cessato o attenuato."
+        simple["text"] = (
+            "Pioggia rilevata recentemente nell'area; la situazione corrente non è verificabile per assenza di campioni SRI."
+            if detected is None else
+            "Pioggia rilevata recentemente nell'area di Giammoro; al momento il segnale radar locale è cessato o attenuato."
+        )
         if model_signal["status"] in {"weak", "supported"}:
             simple["text"] += " Restano possibili altri piovaschi nelle prossime 3 ore."
         indicators["radar"] = "Pioggia recente nell'area"
+    elif observation_status == "unavailable":
+        if simple.get("status") != "active":
+            simple["status"] = "watch"
+            simple["title"] = "Copertura radar locale insufficiente"
+            simple["text"] = (
+                "Non sono disponibili misure radar valide sul territorio: non si può confermare né escludere "
+                "pioggia a Giammoro. Il segnale dei modelli resta separato dalle osservazioni."
+            )
+            simple["detail"] = "Assenza di campioni radar non significa assenza di precipitazione."
+        indicators["radar"] = "Copertura radar locale non verificabile"
     elif model_signal["status"] in {"weak", "supported"} and simple.get("status") == "calm":
         simple["status"] = "watch"
         simple["title"] = "Da monitorare"
