@@ -36,6 +36,10 @@
       .home-nowcast-title{font-size:20px;font-weight:800;line-height:1.2;margin-top:3px}
       .home-nowcast-text{font-size:13px;line-height:1.5;margin-top:5px}
       .home-nowcast-detail{font-size:11px;font-weight:700;margin-top:8px;opacity:.82}
+      .home-model-outlook{margin:0 0 13px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;background:var(--surface2);font-size:12px;line-height:1.5}
+      .home-model-outlook strong{display:block;font-size:12px;margin-bottom:3px}
+      .home-model-outlook span{display:block;color:var(--muted)}
+      .home-model-outlook small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
       .home-nowcast-signals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;margin-top:11px}
       .home-nowcast-signal{min-width:0;padding:9px 10px;border:1px solid rgba(100,114,125,.2);border-radius:10px;background:rgba(255,255,255,.58)}
       .home-nowcast-signal span,.home-nowcast-signal b{display:block;min-width:0}
@@ -164,6 +168,28 @@
     </div>`;
   }
 
+  function modelOutlookHtml(home) {
+    // Compact public forecast, not a technical skill/impact score. No fallback
+    // to radar observations and no invented rain probabilities.
+    const outlook = home?.multi_model || {};
+    if (home?.stale || !outlook.available) return '';
+    const available = num(outlook.models_count);
+    const wet = num(outlook.wet_models);
+    if (available == null || available <= 0 || wet == null) return '';
+    const low = num(outlook.precip_min_mm);
+    const high = num(outlook.precip_max_mm);
+    const amount = low == null || high == null ? '' :
+      ` Accumuli modellistici complessivi: ${fmt(low, 1)}–${fmt(high, 1)} mm.`;
+    const main = wet > 0
+      ? `${fmt(wet)} modelli su ${fmt(available)} prevedono almeno 0,5 mm di precipitazione.`
+      : `Nessuno dei ${fmt(available)} modelli prevede almeno 0,5 mm di precipitazione.`;
+    return `<div class="home-model-outlook" aria-label="Tendenza modellistica da 3 a 48 ore">
+      <strong>Tendenza 3–48 h · previsioni dai modelli</strong>
+      <span>${esc(main + amount)}</span>
+      <small>Previsioni, non osservazioni radar; la disponibilità del radar è indicata separatamente.</small>
+    </div>`;
+  }
+
   function renderVerification(data) {
     const metricsEl = byId('verificationMetrics');
     if (!metricsEl) return;
@@ -250,11 +276,13 @@
     const hourly = Array.isArray(home.hourly) ? home.hourly.slice(0, 8) : [];
     const days = Array.isArray(home.days) ? home.days.slice(0, 2) : [];
     const nowcastHtml = simpleNowcastHtml(home);
+    const outlookHtml = modelOutlookHtml(home);
 
     if (!home.forecast_available || (!hourly.length && !days.length)) {
       section.innerHTML = `
         <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Aggiornata a ogni ciclo</div></div></div>
         ${nowcastHtml}
+        ${outlookHtml}
         <div class="forecast-unavailable"><strong>Previsione temporaneamente non disponibile</strong><br>I dati osservativi e radar disponibili restano consultabili; i fulmini potrebbero non essere disponibili.</div>`;
       return;
     }
@@ -285,6 +313,7 @@
     section.innerHTML = `
       <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Scenario orario ${esc(home.source || 'modello di riferimento')} · aggiornato automaticamente</div></div></div>
       ${nowcastHtml}
+      ${outlookHtml}
       ${staleHtml}
       <div class="hourly-strip" aria-label="Previsione oraria">${hourHtml}</div>
       <div class="day-grid">${dayHtml}</div>`;

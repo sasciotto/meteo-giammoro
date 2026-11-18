@@ -235,3 +235,77 @@ def test_unknown_radar_nowcast_copy_is_concise_and_not_dry(monkeypatch):
     assert simple["indicators"]["pioggia_locale"] == "Non verificabile"
     assert simple["indicators"]["radar"] == "SRI/SRT1: copertura non verificabile"
     assert data["local_precipitation"]["status"] == "unavailable"
+
+
+def test_model_first_forecast_with_unavailable_radar_and_four_dry_models(monkeypatch):
+    missing = {
+        "ok": True, "timestamp": "2026-10-22T16:00+02:00", "age_minutes": 5,
+        "stats": [{"radius_km": r, "point": None, "max": None, "mean": None, "p90": None}
+                  for r in (1, 3, 5)],
+    }
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (missing, None))
+    data = {
+        "nowcast": {"level": "low"},
+        "model_details": [
+            {"label": name, "ok": True, "next_0_3h": {"precip_sum": 0}}
+            for name in ("ICON-2I", "ICON", "IFS", "GFS")
+        ],
+        "home_summary": {"nowcast_simple": {"status": "watch", "title": "Radar off", "text": "", "indicators": {}}},
+    }
+    q.update_local_precipitation(data, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
+    forecast = data["local_precipitation"]["forecast_0_3h"]
+    simple = data["home_summary"]["nowcast_simple"]
+    assert forecast["available_models"] == 4
+    assert forecast["max_precip_0_3h_mm"] == 0
+    assert data["local_precipitation"]["status"] == "unavailable"
+    assert simple["title"].startswith("Previsione 0–3 h:")
+    assert "4 modelli disponibili prevedono 0 mm" in simple["text"]
+    assert "non permette di verificare" in simple["text"]
+    assert simple["indicators"]["modelli_0_3h"] == "4 modelli: 0 mm previsti"
+
+
+def test_model_first_forecast_reports_weak_and_supported_signals(monkeypatch):
+    missing = {
+        "ok": True, "timestamp": "2026-10-22T16:00+02:00", "age_minutes": 5,
+        "stats": [{"radius_km": r, "point": None, "max": None, "mean": None, "p90": None}
+                  for r in (1, 3, 5)],
+    }
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (missing, None))
+    data = {
+        "nowcast": {"level": "low"},
+        "model_details": [
+            {"label": name, "ok": True, "next_0_3h": {"precip_sum": amount}}
+            for name, amount in zip(("ICON-2I", "ICON", "IFS", "GFS"), (0, 0, 0.1, 0.6))
+        ],
+        "home_summary": {"nowcast_simple": {"status": "calm", "title": "Tranquillo", "text": "", "indicators": {}}},
+    }
+    now = datetime(2026, 10, 22, 16, 5, tzinfo=TZ)
+    q.update_local_precipitation(data, now=now)
+    simple = data["home_summary"]["nowcast_simple"]
+    assert "possibili piovaschi" in simple["title"].lower()
+    assert "1/4 modelli" in simple["text"]
+    assert "0.6 mm" in simple["text"]
+    assert data["local_precipitation"]["status"] == "unavailable"
+    data["model_details"][1]["next_0_3h"]["precip_sum"] = 0.3
+    data["model_details"][2]["next_0_3h"]["precip_sum"] = 0.3
+    q.update_local_precipitation(data, now=now)
+    assert "pioggia possibile" in data["home_summary"]["nowcast_simple"]["title"].lower()
+    assert "3/4 modelli" in data["home_summary"]["nowcast_simple"]["text"]
+
+
+def test_model_first_fallback_reports_no_models_without_claiming_dry(monkeypatch):
+    missing = {
+        "ok": True, "timestamp": "2026-10-22T16:00+02:00", "age_minutes": 5,
+        "stats": [{"radius_km": r, "point": None, "max": None, "mean": None, "p90": None}
+                  for r in (1, 3, 5)],
+    }
+    monkeypatch.setattr(q, "_fetch_local_product", lambda data, name: (missing, None))
+    data = {
+        "nowcast": {"level": "low"}, "model_details": [],
+        "home_summary": {"nowcast_simple": {"status": "calm", "title": "", "text": "", "indicators": {}}},
+    }
+    q.update_local_precipitation(data, now=datetime(2026, 10, 22, 16, 5, tzinfo=TZ))
+    simple = data["home_summary"]["nowcast_simple"]
+    assert simple["title"] == "Radar locale: dati non disponibili"
+    assert "né previsioni modellistiche" in simple["text"]
+    assert "asciutto" not in simple["text"]
