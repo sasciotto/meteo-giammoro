@@ -18,7 +18,8 @@ HORIZONS = (30, 60, 120)
 MAX_PENDING = 120
 MAX_RESULTS = 600
 MAX_PROCESSED = 1200
-METRIC_VERSION = "local-precipitation-v1"
+METRIC_VERSION = "local-precipitation-v2"
+# v1 counters are preserved separately, not combined with v2.
 
 
 def _num(value: Any) -> float | None:
@@ -77,11 +78,24 @@ def _history(data: dict) -> list[dict]:
     ]
 
 
-def _observed_between(history: list[dict], start: datetime, end: datetime) -> bool:
-    for row in history:
-        stamp = _parse_iso(row.get("timestamp"))
-        if stamp is not None and start <= stamp <= end and bool(row.get("rain_detected")):
-            return True
+def _observed_between(history: list[dict], start: datetime, end: datetime) -> bool | None:
+    """None means not evaluable: unknown coverage is not a negative observation."""
+    values = [
+        (_parse_iso(row.get("timestamp")), row["rain_detected"])
+        for row in history
+        if isinstance(row, dict)
+        and row.get("observation_valid") is True
+        and type(row.get("rain_detected")) is bool
+    ]
+    values = sorted((t, v) for t, v in values if t is not None and start <= t <= end)
+    if any(v for _, v in values):
+        return True
+    if not values or (values[0][0] - start).total_seconds() > 20 * 60:
+        return None
+    if (end - values[-1][0]).total_seconds() > 20 * 60:
+        return None
+    if any((t2 - t1).total_seconds() > 25 * 60 for (t1, _), (t2, _) in zip(values, values[1:])):
+        return None
     return False
 
 
@@ -140,7 +154,10 @@ def apply(data: dict, verification: dict, events: dict, now: datetime | None = N
     now = now.astimezone(timezone.utc)
     state = events.get("precipitation_verification", {}) or {}
     if state.get("metric_version") != METRIC_VERSION:
+        if state.get("metric_version") == "local-precipitation-v1":
+            events.setdefault("precipitation_verification_legacy_v1", state)
         state = _initial_state()
+    state.setdefault("skipped_unverifiable", 0)
 
     pending = [row for row in (state.get("pending", []) or []) if isinstance(row, dict)]
     results = [row for row in (state.get("results", []) or []) if isinstance(row, dict)]
@@ -173,6 +190,12 @@ def apply(data: dict, verification: dict, events: dict, now: datetime | None = N
                 continue
             predicted = bool(by_horizon.get(str(horizon), False))
             observed = _observed_between(history, issued, min(now, due + timedelta(minutes=15)))
+            if observed is None:
+                state["skipped_unverifiable"] += 1
+                processed.append(key)
+                processed_set.add(key)
+                evaluated.add(horizon)
+                continue
             outcome = _classify(predicted, observed)
             result = {
                 "snapshot_id": snapshot.get("id"),
@@ -217,11 +240,17 @@ def apply(data: dict, verification: dict, events: dict, now: datetime | None = N
     summary["precipitation_presence"] = {
         "metric_version": METRIC_VERSION,
         "semantic": "rain_presence_not_severity",
+        "skipped_unverifiable": state["skipped_unverifiable"],
+        "legacy_v1": {
+            "archived": "precipitation_verification_legacy_v1" in events,
+            "note": "I conteggi v1 rimangono nell'archivio e non sono sommati al denominatore v2.",
+        },
         "cumulative": _metrics(state["counts"]),
         "by_horizon": {key: _metrics(value) for key, value in state["by_horizon"].items()},
         "note": (
             "Metrica separata dagli eventi significativi: misura la presenza di pioggia locale a 30/60/120 min. "
-            "Il rilevamento osservato usa la persistenza radar multi-raggio e non trasforma i massimi areali in accumuli puntuali."
+            "I periodi senza campioni radar locali recenti e verificati sono non valutabili; "
+            "la persistenza radar multi-raggio non viene presentata come accumulo puntuale."
         ),
     }
     data.setdefault("verification", {})["precipitation_presence"] = summary["precipitation_presence"]
