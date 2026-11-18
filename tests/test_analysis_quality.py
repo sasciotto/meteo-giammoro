@@ -4,7 +4,10 @@ import analysis_quality
 def test_data_quality_is_not_predictive_confidence():
     data = {
         "nowcast_tracking": {"status": "detected", "age_minutes": 5},
-        "dpc_observations": {"products": {"SRI": {"ok": True}, "VMI": {"ok": True}}},
+        "dpc_observations": {"products": {
+            "SRI": {"ok": True, "age_minutes": 5, "stats": [{"radius_km": 5, "count": 12, "max": 1.0}]},
+            "VMI": {"ok": True, "age_minutes": 5, "stats": [{"radius_km": 5, "count": 8, "max": 23.0}]},
+        }},
         "stations": [
             {"status": "online", "source_quality": "official", "excluded_from_analysis": False},
             {"status": "online", "source_quality": "reliable", "excluded_from_analysis": False},
@@ -120,3 +123,28 @@ def test_legacy_alias_is_explicitly_deprecated():
 
     assert data["analysis_confidence"]["deprecated_alias"] is True
     assert data["analysis_confidence"]["semantic"] == "data_quality"
+
+
+def test_radar_quality_requires_real_local_pixels():
+    no_pixels = {
+        "dpc_observations": {"products": {
+            "SRI": {"ok": True, "age_minutes": 5, "stats": [{"radius_km": 5, "count": 0, "max": None}]},
+            "VMI": {"ok": True, "age_minutes": 5, "stats": [{"radius_km": 30, "count": 3, "max": 11}]},
+        }}
+    }
+    assert analysis_quality._radar_crosscheck_score(no_pixels) == 0
+    near_pixels = no_pixels["dpc_observations"]["products"]["VMI"]
+    near_pixels["stats"] = [{"radius_km": 15, "count": 3, "max": 11}]
+    assert analysis_quality._radar_crosscheck_score(no_pixels) == 8
+    no_pixels["dpc_observations"]["products"]["SRI"]["stats"] = [{"radius_km": 5, "count": 30, "max": 0}]
+    assert analysis_quality._radar_crosscheck_score(no_pixels) == 15
+
+
+def test_radar_quality_rejects_stale_or_unmeasured_products():
+    data = {"dpc_observations": {"products": {"SRI": {
+        "ok": True, "age_minutes": 60, "stats": [{"radius_km": 5, "count": 20, "max": 5}]
+    }}}}
+    assert analysis_quality._radar_crosscheck_score(data) == 0
+    data["dpc_observations"]["products"]["SRI"]["age_minutes"] = 5
+    data["dpc_observations"]["products"]["SRI"]["stats"][0]["max"] = None
+    assert analysis_quality._radar_crosscheck_score(data) == 0
