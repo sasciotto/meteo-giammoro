@@ -47,7 +47,7 @@ def test_refresh_runtime_text_mentions_active_sources():
     external = nowcast_v4.external_lightning_map()
     assert external["role"] == "external_view_only"
     assert external["used_for_nowcast"] is False
-    assert external["url"].startswith("https://maps.blitzortung.org/")
+    assert external["url"].startswith("https://map.blitzortung.org/")
 
 
 def test_hazard_cell_prefers_nearer_relevant_cell_over_tracked_identity():
