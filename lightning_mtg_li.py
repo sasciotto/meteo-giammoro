@@ -24,6 +24,17 @@ import numpy as np
 
 COLLECTION_ID = "EO:EUM:DAT:0691"
 SOURCE = "EUMETSAT MTG Lightning Imager L2 Lightning Flashes"
+STAGE_FILE = Path("/tmp/mtg-li-stage.txt")
+STAGES = frozenset({"start", "authentication", "collection", "search", "download", "decode", "complete", "unknown"})
+
+
+def _stage(name: str) -> None:
+    """Persist only a finite phase label; safe to expose after an external timeout."""
+    if name not in STAGES:
+        name = "unknown"
+    STAGE_FILE.write_text(name + "\n", encoding="utf-8")
+    print(f"MTG-LI phase: {name}", flush=True)
+
 
 
 def haversine_km(a: float, b: float, c: float, d: float) -> float:
@@ -129,9 +140,12 @@ def fetch_lightning(rlat: float, rlon: float, now: datetime | None = None) -> di
     start = end - timedelta(minutes=35)
 
     try:
+        _stage("authentication")
         token = eumdac.AccessToken(creds)
         datastore = eumdac.DataStore(token)
+        _stage("collection")
         collection = datastore.get_collection(COLLECTION_ID)
+        _stage("search")
         products = list(collection.search(dtstart=start, dtend=end))
         if not products:
             return {
@@ -143,14 +157,17 @@ def fetch_lightning(rlat: float, rlon: float, now: datetime | None = None) -> di
         product = max(products, key=lambda p: getattr(p, "sensing_end", datetime.min) or datetime.min)
         sensing_end = getattr(product, "sensing_end", None)
         entry = _choose_body_entry(product)
+        _stage("download")
         if entry:
             with product.open(entry=entry) as src:
                 raw = src.read()
         else:
             with product.open() as src:
                 raw = src.read()
+        _stage("decode")
         lat, lon = _read_flash_arrays_from_netcdf(raw)
         sampled = summarize_flashes(lat, lon, rlat, rlon)
+        _stage("complete")
         if sensing_end:
             if sensing_end.tzinfo is None:
                 sensing_end = sensing_end.replace(tzinfo=timezone.utc)
@@ -226,6 +243,7 @@ def usable_snapshot(raw: dict, now: datetime | None = None) -> dict[str, Any]:
         "observed_at": raw.get("observed_at") or raw.get("timestamp"),
         "retrieved_at": raw.get("retrieved_at"),
         "last_attempt_at": raw.get("last_attempt_at"),
+        "phase": raw.get("phase") if raw.get("phase") in STAGES else "unknown",
     }
     if status != "ok":
         return base
@@ -302,6 +320,7 @@ def write_snapshot(path: Path, result: dict[str, Any], now: datetime | None = No
         "retrieved_at": stamp,
         "last_attempt_at": stamp,
         "product_id": result.get("product_id"),
+        "phase": result.get("phase"),
         "nearest_km": result.get("nearest_km"),
         "radii": result.get("radii"),
     }
@@ -314,11 +333,14 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", default=str(DEFAULT_PATH))
     parser.add_argument("--mark-unavailable", choices=("timeout", "unavailable"), default=None)
+    parser.add_argument("--phase", choices=sorted(STAGES), default=None)
     args = parser.parse_args()
     if args.mark_unavailable:
-        result = {"status": args.mark_unavailable}
+        result = {"status": args.mark_unavailable, "phase": args.phase or "unknown"}
     else:
+        _stage("start")
         result = fetch_lightning(38.2018, 15.31816)
+        result["phase"] = STAGE_FILE.read_text(encoding="utf-8").strip() if STAGE_FILE.exists() else "unknown"
     snapshot = write_snapshot(Path(args.output), result)
     print(f"MTG-LI independent collector: {snapshot['status']}")
     return 0

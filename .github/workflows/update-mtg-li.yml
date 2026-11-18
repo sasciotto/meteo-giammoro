@@ -35,11 +35,23 @@ jobs:
         run: |
           # Accesso satellitare isolato: il timeout non coinvolge update-weather.yml.
           # Nessun token o errore HTTP contenente URL di accesso viene scritto nei JSON pubblici.
-          if timeout --signal=TERM --kill-after=5s 55s python lightning_mtg_li.py --output lightning_mtg_li.json; then
+          rm -f /tmp/mtg-li-stage.txt
+          if timeout --signal=TERM --kill-after=5s 55s python -u lightning_mtg_li.py --output lightning_mtg_li.json; then
             echo "Collector MTG-LI concluso"
           else
-            echo "::warning::Collector MTG-LI oltre deadline o in errore: dati non disponibili"
-            python lightning_mtg_li.py --output lightning_mtg_li.json --mark-unavailable timeout
+            exit_code=$?
+            phase=$(cat /tmp/mtg-li-stage.txt 2>/dev/null || printf 'unknown')
+            case "$phase" in
+              start|authentication|collection|search|download|decode|complete) ;;
+              *) phase=unknown ;;
+            esac
+            if [ "$exit_code" -eq 124 ] || [ "$exit_code" -eq 137 ]; then
+              state=timeout
+            else
+              state=unavailable
+            fi
+            echo "::warning::MTG-LI state=$state phase=$phase (nessun dato utilizzato nel nowcasting)"
+            python lightning_mtg_li.py --output lightning_mtg_li.json --mark-unavailable "$state" --phase "$phase"
           fi
       - name: Salva snapshot MTG-LI senza modificare la pipeline meteo
         shell: bash
