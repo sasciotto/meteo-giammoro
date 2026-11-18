@@ -121,7 +121,7 @@
       stormIcon.textContent = '☂';
       return;
     }
-    stormTitle.textContent = 'Nessuna pioggia o temporale vicino';
+    stormTitle.textContent = 'Nessuna precipitazione radar vicina';
     stormText.textContent = 'Il radar locale è attualmente asciutto; l’assenza di fulmini non è verificabile senza conteggi osservativi.';
     stormIcon.textContent = '☂';
   }
