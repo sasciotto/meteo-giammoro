@@ -35,7 +35,6 @@ on:
       - "nowcast_v2.py"
       - "nowcast_v4.py"
       - "approaching_cells.py"
-      - "lightning_eumetsat.py"
       - "quality_guard.py"
       - "verification_engine.py"
       - "verification_engine_v2.py"
@@ -62,8 +61,6 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     env:
-      EUMETSAT_CONSUMER_KEY: ${{ secrets.EUMETSAT_CONSUMER_KEY }}
-      EUMETSAT_CONSUMER_SECRET: ${{ secrets.EUMETSAT_CONSUMER_SECRET }}
       LSASAF_USERNAME: ${{ secrets.LSASAF_USERNAME }}
       LSASAF_PASSWORD: ${{ secrets.LSASAF_PASSWORD }}
 
@@ -348,7 +345,7 @@ jobs:
 # Trigger concorrenti vengono accodati, non cancellano un collector già in esecuzione.
 # Pages viene pubblicata prima della persistenza su main, così un conflitto Git non rende obsoleta la dashboard.
 # Il push dati effettua fetch/rebase/retry automatico fino a 3 tentativi.
-# Fulminazioni: EUMETSAT MTG Lightning Imager L2 Lightning Flashes, opzionale via GitHub Secrets.
+# Fulminazioni: LTG/LAMPINET dalla Protezione Civile se disponibile; Blitzortung solo mappa esterna, mai sorgente di nowcast o allerte.
 # Solare: EUMETSAT LSA SAF MDSSFTD, opzionale via LSASAF_USERNAME/LSASAF_PASSWORD; un errore non degrada il collector meteo.
 # Storico solare: campioni grezzi 31 giorni e riepiloghi giornalieri di lungo periodo; buchi >45 min non interpolati; i timeslot LSA intermedi vengono recuperati quando il prodotto piu' recente avanza a salti.
 # Verifica ex-post eventi: orizzonti 30/60/120 min; impatto locale separato dal track radar e metriche cumulative v2 persistenti.
