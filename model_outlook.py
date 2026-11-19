@@ -47,13 +47,13 @@ def _precipitation_tendency(rows: list[dict[str, Any]]) -> dict[str, Any]:
     ratio = wet / count if count else 0.0
 
     if wet == 0:
-        label = "Pioggia poco probabile"
+        label = "Nessun modello indica pioggia significativa"
         level = "low"
     elif ratio >= 0.5:
-        label = "Pioggia probabile"
+        label = "Pioggia indicata dalla maggioranza dei modelli"
         level = "moderato"
     else:
-        label = "Pioggia possibile"
+        label = "Segnale di pioggia in una minoranza di modelli"
         level = "low"
 
     spread = max(amounts) - min(amounts)
@@ -156,7 +156,7 @@ def _fix_nowcast_note(data: dict) -> None:
         r"Segnale modellistico isolato nel brevissimo termine 0–3 h in \1 modelli",
         note,
     )
-    nowcast["note"] = note
+    nowcast["note"] = re.sub(r"\.{2,}", ".", note)
     data["nowcast"] = nowcast
 
 
@@ -173,6 +173,7 @@ def apply(data: dict) -> dict:
         f"mediana {_fmt(tendency['precip_median_mm'])} mm"
     )
     note = (
+        "Consenso deterministico, non probabilità meteorologica calibrata. "
         f"{tendency['wet_models']}/{tendency['models_count']} modelli indicano pioggia ≥0,5 mm nelle 3–48 h. "
         f"{tendency['quantity_uncertainty_label'].capitalize()}: {range_text}. "
         f"Impatto modellistico: {impact['label']}. Segnali d'impatto: {impact['note']}."
