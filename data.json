@@ -1,16 +1,18 @@
 {
   "meta": {
     "schema_version": "2.1",
-    "last_check": "19/11/2026 21:15 CET",
+    "last_check": "19/11/2026 21:30 CET",
     "analysis_engine": "collector Python + regole deterministiche",
     "reference_area": "Giammoro, Pace del Mela (ME)",
     "coordinates": [
       38.2018,
       15.31816
     ],
-    "collector_status": "ok",
-    "collector_errors": [],
-    "last_check_iso": "2026-11-19T21:16:00+01:00"
+    "collector_status": "degraded",
+    "collector_errors": [
+      "stazioni: 502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
+    ],
+    "last_check_iso": "2026-11-19T21:31:08+01:00"
   },
   "primary_station": {
     "name": "MeteoGiammoro",
@@ -22,9 +24,9 @@
     "note": "Stazione MeteoGiammoro riattivata secondo comunicazione del gestore il 16/11/2026. Dati e freschezza del feed non ancora verificati automaticamente: misure locali escluse dai calcoli fino a validazione."
   },
   "nowcast": {
-    "label": "Basso–moderato",
-    "level": "moderato",
-    "note": "Segnale modellistico isolato nel brevissimo termine 0–3 h in 1/4 modelli. Radar-DPC non disponibile nel ciclo corrente. LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato. Nessun nucleo radar sufficientemente definito per il tracking nel raggio analizzato."
+    "label": "Basso (radar)",
+    "level": "low",
+    "note": "Radar-DPC senza segnali precipitativi rilevanti entro ~30 km; Segnale modellistico isolato nel brevissimo termine 0–3 h in 1/4 modelli. LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato. Nessun nucleo radar sufficientemente definito per il tracking nel raggio analizzato."
   },
   "risk_48h": {
     "label": "Pioggia indicata dalla maggioranza dei modelli",
@@ -51,7 +53,7 @@
     "basis": "Valori riferiti alle coordinate di Giammoro da ItaliaMeteo ICON-2I; le stazioni circostanti sono usate separatamente per controllo e contesto, non come sostituzione diretta.",
     "metrics": {
       "temperature": {
-        "value": 21.24,
+        "value": 21.63,
         "unit": " °C",
         "quality": "Radar-DPC TEMP (rete termometrica interpolata)"
       },
@@ -66,18 +68,18 @@
         "quality": "ItaliaMeteo ICON-2I"
       },
       "pressure": {
-        "value": 1012.3,
+        "value": 1012.4,
         "unit": " hPa",
-        "trend": "in aumento · Δ1h +0.6 hPa · Δ3h +2.3 hPa",
+        "trend": "in aumento · Δ1h +0.5 hPa · Δ3h +2.4 hPa",
         "trend_quality": "trend modellistico sul punto"
       },
       "wind": {
-        "value": 15.1,
+        "value": 15.8,
         "unit": " km/h",
-        "direction": 268
+        "direction": 271
       },
       "gust": {
-        "value": 28.1,
+        "value": 29.2,
         "unit": " km/h"
       },
       "rain_1h": {
@@ -106,7 +108,7 @@
     "source": "CFD/DRPC Sicilia + DPC nazionale",
     "url": "https://www.protezionecivilesicilia.it/tinymce/js/tinymce/source/26323_AVVISO%20DRPC_2026_11_19_54251.pdf",
     "parser_note": "livello zona A estratto dal PDF regionale ma non validato automaticamente; consultare l'avviso ufficiale",
-    "retrieved_at": "2026-11-19T21:15+01:00",
+    "retrieved_at": "2026-11-19T21:30+01:00",
     "national_validation": {
       "error": "zona DPC nazionale non trovata nel bollettino corrente"
     },
@@ -117,7 +119,7 @@
     }
   },
   "latest_change": {
-    "time": "19/11/2026 21:15",
+    "time": "19/11/2026 21:30",
     "title": "Nuovo avviso ufficiale pubblicato — livello in verifica",
     "text": "È disponibile un avviso ufficiale aggiornato, ma il livello per la zona di Giammoro non è stato validato automaticamente. Consultare la fonte ufficiale prima di considerarlo definitivo.",
     "window": "Validità avviso: 19–20/11/2026; orari da verificare nel PDF ufficiale.",
@@ -158,9 +160,9 @@
       "network": "LineaMeteo",
       "source_quality": "reliable",
       "source_quality_label": "Rete locale affidabile",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "20:59 · 16 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 31 min fa",
       "temperature": 23.0,
       "dew_point": 16.8,
       "humidity": 68.0,
@@ -172,12 +174,16 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 52.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Archi - San Filippo del Mela (LineaMeteo) Ecowitt WS3900 - Schermatura Originaria. Il dato resta attribuito a questa stazione ed è usato solo come supporto per Pace del Mela / area Giammoro.",
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Archi - San Filippo del Mela (LineaMeteo) Ecowitt WS3900 - Schermatura Originaria. Il dato resta attribuito a questa stazione ed è usato solo come supporto per Pace del Mela / area Giammoro. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
       "rain_30m": null,
       "network_inferred": true,
-      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS."
+      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T20:59:00+01:00",
+      "fallback_age_minutes": 31,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "Milazzo - Piana Ecowitt WS2910 - Schermatura Originaria",
@@ -185,9 +191,9 @@
       "network": "fonte non indicata",
       "source_quality": "unknown",
       "source_quality_label": "Fonte da classificare",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "21:11 · 4 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 19 min fa",
       "temperature": 21.5,
       "dew_point": 18.5,
       "humidity": 83.0,
@@ -199,10 +205,14 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 25.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Milazzo - Piana Ecowitt WS2910 - Schermatura Originaria. Il dato resta attribuito a questa stazione ed è usato solo come supporto per Milazzo.",
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Milazzo - Piana Ecowitt WS2910 - Schermatura Originaria. Il dato resta attribuito a questa stazione ed è usato solo come supporto per Milazzo. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
-      "rain_30m": null
+      "rain_30m": null,
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T21:11:00+01:00",
+      "fallback_age_minutes": 19,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "San Filippo del Mela (LineaMeteo) Bresser 5 in 1",
@@ -210,9 +220,9 @@
       "network": "LineaMeteo",
       "source_quality": "reliable",
       "source_quality_label": "Rete locale affidabile",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "20:59 · 16 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 31 min fa",
       "temperature": 22.7,
       "dew_point": 17.2,
       "humidity": 71.0,
@@ -224,12 +234,16 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 110.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: San Filippo del Mela (LineaMeteo) Bresser 5 in 1. Il dato resta attribuito a questa stazione ed è usato solo come supporto per San Filippo del Mela.",
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: San Filippo del Mela (LineaMeteo) Bresser 5 in 1. Il dato resta attribuito a questa stazione ed è usato solo come supporto per San Filippo del Mela. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
       "rain_30m": null,
       "network_inferred": true,
-      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS."
+      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T20:59:00+01:00",
+      "fallback_age_minutes": 31,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "Santa Lucia del Mela",
@@ -237,8 +251,8 @@
       "network": "nessuna stazione verificata nel feed corrente",
       "source_quality": "unknown",
       "status": "unknown",
-      "status_label": "Non disponibile",
-      "updated": "—",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 14 min fa",
       "temperature": null,
       "dew_point": null,
       "humidity": null,
@@ -250,9 +264,13 @@
       "rain_24h": null,
       "rain_day": null,
       "excluded_from_analysis": true,
-      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo.",
+      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
-      "rain_30m": null
+      "rain_30m": null,
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T21:16:00+01:00",
+      "fallback_age_minutes": 14,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "Merì",
@@ -260,8 +278,8 @@
       "network": "nessuna stazione verificata nel feed corrente",
       "source_quality": "unknown",
       "status": "unknown",
-      "status_label": "Non disponibile",
-      "updated": "—",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 14 min fa",
       "temperature": null,
       "dew_point": null,
       "humidity": null,
@@ -273,9 +291,13 @@
       "rain_24h": null,
       "rain_day": null,
       "excluded_from_analysis": true,
-      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo.",
+      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
-      "rain_30m": null
+      "rain_30m": null,
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T21:16:00+01:00",
+      "fallback_age_minutes": 14,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "Monforte San Giorgio",
@@ -283,8 +305,8 @@
       "network": "nessuna stazione verificata nel feed corrente",
       "source_quality": "unknown",
       "status": "unknown",
-      "status_label": "Non disponibile",
-      "updated": "—",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 14 min fa",
       "temperature": null,
       "dew_point": null,
       "humidity": null,
@@ -296,9 +318,13 @@
       "rain_24h": null,
       "rain_day": null,
       "excluded_from_analysis": true,
-      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo.",
+      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
-      "rain_30m": null
+      "rain_30m": null,
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T21:16:00+01:00",
+      "fallback_age_minutes": 14,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "Barcellona Pozzo di Gotto",
@@ -306,8 +332,8 @@
       "network": "nessuna stazione verificata nel feed corrente",
       "source_quality": "unknown",
       "status": "unknown",
-      "status_label": "Non disponibile",
-      "updated": "—",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 14 min fa",
       "temperature": null,
       "dew_point": null,
       "humidity": null,
@@ -319,9 +345,13 @@
       "rain_24h": null,
       "rain_day": null,
       "excluded_from_analysis": true,
-      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo.",
+      "note": "Nessun dato viene sostituito con una località diversa senza indicarlo. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
-      "rain_30m": null
+      "rain_30m": null,
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T21:16:00+01:00",
+      "fallback_age_minutes": 14,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "Messina (SIAS) Campbell CR1000 + MTX + Gill",
@@ -329,9 +359,9 @@
       "network": "SIAS Regione Siciliana",
       "source_quality": "official",
       "source_quality_label": "Rete ufficiale",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "20:30 · 45 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 60 min fa",
       "temperature": 19.2,
       "dew_point": 16.6,
       "humidity": 85.0,
@@ -343,12 +373,16 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 420.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione effettiva: Messina (SIAS) Campbell CR1000 + MTX + Gill. Il dato resta attribuito a questa stazione ed è usato solo come supporto per Messina.",
+      "excluded_from_analysis": true,
+      "note": "Stazione effettiva: Messina (SIAS) Campbell CR1000 + MTX + Gill. Il dato resta attribuito a questa stazione ed è usato solo come supporto per Messina. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
       "rain_30m": null,
       "network_inferred": true,
-      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS."
+      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T20:30:00+01:00",
+      "fallback_age_minutes": 60,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "San Pier Marina (LineaMeteo) PCE-FWS 20N",
@@ -356,9 +390,9 @@
       "network": "LineaMeteo",
       "source_quality": "reliable",
       "source_quality_label": "Rete locale affidabile",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "21:10 · 5 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 20 min fa",
       "temperature": 22.4,
       "dew_point": 16.7,
       "humidity": 70.0,
@@ -370,12 +404,16 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 34.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione aggiuntiva di supporto territoriale.",
+      "excluded_from_analysis": true,
+      "note": "Stazione aggiuntiva di supporto territoriale. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
       "rain_30m": null,
       "network_inferred": true,
-      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS."
+      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T21:10:00+01:00",
+      "fallback_age_minutes": 20,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     },
     {
       "name": "San Pier Niceto (SIAS) Campbell CR1000 + MTX + Gill",
@@ -383,9 +421,9 @@
       "network": "SIAS Regione Siciliana",
       "source_quality": "official",
       "source_quality_label": "Rete ufficiale",
-      "status": "online",
-      "status_label": "Online",
-      "updated": "20:30 · 45 min fa",
+      "status": "unknown",
+      "status_label": "Dato precedente · feed non disponibile",
+      "updated": "ultimo dato noto · 60 min fa",
       "temperature": 18.0,
       "dew_point": 12.0,
       "humidity": 68.0,
@@ -397,12 +435,16 @@
       "rain_24h": null,
       "rain_day": 0.0,
       "altitude_m": 617.0,
-      "excluded_from_analysis": false,
-      "note": "Stazione aggiuntiva di supporto territoriale.",
+      "excluded_from_analysis": true,
+      "note": "Stazione aggiuntiva di supporto territoriale. Feed stazioni non disponibile nel ciclo corrente: ultimo dato noto conservato solo per riferimento ed escluso dall'analisi.",
       "rain_15m": null,
       "rain_30m": null,
       "network_inferred": true,
-      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS."
+      "network_inference_note": "Rete inferita dal suffisso esplicito del nome stazione nel feed CMS.",
+      "data_freshness": "previous_cycle",
+      "last_valid_observation_iso": "2026-11-19T20:30:00+01:00",
+      "fallback_age_minutes": 60,
+      "fallback_reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php"
     }
   ],
   "dpc_observations": {
@@ -410,7 +452,7 @@
       "SRI": {
         "product": "SRI",
         "ok": true,
-        "timestamp": "2026-11-19T21:05+01:00",
+        "timestamp": "2026-11-19T21:20+01:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
@@ -470,7 +512,7 @@
       "SRT1": {
         "product": "SRT1",
         "ok": true,
-        "timestamp": "2026-11-19T21:05+01:00",
+        "timestamp": "2026-11-19T21:20+01:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
@@ -530,13 +572,13 @@
       "CUM24": {
         "product": "CUM24",
         "ok": true,
-        "timestamp": "2026-11-19T20:30+01:00",
-        "age_minutes": 45,
+        "timestamp": "2026-11-19T21:00+01:00",
+        "age_minutes": 30,
         "period": "PT30M",
         "stats": [
           {
             "radius_km": 5,
-            "count": 101,
+            "count": 102,
             "point": 0.0,
             "max": 0.0,
             "mean": 0.0,
@@ -548,7 +590,7 @@
               "raster_height": 1233,
               "raster_nodata_defined": true,
               "window_pixels": 120,
-              "valid_pixels": 101
+              "valid_pixels": 102
             }
           }
         ]
@@ -556,17 +598,17 @@
       "TEMP": {
         "product": "TEMP",
         "ok": true,
-        "timestamp": "2026-11-19T20:00+01:00",
-        "age_minutes": 75,
+        "timestamp": "2026-11-19T21:00+01:00",
+        "age_minutes": 30,
         "period": "PT1H",
         "stats": [
           {
             "radius_km": 5,
             "count": 30,
-            "point": 21.24,
-            "max": 22.48,
-            "mean": 17.51,
-            "p90": 21.71,
+            "point": 21.63,
+            "max": 21.87,
+            "mean": 17.67,
+            "p90": 21.69,
             "coverage": "valid_pixels",
             "diagnostics": {
               "raster_crs": "EPSG:4326",
@@ -582,7 +624,7 @@
       "VMI": {
         "product": "VMI",
         "ok": true,
-        "timestamp": "2026-11-19T21:05+01:00",
+        "timestamp": "2026-11-19T21:20+01:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
@@ -605,36 +647,36 @@
           },
           {
             "radius_km": 15,
-            "count": 0,
+            "count": 1,
             "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "coverage": "no_valid_pixels",
+            "max": 10.0,
+            "mean": 10.0,
+            "p90": 10.0,
+            "coverage": "valid_pixels",
             "diagnostics": {
               "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
               "raster_width": 1200,
               "raster_height": 1400,
               "raster_nodata_defined": false,
               "window_pixels": 1024,
-              "valid_pixels": 0
+              "valid_pixels": 1
             }
           },
           {
             "radius_km": 30,
-            "count": 0,
+            "count": 1,
             "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "coverage": "no_valid_pixels",
+            "max": 10.0,
+            "mean": 10.0,
+            "p90": 10.0,
+            "coverage": "valid_pixels",
             "diagnostics": {
               "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
               "raster_width": 1200,
               "raster_height": 1400,
               "raster_nodata_defined": false,
               "window_pixels": 3844,
-              "valid_pixels": 0
+              "valid_pixels": 1
             }
           }
         ]
@@ -642,17 +684,17 @@
       "IR_108": {
         "product": "IR_108",
         "ok": true,
-        "timestamp": "2026-11-19T21:05+01:00",
+        "timestamp": "2026-11-19T21:20+01:00",
         "age_minutes": 10,
         "period": "PT5M",
         "stats": [
           {
             "radius_km": 5,
             "count": 144,
-            "point": 10.0,
+            "point": 15.5,
             "max": 16.5,
-            "mean": 9.21,
-            "p90": 16.35,
+            "mean": 15.67,
+            "p90": 16.5,
             "coverage": "valid_pixels",
             "diagnostics": {
               "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
@@ -670,11 +712,11 @@
     "source": "Radar-DPC / Dipartimento Protezione Civile"
   },
   "nowcast_evidence": {
-    "radar": "Radar-DPC non acquisito nel ciclo corrente; nessun valore radar viene inventato.",
-    "rain_gauges": "Stazioni/pluviometri raccolti dal feed locale: 300 righe disponibili; vengono mostrate solo le stazioni selezionate e la rete originaria.",
+    "radar": "Radar-DPC: VMI max 15 km: 10 dBZ · aggiornamento 2026-11-19T21:20+01:00",
+    "rain_gauges": "Feed stazioni non disponibile nel ciclo corrente; l'ultimo dato noto resta visibile solo per riferimento ed è escluso dall'analisi.",
     "lightning": "LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato.",
-    "satellite": "Prodotto satellitare DPC IR10.8 disponibile · aggiornamento 2026-11-19T21:05+01:00. Il valore raw non viene trasformato in copertura percentuale senza una conversione validata.",
-    "wind_pressure": "Pressione sul punto: in aumento; Δ1h +0.6 hPa; Δ3h +2.3 hPa. Trend modellistico, non misura barometrica locale.",
+    "satellite": "Prodotto satellitare DPC IR10.8 disponibile · aggiornamento 2026-11-19T21:20+01:00. Il valore raw non viene trasformato in copertura percentuale senza una conversione validata.",
+    "wind_pressure": "Pressione sul punto: in aumento; Δ1h +0.5 hPa; Δ3h +2.4 hPa. Trend modellistico, non misura barometrica locale.",
     "local_effects": "Giammoro viene valutata come area costiera della Valle del Mela, con possibili differenze rispetto a Milazzo, rilievi di Santa Lucia/Monforte e Stretto di Messina.",
     "tracking_quality": "Tracking radar non disponibile: nessuna cella tracciabile.",
     "approaching_cells": "Nessuna cella radar significativa rilevata nell'area di monitoraggio.",
@@ -709,7 +751,7 @@
       "id": "italia_meteo_arpae_icon_2i",
       "ok": true,
       "current": {
-        "time": "2026-11-19T21:15",
+        "time": "2026-11-19T21:30",
         "interval": 900,
         "temperature_2m": 21.1,
         "relative_humidity_2m": 79,
@@ -718,16 +760,16 @@
         "showers": 0.0,
         "weather_code": 0,
         "cloud_cover": 0,
-        "pressure_msl": 1012.3,
-        "wind_speed_10m": 15.1,
-        "wind_direction_10m": 268,
-        "wind_gusts_10m": 28.1
+        "pressure_msl": 1012.4,
+        "wind_speed_10m": 15.8,
+        "wind_direction_10m": 271,
+        "wind_gusts_10m": 29.2
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 31.7,
-        "cape_max": 60.0,
+        "gust_max": 36.0,
+        "cape_max": 120.0,
         "thunder_signal": false,
         "temp_min": 20.5,
         "temp_max": 21.1
@@ -761,28 +803,28 @@
       "id": "dwd_icon_seamless",
       "ok": true,
       "current": {
-        "time": "2026-11-19T21:15",
+        "time": "2026-11-19T21:30",
         "interval": 900,
-        "temperature_2m": 22.0,
-        "relative_humidity_2m": 65,
+        "temperature_2m": 21.8,
+        "relative_humidity_2m": 67,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 1,
-        "cloud_cover": 25,
-        "pressure_msl": 1011.7,
-        "wind_speed_10m": 11.6,
-        "wind_direction_10m": 265,
+        "cloud_cover": 27,
+        "pressure_msl": 1011.8,
+        "wind_speed_10m": 11.9,
+        "wind_direction_10m": 268,
         "wind_gusts_10m": 17.3
       },
       "next_0_3h": {
         "precip_sum": 0.0,
         "precip_max_h": 0.0,
-        "gust_max": 19.1,
-        "cape_max": 10.0,
+        "gust_max": 32.0,
+        "cape_max": 50.0,
         "thunder_signal": false,
-        "temp_min": 20.4,
-        "temp_max": 22.2
+        "temp_min": 20.1,
+        "temp_max": 21.4
       },
       "next_3_48h": {
         "precip_sum": 0.6,
@@ -813,28 +855,28 @@
       "id": "ecmwf_ifs",
       "ok": true,
       "current": {
-        "time": "2026-11-19T21:15",
+        "time": "2026-11-19T21:30",
         "interval": 900,
-        "temperature_2m": 22.4,
+        "temperature_2m": 22.3,
         "relative_humidity_2m": 79,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 0,
-        "cloud_cover": 14,
-        "pressure_msl": 1012.4,
-        "wind_speed_10m": 28.7,
-        "wind_direction_10m": 274,
+        "cloud_cover": 16,
+        "pressure_msl": 1012.5,
+        "wind_speed_10m": 28.9,
+        "wind_direction_10m": 275,
         "wind_gusts_10m": 37.1
       },
       "next_0_3h": {
-        "precip_sum": 0.0,
-        "precip_max_h": 0.0,
-        "gust_max": 39.6,
-        "cape_max": 260.0,
+        "precip_sum": 0.1,
+        "precip_max_h": 0.1,
+        "gust_max": 43.9,
+        "cape_max": 370.0,
         "thunder_signal": false,
-        "temp_min": 21.7,
-        "temp_max": 22.5
+        "temp_min": 21.1,
+        "temp_max": 22.3
       },
       "next_3_48h": {
         "precip_sum": 2.7,
@@ -865,27 +907,27 @@
       "id": "ncep_gfs_seamless",
       "ok": true,
       "current": {
-        "time": "2026-11-19T21:15",
+        "time": "2026-11-19T21:30",
         "interval": 900,
         "temperature_2m": 18.8,
-        "relative_humidity_2m": 88,
+        "relative_humidity_2m": 87,
         "precipitation": 0.0,
         "rain": 0.0,
         "showers": 0.0,
         "weather_code": 0,
-        "cloud_cover": 9,
-        "pressure_msl": 1011.4,
+        "cloud_cover": 8,
+        "pressure_msl": 1011.5,
         "wind_speed_10m": 4.0,
-        "wind_direction_10m": 280,
-        "wind_gusts_10m": 31.0
+        "wind_direction_10m": 275,
+        "wind_gusts_10m": 29.5
       },
       "next_0_3h": {
-        "precip_sum": 0.0,
-        "precip_max_h": 0.0,
+        "precip_sum": 0.1,
+        "precip_max_h": 0.1,
         "gust_max": 57.2,
-        "cape_max": 220.0,
+        "cape_max": 270.0,
         "thunder_signal": false,
-        "temp_min": 18.8,
+        "temp_min": 19.0,
         "temp_max": 20.1
       },
       "next_3_48h": {
@@ -1163,9 +1205,17 @@
       "text": "Traiettoria radar verso Giammoro non confermata"
     }
   ],
+  "station_feed": {
+    "source": "fallback ultimo dato noto",
+    "rows": 0,
+    "status": "degraded",
+    "fallback": true,
+    "reason": "502 Server Error: Bad Gateway for url: https://www.centrometeosicilia.it/stations/database.php",
+    "checked_at": "2026-11-19T21:30:48+01:00"
+  },
   "nearby_station_rain": {
     "source": "CMS - cumulati giornalieri delle singole stazioni",
-    "updated_at": "2026-11-19T21:15:00+01:00",
+    "updated_at": "2026-11-19T21:30:00+01:00",
     "window_minutes": [
       15,
       30,
@@ -1193,8 +1243,8 @@
         "status": "ok",
         "solar_wm2": 0.0,
         "uv_index": 0.0,
-        "observed_at": "2026-11-19T20:15:30Z",
-        "retrieved_at": "2026-11-19T20:15:51.378391Z",
+        "observed_at": "2026-11-19T20:30:26Z",
+        "retrieved_at": "2026-11-19T20:30:58.168279Z",
         "method": "cumulus-realtime",
         "note": "Lettura dal feed Cumulus MX corrente della stazione; i file privi di prova di freschezza vengono scartati."
       },
@@ -1210,7 +1260,7 @@
         "solar_wm2": 0.0,
         "uv_index": 0.0,
         "observed_at": null,
-        "retrieved_at": "2026-11-19T20:15:51.378391Z",
+        "retrieved_at": "2026-11-19T20:30:58.168279Z",
         "method": "wunderground-public-pws-page",
         "note": "Valori UV e radiazione letti dalla dashboard pubblica della PWS Archi; acquisizione best-effort e indipendente dalle altre fonti."
       },
@@ -1226,19 +1276,19 @@
         "solar_wm2": 0.0,
         "uv_index": 0.0,
         "observed_at": null,
-        "retrieved_at": "2026-11-19T20:15:51.378391Z",
+        "retrieved_at": "2026-11-19T20:30:58.168279Z",
         "method": "meteonetwork-public-page",
         "note": "Valore letto dalla pagina pubblica ufficiale MeteoNetwork; il timestamp della misura non è esposto in modo affidabile dal parser, quindi viene mostrato il tempo di acquisizione."
       }
     ],
     "status": "ok",
     "message": "Osservazione satellitare LSA SAF disponibile.",
-    "updated_at": "2026-11-19T20:15:51.378391Z",
+    "updated_at": "2026-11-19T20:30:58.168279Z",
     "observation": {
       "source": "EUMETSAT LSA SAF MDSSFTD (LSA-207)",
       "source_url": "https://lsa-saf.eumetsat.int/en/data/products/radiation/",
-      "product_url": "https://datalsasaf.lsasvcs.ipma.pt/PRODUCTS/MSG/MDSSFTD/NETCDF/2026/11/19/NETCDF4_LSASAF_MSG_MDSSFTD_MSG-Disk_202611191900.nc",
-      "observed_at": "2026-11-19T19:00:00Z",
+      "product_url": "https://datalsasaf.lsasvcs.ipma.pt/PRODUCTS/MSG/MDSSFTD/NETCDF/2026/11/19/NETCDF4_LSASAF_MSG_MDSSFTD_MSG-Disk_202611192000.nc",
+      "observed_at": "2026-11-19T20:00:00Z",
       "grid_point": {
         "latitude": 38.2,
         "longitude": 15.3
@@ -1251,15 +1301,15 @@
       "aod_550nm": null,
       "opacity_index": null,
       "quality_flag": null,
-      "age_minutes": 75
+      "age_minutes": 30
     },
     "daily": {
       "local_date": "2026-11-19",
       "energy_kwh_m2": 0.5273,
       "coverage_minutes": 135,
-      "samples": 21,
+      "samples": 22,
       "first_observed_at": "2026-11-18T23:00:00Z",
-      "last_observed_at": "2026-11-19T19:00:00Z"
+      "last_observed_at": "2026-11-19T20:00:00Z"
     }
   },
   "nowcast_tracking": {
@@ -1267,8 +1317,8 @@
     "product": "SRI",
     "unit": "mm/h",
     "candidates": [],
-    "timestamp": "2026-11-19T21:05+01:00",
-    "age_minutes": 10,
+    "timestamp": "2026-11-19T21:20+01:00",
+    "age_minutes": 11,
     "motion": {
       "status": "unavailable"
     },
@@ -1285,14 +1335,14 @@
     }
   },
   "analysis_confidence": {
-    "score": 35,
+    "score": 23,
     "label": "Bassa",
     "status": "poor",
     "semantic": "data_quality",
     "components": {
       "radar_freshness": 0,
-      "radar_crosscheck": 0,
-      "station_support": 20,
+      "radar_crosscheck": 8,
+      "station_support": 0,
       "model_availability": 15,
       "lightning_support": 0
     },
@@ -1311,7 +1361,7 @@
   },
   "approaching_cells": {
     "status": "none",
-    "timestamp": "2026-11-19T21:05+01:00",
+    "timestamp": "2026-11-19T21:20+01:00",
     "product": "SRI",
     "unit": "mm/h",
     "reference": "Giammoro, Pace del Mela (ME)",
@@ -1345,10 +1395,6 @@
     "phase": "search"
   },
   "pressure_history": [
-    {
-      "timestamp": "2026-11-19T15:29:09+01:00",
-      "hpa": 1009.3
-    },
     {
       "timestamp": "2026-11-19T15:42:20+01:00",
       "hpa": 1009.3
@@ -1436,13 +1482,17 @@
     {
       "timestamp": "2026-11-19T21:16:00+01:00",
       "hpa": 1012.3
+    },
+    {
+      "timestamp": "2026-11-19T21:31:08+01:00",
+      "hpa": 1012.4
     }
   ],
   "pressure_trend": {
     "status": "ready",
     "tendency": "in aumento",
-    "delta_1h_hpa": 0.6,
-    "delta_3h_hpa": 2.3,
+    "delta_1h_hpa": 0.5,
+    "delta_3h_hpa": 2.4,
     "samples": 23,
     "source": "pressione sul punto da modello; non misura barometrica locale"
   },
@@ -1524,14 +1574,14 @@
     ]
   },
   "analysis_quality": {
-    "score": 35,
+    "score": 23,
     "label": "Bassa",
     "status": "poor",
     "semantic": "data_quality",
     "components": {
       "radar_freshness": 0,
-      "radar_crosscheck": 0,
-      "station_support": 20,
+      "radar_crosscheck": 8,
+      "station_support": 0,
       "model_availability": 15,
       "lightning_support": 0
     },
@@ -1557,18 +1607,18 @@
     "note": "Confidenza previsionale non espressa in percentuale: il progetto non dispone ancora di una calibrazione probabilistica affidabile. Campioni evento cumulativi v2 disponibili: 316/20 come soglia minima di studio; il superamento della soglia non equivale a una probabilità calibrata."
   },
   "home_summary": {
-    "generated_at": "2026-11-19T21:16:01+01:00",
+    "generated_at": "2026-11-19T21:31:08+01:00",
     "source": "Consenso multi-modello (ICON-2I · DWD ICON · ECMWF IFS · NOAA GFS)",
     "current": {
       "icon": "☾",
       "kind": "calm",
       "label": "Cielo poco nuvoloso",
-      "status_label": "Da monitorare",
-      "status_class": "moderato",
+      "status_label": "Tranquillo",
+      "status_class": "low",
       "short_term": {
-        "title": "Situazione da monitorare",
-        "text": "Sono presenti segnali di instabilità nell'area, senza un impatto diretto certo su Giammoro.",
-        "icon": "◷"
+        "title": "Nessun fenomeno rilevante",
+        "text": "Non emergono segnali importanti a brevissimo termine.",
+        "icon": "✓"
       },
       "storm": {
         "title": "Temporali: osservazioni insufficienti",
@@ -2305,7 +2355,7 @@
       "window": "0–3 h",
       "status": "watch",
       "title": "Previsione 0–3 h: pioggia non significativa nei modelli",
-      "text": "Tutti i 4 modelli disponibili prevedono 0 mm di precipitazioni nelle prossime 3 ore. Il radar SRI non permette di verificare la pioggia attuale su Giammoro.",
+      "text": "0/4 modelli prevedono almeno 0,2 mm nelle prossime 3 ore; accumulo massimo tra modelli: 0.1 mm. Il radar SRI non permette di verificare la pioggia attuale su Giammoro.",
       "detail": "Previsione modellistica, non osservazione. Il radar locale non è disponibile per una conferma in tempo reale.",
       "nearest_signal_km": null,
       "indicators": {
@@ -2314,7 +2364,7 @@
         "lightning": "Dato non disponibile",
         "distance": null,
         "pioggia_locale": "Non verificabile",
-        "modelli_0_3h": "4 modelli: 0 mm previsti"
+        "modelli_0_3h": "0/4 modelli con almeno 0,2 mm"
       }
     },
     "hourly_consensus": {
@@ -2331,7 +2381,7 @@
     }
   },
   "local_precipitation": {
-    "generated_at": "2026-11-19T21:16:01+01:00",
+    "generated_at": "2026-11-19T21:31:09+01:00",
     "status": "unavailable",
     "label": "Dato radar locale non disponibile: pioggia non verificabile",
     "observation_valid": false,
@@ -2344,7 +2394,7 @@
     "recent_accumulation_signal": null,
     "radar": {
       "sri": {
-        "timestamp": "2026-11-19T21:05+01:00",
+        "timestamp": "2026-11-19T21:20+01:00",
         "age_minutes": 11,
         "1": {
           "point": null,
@@ -2396,7 +2446,7 @@
         }
       },
       "srt1": {
-        "timestamp": "2026-11-19T21:05+01:00",
+        "timestamp": "2026-11-19T21:20+01:00",
         "age_minutes": 11,
         "1": {
           "point": null,
@@ -2457,126 +2507,13 @@
       "current_available_models": 4,
       "current_wet_models": 0,
       "max_current_precip_mm": 0.0,
-      "max_precip_0_3h_mm": 0.0,
+      "max_precip_0_3h_mm": 0.1,
       "current_signals": [],
       "signals": [],
       "semantic": "precipitation_presence_not_impact"
     },
-    "impact_level": "moderato",
+    "impact_level": "low",
     "history": [
-      {
-        "timestamp": "2026-11-19T18:26+01:00",
-        "rain_detected": null,
-        "observation_valid": false,
-        "recent_accumulation": null,
-        "sri_valid": false,
-        "srt1_valid": false,
-        "basis": "copertura radar locale non verificabile: campioni SRI mancanti o obsoleti",
-        "sri": {
-          "timestamp": "2026-11-19T18:15+01:00",
-          "age_minutes": 12,
-          "1": {
-            "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "count": 0,
-            "coverage": "no_valid_pixels",
-            "diagnostics": {
-              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
-              "raster_width": 1200,
-              "raster_height": 1400,
-              "raster_nodata_defined": false,
-              "window_pixels": 12,
-              "valid_pixels": 0
-            }
-          },
-          "3": {
-            "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "count": 0,
-            "coverage": "no_valid_pixels",
-            "diagnostics": {
-              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
-              "raster_width": 1200,
-              "raster_height": 1400,
-              "raster_nodata_defined": false,
-              "window_pixels": 56,
-              "valid_pixels": 0
-            }
-          },
-          "5": {
-            "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "count": 0,
-            "coverage": "no_valid_pixels",
-            "diagnostics": {
-              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
-              "raster_width": 1200,
-              "raster_height": 1400,
-              "raster_nodata_defined": false,
-              "window_pixels": 144,
-              "valid_pixels": 0
-            }
-          }
-        },
-        "srt1": {
-          "timestamp": "2026-11-19T18:15+01:00",
-          "age_minutes": 12,
-          "1": {
-            "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "count": 0,
-            "coverage": "no_valid_pixels",
-            "diagnostics": {
-              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
-              "raster_width": 1200,
-              "raster_height": 1400,
-              "raster_nodata_defined": false,
-              "window_pixels": 12,
-              "valid_pixels": 0
-            }
-          },
-          "3": {
-            "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "count": 0,
-            "coverage": "no_valid_pixels",
-            "diagnostics": {
-              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
-              "raster_width": 1200,
-              "raster_height": 1400,
-              "raster_nodata_defined": false,
-              "window_pixels": 56,
-              "valid_pixels": 0
-            }
-          },
-          "5": {
-            "point": null,
-            "max": null,
-            "mean": null,
-            "p90": null,
-            "count": 0,
-            "coverage": "no_valid_pixels",
-            "diagnostics": {
-              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
-              "raster_width": 1200,
-              "raster_height": 1400,
-              "raster_nodata_defined": false,
-              "window_pixels": 144,
-              "valid_pixels": 0
-            }
-          }
-        }
-      },
       {
         "timestamp": "2026-11-19T18:44+01:00",
         "rain_detected": null,
@@ -3819,13 +3756,126 @@
             }
           }
         }
+      },
+      {
+        "timestamp": "2026-11-19T21:31+01:00",
+        "rain_detected": null,
+        "observation_valid": false,
+        "recent_accumulation": null,
+        "sri_valid": false,
+        "srt1_valid": false,
+        "basis": "copertura radar locale non verificabile: campioni SRI mancanti o obsoleti",
+        "sri": {
+          "timestamp": "2026-11-19T21:20+01:00",
+          "age_minutes": 11,
+          "1": {
+            "point": null,
+            "max": null,
+            "mean": null,
+            "p90": null,
+            "count": 0,
+            "coverage": "no_valid_pixels",
+            "diagnostics": {
+              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+              "raster_width": 1200,
+              "raster_height": 1400,
+              "raster_nodata_defined": false,
+              "window_pixels": 12,
+              "valid_pixels": 0
+            }
+          },
+          "3": {
+            "point": null,
+            "max": null,
+            "mean": null,
+            "p90": null,
+            "count": 0,
+            "coverage": "no_valid_pixels",
+            "diagnostics": {
+              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+              "raster_width": 1200,
+              "raster_height": 1400,
+              "raster_nodata_defined": false,
+              "window_pixels": 56,
+              "valid_pixels": 0
+            }
+          },
+          "5": {
+            "point": null,
+            "max": null,
+            "mean": null,
+            "p90": null,
+            "count": 0,
+            "coverage": "no_valid_pixels",
+            "diagnostics": {
+              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+              "raster_width": 1200,
+              "raster_height": 1400,
+              "raster_nodata_defined": false,
+              "window_pixels": 144,
+              "valid_pixels": 0
+            }
+          }
+        },
+        "srt1": {
+          "timestamp": "2026-11-19T21:20+01:00",
+          "age_minutes": 11,
+          "1": {
+            "point": null,
+            "max": null,
+            "mean": null,
+            "p90": null,
+            "count": 0,
+            "coverage": "no_valid_pixels",
+            "diagnostics": {
+              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+              "raster_width": 1200,
+              "raster_height": 1400,
+              "raster_nodata_defined": false,
+              "window_pixels": 12,
+              "valid_pixels": 0
+            }
+          },
+          "3": {
+            "point": null,
+            "max": null,
+            "mean": null,
+            "p90": null,
+            "count": 0,
+            "coverage": "no_valid_pixels",
+            "diagnostics": {
+              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+              "raster_width": 1200,
+              "raster_height": 1400,
+              "raster_nodata_defined": false,
+              "window_pixels": 56,
+              "valid_pixels": 0
+            }
+          },
+          "5": {
+            "point": null,
+            "max": null,
+            "mean": null,
+            "p90": null,
+            "count": 0,
+            "coverage": "no_valid_pixels",
+            "diagnostics": {
+              "raster_crs": "PROJCS[\"unnamed\",GEOGCS[\"WGS 84\",DATUM[\"WGS_1984\",SPHEROID[\"WGS 84\",6378137,298.257223563,AUTHORITY[\"EPSG\",\"7030\"]],AUTHORITY[\"EPSG\",\"6326\"]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]],AUTHORITY[\"EPSG\",\"4326\"]],PROJECTION[\"Transverse_Mercator\"],PARAMETER[\"latitude_of_origin\",42],PARAMETER[\"central_meridian\",12.5],PARAMETER[\"scale_factor\",1],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1,AUTHORITY[\"EPSG\",\"9001\"]],AXIS[\"Easting\",EAST],AXIS[\"Northing\",NORTH]]",
+              "raster_width": 1200,
+              "raster_height": 1400,
+              "raster_nodata_defined": false,
+              "window_pixels": 144,
+              "valid_pixels": 0
+            }
+          }
+        }
       }
     ],
     "errors": [],
     "note": "La presenza di pioggia e l'impatto sono separati. I valori areali entro 1/3/5 km non sono accumuli puntuali. Copertura SRI non verificabile: non è possibile concludere che l'area sia asciutta."
   },
   "verification": {
-    "updated_at": "2026-11-19T20:16:04+00:00",
+    "updated_at": "2026-11-19T20:31:10+00:00",
     "summary": {
       "total_results": 300,
       "evaluable_results": 0,
@@ -4025,7 +4075,7 @@
       "precipitation_presence": {
         "metric_version": "local-precipitation-v2",
         "semantic": "rain_presence_not_severity",
-        "skipped_unverifiable": 334,
+        "skipped_unverifiable": 337,
         "legacy_v1": {
           "archived": true,
           "note": "I conteggi v1 rimangono nell'archivio e non sono sommati al denominatore v2."
@@ -4088,9 +4138,9 @@
       }
     },
     "latest_result": {
-      "snapshot_id": "20261119T181607Z",
-      "issued_at": "2026-11-19T18:16:07+00:00",
-      "verified_at": "2026-11-19T20:16:04+00:00",
+      "snapshot_id": "20261119T183000Z",
+      "issued_at": "2026-11-19T18:30:00+00:00",
+      "verified_at": "2026-11-19T20:31:10+00:00",
       "horizon_minutes": 120,
       "outcome": "inconclusive",
       "predicted_event": false,
@@ -4129,7 +4179,7 @@
     "precipitation_presence": {
       "metric_version": "local-precipitation-v2",
       "semantic": "rain_presence_not_severity",
-      "skipped_unverifiable": 334,
+      "skipped_unverifiable": 337,
       "legacy_v1": {
         "archived": true,
         "note": "I conteggi v1 rimangono nell'archivio e non sono sommati al denominatore v2."
