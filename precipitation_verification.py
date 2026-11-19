@@ -253,7 +253,9 @@ def apply(data: dict, verification: dict, events: dict, now: datetime | None = N
             "la persistenza radar multi-raggio non viene presentata come accumulo puntuale."
         ),
     }
-    data.setdefault("verification", {})["precipitation_presence"] = summary["precipitation_presence"]
+    data_verification = data.setdefault("verification", {})
+    data_verification["precipitation_presence"] = summary["precipitation_presence"]
+    data_verification.setdefault("summary", {})["precipitation_presence"] = summary["precipitation_presence"]
     return data, verification, events
 
 
