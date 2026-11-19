@@ -123,18 +123,25 @@ def station_age_status(time_hhmm: str | None, now: datetime | None = None) -> tu
 
 
 def parse_cms_table(html: str) -> dict[str, dict[str, Any]]:
+    """Parse both older and current CMS tables, retaining true station names."""
     soup = BeautifulSoup(html, "html.parser")
-    tables = soup.find_all("table")
     target = None
-    for table in tables:
+    for table in soup.find_all("table"):
         headers = [x.get_text(" ", strip=True) for x in table.find_all("th")]
-        if headers and "Nome Stazione" in headers and ("Temp" in headers or "Umid" in headers):
+        if "Nome Stazione" in headers and ("Temp" in headers or "Umid" in headers or "Umidità" in headers):
             target = table
             break
     if target is None:
         raise RuntimeError("Tabella stazioni CMS non trovata")
 
-    headers = [x.get_text(" ", strip=True) for x in target.find_all("th")]
+    # Modern CMS pages repeat column headers in a footer. Reading every
+    # <th> in the whole table doubles the expected column count and discards
+    # all real rows. Use only the actual station header row.
+    header_row = next(
+        tr for tr in target.find_all("tr")
+        if any(th.get_text(" ", strip=True) == "Nome Stazione" for th in tr.find_all("th"))
+    )
+    headers = [th.get_text(" ", strip=True) for th in header_row.find_all("th")]
     out: dict[str, dict[str, Any]] = {}
     for tr in target.find_all("tr"):
         cells = tr.find_all("td")
@@ -144,29 +151,47 @@ def parse_cms_table(html: str) -> dict[str, dict[str, Any]]:
         name = row.get("Nome Stazione", "").strip()
         if not name:
             continue
-        network = row.get("Rete", "").replace("Image:", "").strip()
+
+        def field(*names: str) -> str | None:
+            return next((row[key] for key in names if key in row), None)
+
+        network = (field("Rete") or "").replace("Image:", "").strip()
         if not network:
             img = cells[-1].find("img")
             network = (img.get("alt") or img.get("title") or "").strip() if img else ""
         out[name] = {
             "name": name,
-            "province": row.get("Pr"),
-            "altitude_m": safe_float(row.get("Alt")),
-            "temperature": safe_float(row.get("Temp")),
-            "tmax": safe_float(row.get("Max")),
-            "tmin": safe_float(row.get("Min")),
-            "humidity": safe_float(row.get("Umid")),
-            "wind": safe_float(row.get("Vento")),
-            "gust": safe_float(row.get("Raff")),
-            "wind_direction": None if row.get("Dir") in {None, "", "-", "--"} else row.get("Dir"),
-            "rain_day": safe_float(row.get("P.Day")),
-            "rain_month": safe_float(row.get("P.Mese")),
-            "rain_year": safe_float(row.get("P.Anno")),
-            "pressure": safe_float(row.get("Press")),
-            "time": row.get("Ore"),
+            "province": field("Pr"),
+            "altitude_m": safe_float(field("Alt", "Quota")),
+            "temperature": safe_float(field("Temp")),
+            "tmax": safe_float(field("Max")),
+            "tmin": safe_float(field("Min")),
+            "humidity": safe_float(field("Umid", "Umidità")),
+            "wind": safe_float(field("Vento")),
+            "gust": safe_float(field("Raff", "Raffica")),
+            "wind_direction": None if field("Dir") in {None, "", "-", "--"} else field("Dir"),
+            "rain_day": safe_float(field("P.Day", "Pioggia")),
+            "rain_month": safe_float(field("P.Mese", "Mese")),
+            "rain_year": safe_float(field("P.Anno", "Anno")),
+            "pressure": safe_float(field("Press", "Pressione")),
+            "time": field("Ore", "Ora"),
             "network": network,
         }
     return out
+
+
+def _match_cms_station(rows: dict[str, dict[str, Any]], candidate: str) -> dict[str, Any] | None:
+    """Match a configured location only when its full name is unchanged or
+    followed by the instrument model. Never use loose substring matching:
+    'Messina (SIAS)' must not match a different Messina station.
+    """
+    if candidate in rows:
+        return rows[candidate]
+    matches = [
+        row for name, row in rows.items()
+        if name.casefold().startswith(candidate.casefold() + " ")
+    ]
+    return matches[0] if len(matches) == 1 else None
 
 
 def fetch_text(url: str, timeout: int = 25) -> str:
@@ -235,8 +260,8 @@ def fetch_stations() -> tuple[list[dict[str, Any]], dict[str, Any]]:
     for group in CONFIG["station_groups"]:
         selected = None
         for candidate in group["candidates"]:
-            if candidate in rows:
-                selected = rows[candidate]
+            selected = _match_cms_station(rows, candidate)
+            if selected is not None:
                 break
         if selected is None:
             stations.append({
@@ -276,10 +301,12 @@ def fetch_stations() -> tuple[list[dict[str, Any]], dict[str, Any]]:
 
     # Supporto aggiuntivo senza duplicati
     existing = {s["name"] for s in stations}
-    for name in CONFIG.get("additional_support", []):
-        if name not in rows or name in existing:
+    for configured_name in CONFIG.get("additional_support", []):
+        st = _match_cms_station(rows, configured_name)
+        if st is None or st["name"] in existing:
             continue
-        st = rows[name]
+        name = st["name"]
+        existing.add(name)
         status, status_label, age = station_age_status(st.get("time"), now)
         q, q_label = network_quality(st.get("network", ""))
         stations.append({
