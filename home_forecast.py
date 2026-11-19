@@ -41,14 +41,15 @@ def weather_style(code: int | float | None, night: bool = False) -> dict[str, st
     return {"icon": "☾" if night else "☀", "kind": "calm", "label": "Sereno"}
 
 
-def _lightning_count(data: dict, radius: int) -> int:
-    l = data.get("lightning", {}) or {}
-    if l.get("status") != "ok":
-        return 0
-    item = (l.get("radii", {}) or {}).get(str(radius), {}) or {}
-    value = item.get("flash_count", item.get("frequency_sum", 0))
-    n = num(value)
-    return max(0, int(n or 0))
+def _lightning_count(data: dict, radius: int) -> int | None:
+    """Only a fresh, actually measured lightning count can be called zero."""
+    lightning = data.get("lightning", {}) or {}
+    age = num(lightning.get("age_minutes"))
+    if lightning.get("status") != "ok" or age is None or age < 0 or age > 35:
+        return None
+    item = (lightning.get("radii", {}) or {}).get(str(radius), {}) or {}
+    count = num(item.get("flash_count", item.get("frequency_sum")))
+    return max(0, int(count)) if count is not None and count >= 0 else None
 
 
 def current_summary(data: dict, now: datetime) -> dict[str, Any]:
@@ -56,7 +57,7 @@ def current_summary(data: dict, now: datetime) -> dict[str, Any]:
     tr = data.get("nowcast_tracking", {}) or {}
     hazard = tr.get("hazard_cell") or tr.get("cell") or {}
     motion = tr.get("motion", {}) or {}
-    rain = num((metrics.get("rain_1h", {}) or {}).get("value")) or 0.0
+    rain = num((metrics.get("rain_1h", {}) or {}).get("value"))
     cloud = num((metrics.get("cloud_cover", {}) or {}).get("value"))
     flashes20 = _lightning_count(data, 20)
     hazard_distance = num(hazard.get("distance_km"))
@@ -67,9 +68,9 @@ def current_summary(data: dict, now: datetime) -> dict[str, Any]:
     )
     night = now.hour >= 19 or now.hour < 7
 
-    if flashes20 > 0:
+    if flashes20 is not None and flashes20 > 0:
         style = {"icon": "⛈", "kind": "storm", "label": "Temporali nelle vicinanze"}
-    elif rain >= 0.2:
+    elif rain is not None and rain >= 0.2:
         style = {"icon": "☂", "kind": "rain", "label": "Pioggia in corso o appena rilevata"}
     elif radar_near:
         style = {"icon": "☂", "kind": "rain", "label": "Precipitazioni nelle vicinanze"}
@@ -93,11 +94,11 @@ def current_summary(data: dict, now: datetime) -> dict[str, Any]:
     return {**style, "status_label": status_label, "status_class": status_class, "short_term": short, "storm": storm}
 
 
-def short_term_summary(data: dict, hazard: dict, motion: dict, flashes20: int) -> dict[str, str]:
+def short_term_summary(data: dict, hazard: dict, motion: dict, flashes20: int | None) -> dict[str, str]:
     dist = num(hazard.get("distance_km"))
     eta = num(motion.get("eta_minutes")) if motion.get("status") == "tracked" else None
     level = str((data.get("nowcast", {}) or {}).get("level") or "").lower()
-    if flashes20 > 0:
+    if flashes20 is not None and flashes20 > 0:
         return {"title": "Temporali da seguire", "text": f"Osservati {flashes20} flash entro 20 km da Giammoro.", "icon": "⛈"}
     if eta is not None and eta <= 180:
         return {"title": "Possibile arrivo di pioggia", "text": f"La cella tracciata potrebbe raggiungere l'area in circa {int(round(eta))} minuti.", "icon": "☂"}
@@ -112,18 +113,43 @@ def short_term_summary(data: dict, hazard: dict, motion: dict, flashes20: int) -
     return {"title": "Nessun fenomeno rilevante", "text": "Non emergono segnali importanti a brevissimo termine.", "icon": "✓"}
 
 
-def storm_summary(data: dict, hazard: dict, motion: dict, flashes20: int) -> dict[str, str]:
+def storm_summary(data: dict, hazard: dict, motion: dict, flashes20: int | None) -> dict[str, str]:
     dist = num(hazard.get("distance_km"))
     eta = num(motion.get("eta_minutes")) if motion.get("status") == "tracked" else None
-    if flashes20 > 0:
+    if flashes20 is not None and flashes20 > 0:
         return {"title": "Fulmini nelle vicinanze", "text": f"Rilevati {flashes20} flash entro 20 km da Giammoro.", "icon": "⛈"}
     if eta is not None and eta <= 180:
         return {"title": "Cella tracciata in avvicinamento", "text": f"Possibile interessamento dell'area in circa {int(round(eta))} minuti.", "icon": "☂"}
+    suffix = (
+        " Nessun fulmine rilevato entro 20 km dai dati disponibili."
+        if flashes20 == 0
+        else " Fulminazioni non verificabili: dato osservativo assente."
+    )
     if dist is not None and dist <= 25:
-        return {"title": "Pioggia nelle vicinanze", "text": f"La cella di pericolo locale è a circa {dist:g} km da Giammoro; nessun fulmine entro 20 km nel dato disponibile.", "icon": "☂"}
+        return {"title": "Pioggia nelle vicinanze", "text": f"La cella di pericolo locale è a circa {dist:g} km da Giammoro." + suffix, "icon": "☂"}
     if dist is not None:
-        return {"title": "Fenomeni lontani da Giammoro", "text": f"La cella radar più rilevante è a circa {dist:g} km; nessun fulmine entro 20 km nel dato disponibile.", "icon": "↗"}
-    return {"title": "Nessun temporale vicino", "text": "Non risultano fulmini entro 20 km né celle radar locali rilevanti.", "icon": "☂"}
+        return {"title": "Fenomeni lontani da Giammoro", "text": f"La cella radar più rilevante è a circa {dist:g} km." + suffix, "icon": "↗"}
+    tracking = data.get("nowcast_tracking", {}) or {}
+    radar_valid = tracking.get("status") == "no_cell" and num(tracking.get("age_minutes")) is not None and num(tracking.get("age_minutes")) <= 35
+    if flashes20 is None and not radar_valid:
+        return {
+            "title": "Temporali: osservazioni insufficienti",
+            "text": "Fulminazioni non disponibili e nessuna osservazione radar locale valida: temporali vicini non verificabili.",
+            "icon": "◷",
+        }
+    if flashes20 is None:
+        return {
+            "title": "Fulminazioni non disponibili",
+            "text": "Il radar non indica celle significative, ma l'attività elettrica non è verificabile.",
+            "icon": "◷",
+        }
+    if not radar_valid:
+        return {
+            "title": "Radar non disponibile",
+            "text": "Non sono stati rilevati fulmini entro 20 km nei dati validi; l'assenza di celle radar non è verificabile.",
+            "icon": "◷",
+        }
+    return {"title": "Nessun segnale osservativo rilevato", "text": "Nessun fulmine entro 20 km e nessuna cella significativa nel radar disponibile.", "icon": "☂"}
 
 
 def _hour_rows(raw: dict, now: datetime, limit: int = 12) -> list[dict[str, Any]]:

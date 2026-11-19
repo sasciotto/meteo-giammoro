@@ -186,7 +186,7 @@
     return `<div class="home-model-outlook" aria-label="Tendenza modellistica da 3 a 48 ore">
       <strong>Tendenza 3–48 h · previsioni dai modelli</strong>
       <span>${esc(main + amount)}</span>
-      <small>Previsioni, non osservazioni radar; la disponibilità del radar è indicata separatamente.</small>
+      <small>Confronto deterministico fra modelli, non probabilità calibrata né osservazione radar.</small>
     </div>`;
   }
 
@@ -307,11 +307,11 @@
       <div class="day-head"><div><div class="k">${esc(day.label || '')}</div><div class="day-title">${esc(day.condition || 'Previsione')}</div></div><div class="day-icon" aria-hidden="true">${esc(day.icon || '•')}</div></div>
       <div class="day-range">${fmt(day.temp_min,1)}° / ${fmt(day.temp_max,1)}°</div>
       <div class="day-meta">Pioggia ${fmt(day.precipitation_sum,1)} mm · raffiche max ${fmt(day.gust_max_kmh)} km/h${day.thunder_signal ? ' · possibile segnale temporalesco' : ''}</div>
-      <div class="day-basis">Scenario orario: ${esc(day.basis || home.source || 'modello di riferimento')}</div>
+      <div class="day-basis">Previsione giornaliera · fonte: ${esc(day.basis || 'modello di riferimento')} (distinta dal consenso orario)</div>
     </div>`).join('');
 
     section.innerHTML = `
-      <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Scenario orario ${esc(home.source || 'modello di riferimento')} · aggiornato automaticamente</div></div></div>
+      <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Previsione oraria · ${esc(home.source || 'modello di riferimento')} · aggiornato automaticamente</div></div></div>
       ${nowcastHtml}
       ${outlookHtml}
       ${staleHtml}

@@ -58,7 +58,7 @@ def test_home_does_not_render_technical_multi_model_consensus_block():
     # Il riepilogo sintetico è consentito; non ripristinare il blocco tecnico.
     assert "Tendenza 3–48 h · previsioni dai modelli" in js
     assert "home-model-outlook" in js
-    assert "Previsioni, non osservazioni radar" in js
+    assert "Confronto deterministico fra modelli, non probabilità calibrata" in js
 
 
 def test_detailed_analysis_keeps_multi_model_technical_section():
@@ -89,3 +89,10 @@ def test_model_forecast_visible_without_radar_and_without_invented_probability()
     assert "${nowcastHtml}\n      ${outlookHtml}\n      ${staleHtml}" in js
     assert "home?.stale || !outlook.available" in js
     assert "nessuna probabilità" not in js.lower()
+
+
+def test_hourly_and_daily_forecast_provenance_is_explicit():
+    js = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+    assert "Previsione oraria · " in js
+    assert "Previsione giornaliera · fonte:" in js
+    assert "distinta dal consenso orario" in js

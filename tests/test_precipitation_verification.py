@@ -130,3 +130,17 @@ def test_v1_metrics_archived_and_unverifiable_forecasts_skipped():
     assert report["summary"]["precipitation_presence"]["skipped_unverifiable"] == 1
     assert report["summary"]["precipitation_presence"]["cumulative"]["samples"] == 0
     assert events["precipitation_verification"]["results"] == []
+
+
+def test_embedded_precipitation_metrics_are_synchronized_with_verification_summary():
+    data, report, _ = p.apply(
+        {"local_precipitation": {"status": "unavailable", "history": []},
+         "verification": {"summary": {"event_metrics": {"samples": 4}}}},
+        {"summary": {"event_metrics": {"samples": 4}}},
+        {},
+        now=datetime(2026, 10, 22, 14, 31, tzinfo=timezone.utc),
+    )
+    metric = report["summary"]["precipitation_presence"]
+    assert data["verification"]["precipitation_presence"] == metric
+    assert data["verification"]["summary"]["precipitation_presence"] == metric
+    assert data["verification"]["summary"]["event_metrics"]["samples"] == 4

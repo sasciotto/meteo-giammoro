@@ -126,7 +126,20 @@ def consensus_hourly(cache: dict[str, dict], now: datetime, limit: int = 36) -> 
         precip = [v for v in (_num(row.get('precipitation')) for row in rows) if v is not None]
         temps = [v for v in (_num(row.get('temperature')) for row in rows) if v is not None]
         winds = [v for v in (_num(row.get('wind_kmh')) for row in rows) if v is not None]
-        gusts = [v for v in (_num(row.get('gust_kmh')) for row in rows) if v is not None]
+        # Keep wind/gust pairs from the same models; do not combine
+        # separately computed medians into a physically impossible pair.
+        valid_pairs = [
+            (wind, gust) for row in rows
+            if (wind := _num(row.get('wind_kmh'))) is not None
+            and (gust := _num(row.get('gust_kmh'))) is not None
+            and wind >= 0 and gust >= wind
+        ]
+        wind_out = round(_median([pair[0] for pair in valid_pairs]), 1) if len(valid_pairs) >= 2 else (
+            round(_median(winds), 1) if winds else None
+        )
+        gust_out = round(_median([pair[1] for pair in valid_pairs]), 1) if len(valid_pairs) >= 2 else None
+        if wind_out is not None and gust_out is not None and gust_out < wind_out:
+            gust_out = None
 
         cloud = _median(clouds)
         cloud_spread = (max(clouds) - min(clouds)) if len(clouds) >= 2 else 0.0 if clouds else None
@@ -142,8 +155,8 @@ def consensus_hourly(cache: dict[str, dict], now: datetime, limit: int = 36) -> 
             'precipitation_max': None if not precip else round(max(precip), 1),
             'cloud_cover': None if cloud is None else round(cloud, 1),
             'cloud_spread': None if cloud_spread is None else round(cloud_spread, 1),
-            'wind_kmh': None if not winds else round(_median(winds), 1),
-            'gust_kmh': None if not gusts else round(_median(gusts), 1),
+            'wind_kmh': wind_out,
+            'gust_kmh': gust_out,
             'model_count': len(rows),
             'consensus': True,
             **style,
