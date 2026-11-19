@@ -74,3 +74,34 @@ def test_multi_model_consensus_exposes_range_and_wet_models():
     assert out["precip_min_mm"] == 0.0
     assert out["precip_max_mm"] == 8.0
     assert out["agreement"] == "basso"
+
+
+def test_missing_lightning_data_is_not_zero_or_absence():
+    current = base_data()
+    current["lightning"] = {"status": "unavailable"}
+    current["nowcast_tracking"] = {"status": "no_data"}
+    current["territory"]["metrics"]["rain_1h"]["value"] = None
+    assert h._lightning_count(current, 20) is None
+    summary = h.current_summary(current, datetime(2026, 10, 10, 22, 30, tzinfo=TZ))
+    assert summary["storm"]["title"] == "Temporali: osservazioni insufficienti"
+    assert "non verificabili" in summary["storm"]["text"]
+    assert "Non risultano fulmini" not in summary["storm"]["text"]
+
+
+def test_verified_lightning_zero_can_be_called_zero_only_with_fresh_age():
+    data = base_data()
+    data["lightning"]["age_minutes"] = 5
+    data["nowcast_tracking"] = {"status": "no_cell", "age_minutes": 5}
+    assert h._lightning_count(data, 20) == 0
+    result = h.current_summary(data, datetime(2026, 10, 10, 22, 30, tzinfo=TZ))
+    assert "Nessun fulmine entro 20 km" in result["storm"]["text"]
+    data["lightning"]["age_minutes"] = 90
+    assert h._lightning_count(data, 20) is None
+
+
+def test_lightning_unavailable_does_not_suppress_valid_nearby_radar_cell():
+    data = base_data()
+    data["lightning"] = {"status": "unavailable"}
+    current = h.current_summary(data, datetime(2026, 10, 10, 22, 30, tzinfo=TZ))
+    assert current["storm"]["title"] == "Pioggia nelle vicinanze"
+    assert "Fulminazioni non verificabili" in current["storm"]["text"]
