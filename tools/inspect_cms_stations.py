@@ -44,3 +44,16 @@ try:
     }, ensure_ascii=False), flush=True)
 except Exception as exc:
     print("CMS_PARSER_ERROR", type(exc).__name__, str(exc)[:220], flush=True)
+
+try:
+    table = soup.find("table")
+    tr_rows = table.find_all("tr") if table else []
+    for idx in (1, 2, 5, 10):
+        if len(tr_rows) > idx:
+            row = tr_rows[idx]
+            cells = row.find_all("td")
+            print("CMS_CELL_DIAGNOSTIC", idx, "cells", len(cells),
+                  "all", json.dumps([v.get_text(" ",strip=True)[:70] for v in cells],
+                                     ensure_ascii=False), flush=True)
+except Exception as exc:
+    print("CMS_CELL_DIAGNOSTIC_ERROR",type(exc).__name__,str(exc)[:150],flush=True)
