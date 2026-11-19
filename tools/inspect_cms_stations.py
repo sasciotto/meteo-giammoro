@@ -72,3 +72,5 @@ try:
           "parser_count", len(collector.parse_cms_table(text)),flush=True)
 except Exception as exc:
     print("CMS_DIRECT_PARSER_ERROR",type(exc).__name__,str(exc)[:150],flush=True)
+
+# Re-run live parser after the single-header-row fix.
