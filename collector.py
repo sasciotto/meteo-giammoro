@@ -134,7 +134,14 @@ def parse_cms_table(html: str) -> dict[str, dict[str, Any]]:
     if target is None:
         raise RuntimeError("Tabella stazioni CMS non trovata")
 
-    headers = [x.get_text(" ", strip=True) for x in target.find_all("th")]
+    # Modern CMS pages repeat column headers in a footer. Reading every
+    # <th> in the whole table doubles the expected column count and discards
+    # all real rows. Use only the actual station header row.
+    header_row = next(
+        tr for tr in target.find_all("tr")
+        if any(th.get_text(" ", strip=True) == "Nome Stazione" for th in tr.find_all("th"))
+    )
+    headers = [th.get_text(" ", strip=True) for th in header_row.find_all("th")]
     out: dict[str, dict[str, Any]] = {}
     for tr in target.find_all("tr"):
         cells = tr.find_all("td")
