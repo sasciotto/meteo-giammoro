@@ -96,3 +96,14 @@ def test_hourly_and_daily_forecast_provenance_is_explicit():
     assert "Previsione oraria · " in js
     assert "Previsione giornaliera · fonte:" in js
     assert "distinta dal consenso orario" in js
+
+
+def test_nearby_rain_history_ui_is_separate_from_giammoro_observation():
+    html = Path("index.html").read_text(encoding="utf-8")
+    assert 'id="nearbyStationRain"' in html
+    assert "function renderNearbyStationRain(d)" in html
+    assert "renderNearbyStationRain(d);" in html
+    assert "15 min</th><th>30 min</th><th>60 min" in html
+    assert "non misure su Giammoro" in html
+    assert "s.name!=='MeteoGiammoro'" in html
+    assert "stale?'n/d':fmt(s[key])" in html
