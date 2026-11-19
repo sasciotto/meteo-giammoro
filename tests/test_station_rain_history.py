@@ -131,3 +131,21 @@ def test_old_samples_pruned_and_station_identity_is_kept():
     out, hist = r.update(data(sample(0, 1)), prev)
     assert "Un'altra stazione" not in hist["stations"]
     assert len(hist["stations"][NAME]) == 1
+
+
+def test_real_collector_meta_before_runtime_quality_timestamp():
+    # collector.py only sets last_check; last_check_iso is added in runtime_quality.py.
+    payload = {
+        "meta": {"last_check": "19/11/2026 17:30 CET"},
+        "stations": [sample(0, 1.5)],
+    }
+    out, history = r.update(payload, past((60, 0), (45, 0), (30, 0.5), (15, 0.8)))
+    assert out["nearby_station_rain"]["updated_at"] == "2026-11-19T17:30:00+01:00"
+    assert out["stations"][0]["rain_1h"] == 1.5
+    assert history["updated_at"] == "2026-11-19T17:30:00+01:00"
+
+
+def test_invalid_collector_timestamp_does_not_use_runner_clock():
+    import pytest
+    with pytest.raises(ValueError, match="collector timestamp"):
+        r.update({"meta": {"last_check": "—"}, "stations": [sample(0, 1)]})

@@ -111,9 +111,20 @@ def _interval(rows: list[dict], current: dict, minutes: int):
 
 
 def update(data: dict, previous: dict | None = None):
-    now = _time((data.get("meta") or {}).get("last_check_iso"))
+    meta = data.get("meta") or {}
+    now = _time(meta.get("last_check_iso"))
     if now is None:
-        raise ValueError("data.json missing valid meta.last_check_iso")
+        # collector.py fills human-readable last_check before runtime_quality.py
+        # adds last_check_iso. Parse that actual cycle timestamp rather than
+        # using the runner clock or inventing a station observation.
+        match = re.match(r"^(\d{2}/\d{2}/\d{4} \d{2}:\d{2})\b", str(meta.get("last_check") or ""))
+        if match:
+            try:
+                now = datetime.strptime(match.group(1), "%d/%m/%Y %H:%M").replace(tzinfo=TZ)
+            except ValueError:
+                now = None
+    if now is None:
+        raise ValueError("data.json missing a valid collector timestamp")
     previous = previous or {}
     prev = (previous.get("stations") or {})
     if not isinstance(prev, dict):
