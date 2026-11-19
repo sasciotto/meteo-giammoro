@@ -26,3 +26,18 @@ try:
             print("CMS_MATCH",word, json.dumps([m.get_text(" ",strip=True)[:160] for m in matches[:5]],ensure_ascii=False),flush=True)
 except Exception as exc:
     print("CMS_PROBE_ERROR", type(exc).__name__, str(exc)[:200], flush=True)
+
+try:
+    import collector
+    stations, meta = collector.fetch_stations()
+    print("CMS_PARSER_RESULTS", json.dumps({
+        "feed_rows": meta.get("rows"),
+        "stations": [
+            {"display": st.get("display_name"), "actual": st.get("name"),
+             "status": st.get("status"), "temperature": st.get("temperature"),
+             "rain_day": st.get("rain_day"), "time": st.get("updated")}
+            for st in stations
+        ]
+    }, ensure_ascii=False), flush=True)
+except Exception as exc:
+    print("CMS_PARSER_ERROR", type(exc).__name__, str(exc)[:220], flush=True)
