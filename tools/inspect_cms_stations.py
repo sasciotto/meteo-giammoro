@@ -28,6 +28,9 @@ except Exception as exc:
     print("CMS_PROBE_ERROR", type(exc).__name__, str(exc)[:200], flush=True)
 
 try:
+    import sys
+    from pathlib import Path
+    sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     import collector
     stations, meta = collector.fetch_stations()
     print("CMS_PARSER_RESULTS", json.dumps({
