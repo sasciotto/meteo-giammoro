@@ -118,3 +118,16 @@ def test_cms_matching_never_substitutes_different_stations():
     assert collector._match_cms_station(rows, "Milazzo - Piana") is None
     assert collector._match_cms_station(rows, "Messina (SIAS)") is None
     assert collector._match_cms_station(rows, "Merì") is None
+
+
+def test_cms_repeated_footer_headers_do_not_discard_all_rows():
+    headers = "<tr><th>Nome Stazione</th><th>Temp</th><th>Ora</th></tr>"
+    html = (
+        "<table><thead>" + headers + "</thead>"
+        "<tbody><tr><td>Milazzo - Piana Ecowitt WS2910</td><td>24.1</td>"
+        "<td>13:40</td></tr></tbody>"
+        "<tfoot>" + headers + "</tfoot></table>"
+    )
+    rows = collector.parse_cms_table(html)
+    assert len(rows) == 1
+    assert collector._match_cms_station(rows, "Milazzo - Piana")["temperature"] == 24.1
