@@ -57,3 +57,18 @@ try:
                                      ensure_ascii=False), flush=True)
 except Exception as exc:
     print("CMS_CELL_DIAGNOSTIC_ERROR",type(exc).__name__,str(exc)[:150],flush=True)
+
+try:
+    parsed = collector.parse_cms_table(r.text)
+    print("CMS_DIRECT_PARSER", len(parsed),
+          "nearby", json.dumps([x for x in parsed if
+              any(k in x for k in ("Milazzo", "Messina (SIAS)", "Archi - San Filippo", "Venetico"))][:9],
+              ensure_ascii=False), flush=True)
+    text = collector.fetch_text(collector.CMS_URL)
+    h = BeautifulSoup(text, "html.parser")
+    print("CMS_COLLECTOR_HTTP", "length", len(text),
+          "table_count", len(h.find_all("table")),
+          "td_count", len(h.find_all("td")),
+          "parser_count", len(collector.parse_cms_table(text)),flush=True)
+except Exception as exc:
+    print("CMS_DIRECT_PARSER_ERROR",type(exc).__name__,str(exc)[:150],flush=True)
