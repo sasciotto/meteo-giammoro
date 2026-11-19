@@ -87,3 +87,41 @@ def test_apply_replaces_single_model_hourly_source_with_consensus():
     assert data['home_summary']['source'].startswith('Consenso multi-modello')
     assert data['home_summary']['hourly'][0]['consensus'] is True
     assert data['home_summary']['hourly_consensus']['model_count'] == 4
+
+
+def test_wind_gust_consensus_never_displays_gust_below_wind():
+    cache = {
+        'italia_meteo_arpae_icon_2i': raw([10]*4),
+        'dwd_icon_seamless': raw([10]*4),
+        'ecmwf_ifs': raw([10]*4),
+        'ncep_gfs_seamless': raw([10]*4),
+    }
+    # Three internally consistent model pairs but a fourth invalid gust.
+    cache['italia_meteo_arpae_icon_2i']['hourly']['wind_speed_10m'] = [7]*4
+    cache['italia_meteo_arpae_icon_2i']['hourly']['wind_gusts_10m'] = [6]*4
+    cache['dwd_icon_seamless']['hourly']['wind_speed_10m'] = [9]*4
+    cache['dwd_icon_seamless']['hourly']['wind_gusts_10m'] = [15]*4
+    cache['ecmwf_ifs']['hourly']['wind_speed_10m'] = [8]*4
+    cache['ecmwf_ifs']['hourly']['wind_gusts_10m'] = [12]*4
+    cache['ncep_gfs_seamless']['hourly']['wind_speed_10m'] = [10]*4
+    cache['ncep_gfs_seamless']['hourly']['wind_gusts_10m'] = [11]*4
+    rows, _ = h.consensus_hourly(cache, NOW)
+    assert rows
+    assert all(row['gust_kmh'] >= row['wind_kmh'] for row in rows if row['gust_kmh'] is not None)
+    assert rows[0]['wind_kmh'] == 9.0
+    assert rows[0]['gust_kmh'] == 12.0
+
+
+def test_invalid_model_gusts_are_not_fabricated():
+    a = raw([10]*4)
+    b = raw([12]*4)
+    a['hourly']['wind_speed_10m'] = [12]*4
+    a['hourly']['wind_gusts_10m'] = [6]*4
+    b['hourly']['wind_speed_10m'] = [14]*4
+    b['hourly']['wind_gusts_10m'] = [7]*4
+    rows, _ = h.consensus_hourly({
+        'italia_meteo_arpae_icon_2i': a,
+        'dwd_icon_seamless': b,
+    }, NOW)
+    assert rows[0]['gust_kmh'] is None
+    assert rows[0]['wind_kmh'] == 13.0
