@@ -141,6 +141,7 @@ def update(data: dict, previous: dict | None = None):
                 }
         stamp = _actual_time(station, now) if _valid_station(station) else None
         amount = _num(station.get("rain_day"))
+        is_new = False
         if stamp is not None and amount is not None:
             key = stamp.isoformat(timespec="minutes")
             if key in rows and rows[key]["rain_day_mm"] != amount:
@@ -149,9 +150,10 @@ def update(data: dict, previous: dict | None = None):
                 rows.pop(key)
             elif key not in rows:
                 rows[key] = {"at": key, "rain_day_mm": amount}
+                is_new = True
         ordered = [rows[key] for key in sorted(rows)]
         output[name] = ordered
-        if stamp is None or amount is None:
+        if stamp is None or amount is None or not is_new:
             continue
         current = rows.get(stamp.isoformat(timespec="minutes"))
         if not current:
