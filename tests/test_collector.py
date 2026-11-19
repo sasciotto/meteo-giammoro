@@ -71,3 +71,50 @@ def test_significant_change_gust_threshold():
     change = collector.significant_change(previous, current)
     assert change is not None
     assert "raffiche" in change["title"].lower()
+
+
+def test_parse_cms_current_headers_and_instrument_suffix():
+    html = """
+    <table><thead><tr>
+      <th>Nome Stazione</th><th>Pr</th><th>Quota</th><th>Temp</th><th>Max</th>
+      <th>Min</th><th>Umidità</th><th>Rugiada</th><th>Vento</th><th>Raffica</th>
+      <th>Dir</th><th>Pioggia</th><th>Mese</th><th>Pressione</th>
+      <th>Ora</th><th>Rete</th><th>Dettagli</th>
+    </tr></thead><tbody>
+      <tr>
+        <td>Milazzo - Piana Ecowitt WS2910 - Schermatura Originaria</td>
+        <td>ME</td><td>14</td><td>22.5</td><td>25.2</td><td>18.1</td>
+        <td>63</td><td>15</td><td>12</td><td>20</td><td>NE</td>
+        <td>2.4</td><td>51.0</td><td>1016.2</td><td>13:20</td><td>Ecowitt</td><td>Dettagli</td>
+      </tr>
+      <tr>
+        <td>Messina (SIAS) Campbell CR1000 + MTX + Gill</td>
+        <td>ME</td><td>55</td><td>21.0</td><td>23</td><td>19</td>
+        <td>67</td><td>14</td><td>5</td><td>9</td><td>E</td>
+        <td>0</td><td>15</td><td>1015.0</td><td>13:15</td><td>SIAS</td><td>Dettagli</td>
+      </tr>
+    </tbody></table>
+    """
+    rows = collector.parse_cms_table(html)
+    selected = collector._match_cms_station(rows, "Milazzo - Piana")
+    assert selected["name"] == "Milazzo - Piana Ecowitt WS2910 - Schermatura Originaria"
+    assert selected["temperature"] == 22.5
+    assert selected["humidity"] == 63
+    assert selected["rain_day"] == 2.4
+    assert selected["rain_month"] == 51.0
+    assert selected["rain_year"] is None  # Current source does not include year.
+    assert selected["pressure"] == 1016.2
+    assert selected["time"] == "13:20"
+    assert selected["altitude_m"] == 14
+    assert collector._match_cms_station(rows, "Messina (SIAS)")["name"].startswith("Messina (SIAS)")
+
+
+def test_cms_matching_never_substitutes_different_stations():
+    rows = {
+        "Milazzo - Piana Ecowitt WS2910": {"name": "Milazzo - Piana Ecowitt WS2910"},
+        "Milazzo - Piana Davis VP2": {"name": "Milazzo - Piana Davis VP2"},
+        "Messina (LineaMeteo) Sainlogic": {"name": "Messina (LineaMeteo) Sainlogic"},
+    }
+    assert collector._match_cms_station(rows, "Milazzo - Piana") is None
+    assert collector._match_cms_station(rows, "Messina (SIAS)") is None
+    assert collector._match_cms_station(rows, "Merì") is None
