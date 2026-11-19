@@ -21,7 +21,7 @@ def test_current_case_becomes_precipitation_tendency_not_high_risk():
     data = model_outlook.apply(_current_case())
     risk = data["risk_48h"]
     assert risk["semantic"] == "model_precipitation_tendency"
-    assert risk["label"] == "Pioggia probabile"
+    assert risk["label"] == "Pioggia indicata dalla maggioranza dei modelli"
     assert risk["level"] == "moderato"
     assert risk["wet_models"] == 3
     assert risk["precip_min_mm"] == 0.1
@@ -42,7 +42,7 @@ def test_high_cape_without_rain_or_thunder_does_not_create_high_impact():
         ],
     }
     model_outlook.apply(data)
-    assert data["risk_48h"]["label"] == "Pioggia poco probabile"
+    assert data["risk_48h"]["label"] == "Nessun modello indica pioggia significativa"
     assert data["risk_48h"]["impact_label"] == "Basso (modellistico)"
     assert data["risk_48h"]["impact_severe_models"] == 0
 
@@ -50,8 +50,8 @@ def test_high_cape_without_rain_or_thunder_does_not_create_high_impact():
 def test_home_multi_model_exposes_tendency_and_impact_separately():
     data = model_outlook.apply(_current_case())
     mm = data["home_summary"]["multi_model"]
-    assert mm["label"] == "Pioggia probabile · quantità incerta"
-    assert mm["precipitation_tendency"] == "Pioggia probabile"
+    assert mm["label"] == "Pioggia indicata dalla maggioranza dei modelli · quantità incerta"
+    assert mm["precipitation_tendency"] == "Pioggia indicata dalla maggioranza dei modelli"
     assert mm["impact_label"] == "Moderato (modellistico)"
 
 
@@ -60,3 +60,16 @@ def test_site_preparation_renames_risk_card_to_tendency():
     out = site_prepare.transform(html)
     assert "Tendenza 3–48 h" in out
     assert "Rischio 3–48 h" not in out
+
+
+def test_model_consensus_does_not_claim_calibrated_probability():
+    data = model_outlook.apply(_current_case())
+    assert "probabil" not in data["risk_48h"]["label"].lower()
+    assert "non probabilità meteorologica calibrata" in data["risk_48h"]["note"]
+    assert "probabil" not in data["home_summary"]["multi_model"]["label"].lower()
+
+
+def test_nowcast_note_normalizes_duplicate_periods():
+    data = {"nowcast": {"note": "Radar-DPC non disponibile nel ciclo corrente.."}}
+    model_outlook.apply(data)
+    assert "corrente.." not in data["nowcast"]["note"]
