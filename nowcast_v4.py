@@ -274,6 +274,17 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     mtg_li = lightning_mtg_li.read_snapshot()
     data["mtg_li"] = mtg_li
     data.setdefault("nowcast_evidence", {})["mtg_li"] = lightning_mtg_li.snapshot_note(mtg_li)
+    # A validated, fresh satellite observation can substitute an unavailable
+    # DPC lightning feed. Do not merge counts or use stale/unknown products.
+    dpc_lightning = data.get("lightning", {}) or {}
+    if mtg_li["status"] == "ok" and dpc_lightning.get("status") not in {"ok", "ok_wms"}:
+        data["lightning"] = mtg_li
+        import nowcast_v2
+        data.setdefault("nowcast_evidence", {})["lightning"] = nowcast_v2.lightning_summary(mtg_li)
+        # The preceding v2 analysis was based on an unavailable DPC feed.
+        data["analysis_confidence"] = nowcast_v2.enhanced_confidence(
+            data, data.get("nowcast_tracking", {}) or {}, mtg_li
+        )
     if mtg_li["status"] == "ok":
         source = lightning_mtg_li.SOURCE
         sources = data.setdefault("sources", [])
