@@ -131,3 +131,20 @@ def test_workflow_has_safe_error_categorization():
     assert "--phase \"$phase\"" in workflow
     assert "state=timeout" in workflow
     assert "state=unavailable" in workflow
+
+
+def test_lfl_netcdf_flashes_group_is_decoded(tmp_path):
+    import numpy as np
+    from netCDF4 import Dataset
+
+    path = tmp_path / "lightning.nc"
+    with Dataset(str(path), "w", format="NETCDF4") as ds:
+        group = ds.createGroup("flashes")
+        group.createDimension("flashes", 2)
+        lat = group.createVariable("latitude", "f4", ("flashes",))
+        lon = group.createVariable("longitude", "f4", ("flashes",))
+        lat[:] = [38.2, 38.3]
+        lon[:] = [15.3, 15.4]
+    latitudes, longitudes = li._read_flash_arrays_from_netcdf(path.read_bytes())
+    assert np.allclose(latitudes, [38.2, 38.3])
+    assert np.allclose(longitudes, [15.3, 15.4])

@@ -150,3 +150,26 @@ def test_workflow_has_no_eumetsat_lightning_keys_but_keeps_solar():
     assert "EUMETSAT_CONSUMER_SECRET" not in workflow
     assert "LSASAF_USERNAME" in workflow
     assert "LSASAF_PASSWORD" in workflow
+
+
+def test_valid_mtg_li_is_used_only_when_dpc_lightning_unavailable(monkeypatch):
+    import nowcast_v2
+    satellite = {
+        "status": "ok", "source": "EUMETSAT MTG Lightning Imager",
+        "radii": {str(r): {"flash_count": 1} for r in (5, 10, 20, 30)},
+        "age_minutes": 10,
+    }
+    monkeypatch.setattr(nowcast_v2, "enhanced_confidence", lambda data, tracking, lightning: {"source": lightning["source"]})
+    data = {"lightning": {"status": "unavailable"}, "nowcast_tracking": {}}
+    assert nowcast_v4.use_validated_satellite_lightning(data, satellite)
+    assert data["lightning"]["source"] == satellite["source"]
+    assert "EUMETSAT" in data["nowcast_evidence"]["lightning"]
+    assert data["analysis_confidence"]["source"] == satellite["source"]
+
+    dpc = {"lightning": {"status": "ok", "source": "DPC"}}
+    assert not nowcast_v4.use_validated_satellite_lightning(dpc, satellite)
+    assert dpc["lightning"]["source"] == "DPC"
+
+    stale = {"lightning": {"status": "unavailable"}}
+    assert not nowcast_v4.use_validated_satellite_lightning(stale, {"status": "stale"})
+    assert stale["lightning"]["status"] == "unavailable"

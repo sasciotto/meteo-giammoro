@@ -243,6 +243,27 @@ def refresh_runtime_text(data: dict) -> None:
     sources[:] = [name for name in sources if "EUMETSAT MTG Lightning Imager" not in str(name) or data.get("mtg_li", {}).get("status") == "ok"]
 
 
+def use_validated_satellite_lightning(data: dict, snapshot: dict) -> bool:
+    """Use MTG-LI only when validated and DPC lightning cannot be used."""
+    if snapshot.get("status") != "ok":
+        return False
+    if (data.get("lightning", {}) or {}).get("status") in {"ok", "ok_wms"}:
+        return False
+    data["lightning"] = snapshot
+    evidence = v2.lightning_summary(snapshot)
+    data.setdefault("nowcast_evidence", {})["lightning"] = evidence
+    # Replace the DPC unavailable sentence, rather than presenting contradictory
+    # availability statements after a successful validated satellite fallback.
+    note = str((data.get("nowcast", {}) or {}).get("note") or "")
+    missing_dpc = "LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato."
+    if missing_dpc in note:
+        data.setdefault("nowcast", {})["note"] = note.replace(missing_dpc, evidence)
+    data["analysis_confidence"] = v2.enhanced_confidence(
+        data, data.get("nowcast_tracking", {}) or {}, snapshot
+    )
+    return True
+
+
 def external_lightning_map() -> dict:
     """La mappa Blitzortung non è un feed per il nowcast o per le allerte."""
     return {
@@ -274,6 +295,7 @@ def run(data_path: Path, previous_path: Path | None = None, history_path: Path |
     mtg_li = lightning_mtg_li.read_snapshot()
     data["mtg_li"] = mtg_li
     data.setdefault("nowcast_evidence", {})["mtg_li"] = lightning_mtg_li.snapshot_note(mtg_li)
+    use_validated_satellite_lightning(data, mtg_li)
     if mtg_li["status"] == "ok":
         source = lightning_mtg_li.SOURCE
         sources = data.setdefault("sources", [])

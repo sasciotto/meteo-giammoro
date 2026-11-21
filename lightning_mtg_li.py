@@ -106,10 +106,13 @@ def _read_flash_arrays_from_netcdf(raw: bytes) -> tuple[np.ndarray, np.ndarray]:
         tmp.write(nc_bytes)
         tmp.flush()
         with Dataset(tmp.name, "r") as ds:
-            if "latitude" not in ds.variables or "longitude" not in ds.variables:
-                raise RuntimeError("variabili latitude/longitude non presenti nel prodotto LI")
-            lat = np.asarray(ds.variables["latitude"][:], dtype=float)
-            lon = np.asarray(ds.variables["longitude"][:], dtype=float)
+            # EUMETSAT LFL stores the flash coordinates in the 'flashes'
+            # NetCDF group; some converted files put them at the root.
+            flashes = ds.groups.get("flashes") or ds
+            if "latitude" not in flashes.variables or "longitude" not in flashes.variables:
+                raise RuntimeError("variabili latitude/longitude non presenti nel gruppo flashes LI")
+            lat = np.ma.asarray(flashes.variables["latitude"][:], dtype=float).filled(np.nan)
+            lon = np.ma.asarray(flashes.variables["longitude"][:], dtype=float).filled(np.nan)
     return lat, lon
 
 
@@ -137,7 +140,7 @@ def fetch_lightning(rlat: float, rlon: float, now: datetime | None = None) -> di
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
     end = now.astimezone(timezone.utc).replace(tzinfo=None)
-    start = end - timedelta(minutes=35)
+    start = end - timedelta(minutes=MAX_AGE_MINUTES)
 
     try:
         _stage("authentication")
@@ -152,7 +155,7 @@ def fetch_lightning(rlat: float, rlon: float, now: datetime | None = None) -> di
                 "status": "no_recent_product",
                 "source": SOURCE,
                 "collection": COLLECTION_ID,
-                "window_minutes": 35,
+                "window_minutes": MAX_AGE_MINUTES,
             }
         product = max(products, key=lambda p: getattr(p, "sensing_end", datetime.min) or datetime.min)
         sensing_end = getattr(product, "sensing_end", None)
