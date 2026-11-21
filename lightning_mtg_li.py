@@ -137,7 +137,7 @@ def fetch_lightning(rlat: float, rlon: float, now: datetime | None = None) -> di
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
     end = now.astimezone(timezone.utc).replace(tzinfo=None)
-    start = end - timedelta(minutes=35)
+    start = end - timedelta(minutes=MAX_AGE_MINUTES)
 
     try:
         _stage("authentication")
@@ -152,7 +152,7 @@ def fetch_lightning(rlat: float, rlon: float, now: datetime | None = None) -> di
                 "status": "no_recent_product",
                 "source": SOURCE,
                 "collection": COLLECTION_ID,
-                "window_minutes": 35,
+                "window_minutes": MAX_AGE_MINUTES,
             }
         product = max(products, key=lambda p: getattr(p, "sensing_end", datetime.min) or datetime.min)
         sensing_end = getattr(product, "sensing_end", None)
