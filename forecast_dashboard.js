@@ -22,6 +22,13 @@
     const style = document.createElement('style');
     style.id = 'forecastDashboardStyles';
     style.textContent = `
+      .home-stations{margin:14px 0;padding:15px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}
+      .home-stations-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px;margin-top:11px}
+      .home-station-item{padding:11px;border:1px solid var(--line);border-radius:10px;background:var(--surface2);min-width:0}
+      .home-station-item b,.home-station-item small{display:block;overflow-wrap:anywhere}
+      .home-station-item small{font-size:11px;color:var(--muted);margin-top:4px}
+      .home-station-observation{font-size:17px;font-weight:750;margin-top:5px}
+      .home-stations-note{font-size:12px;color:var(--muted);margin-top:6px}
       .forecast-detail{margin-top:14px}
       .forecast-detail .section-title{margin-bottom:13px}
       .forecast-source{font-size:12px;color:var(--muted)}
@@ -266,7 +273,38 @@
     return section;
   }
 
+  function renderStationOverview(data) {
+    const home = byId('weatherMain')?.closest('.home-only');
+    if (!home) return;
+    let section = byId('homeStationsOverview');
+    if (!section) {
+      section = document.createElement('section');
+      section.id = 'homeStationsOverview';
+      section.className = 'home-stations';
+      const alert = byId('homeAlertCard');
+      if (alert && alert.parentElement === home) home.insertBefore(section, alert);
+      else home.appendChild(section);
+    }
+    const stations = Array.isArray(data?.stations) ? data.stations : [];
+    const support = stations.filter(s => s && s.name !== 'MeteoGiammoro' && s.source_quality !== 'primary');
+    const live = support.filter(s => s.status === 'online' && !s.excluded_from_analysis && num(s.temperature) !== null);
+    const check = Date.parse(data?.meta?.last_check_iso || '');
+    const oldCycle = !Number.isFinite(check) || (Date.now() - check > 25 * 60 * 1000);
+    const primary = stations.find(s => s?.name === 'MeteoGiammoro');
+    const primaryNote = primary?.status === 'test' ? 'MeteoGiammoro in verifica: misure locali non utilizzate.' : 'MeteoGiammoro: misure locali non disponibili.';
+    const cards = support.map(s => {
+      const fresh = !oldCycle && s.status === 'online' && !s.excluded_from_analysis;
+      const label = s.display_name || s.name || 'Stazione';
+      const value = fresh ? num(s.temperature) : null;
+      return `<article class="home-station-item"><b>${esc(label)}</b><small>${esc(s.name || '')}</small><div class="home-station-observation">${value === null ? 'Non disponibile' : fmt(value, 1) + ' °C'}</div><small>${esc(fresh ? (s.updated || 'Orario non disponibile') : 'Dato non corrente / da verificare')}</small></article>`;
+    }).join('');
+    section.innerHTML = `<div class="section-title"><div><h2>Stazioni nei dintorni</h2><div class="home-stations-note">Dati osservati nelle località indicate; non sono misure di Giammoro.</div></div></div>
+      <div class="home-stations-note">${oldCycle ? 'Aggiornamento generale non recente · ' : ''}${live.length} stazioni con temperatura valida su ${support.length} di supporto. ${esc(primaryNote)}</div>
+      <div class="home-stations-grid">${cards || '<p>Non sono disponibili stazioni di supporto.</p>'}</div>`;
+  }
+
   function render(data) {
+    renderStationOverview(data);
     renderSummaryCards(data);
     renderVerification(data);
     const section = ensureSection();
