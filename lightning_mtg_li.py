@@ -111,8 +111,8 @@ def _read_flash_arrays_from_netcdf(raw: bytes) -> tuple[np.ndarray, np.ndarray]:
             flashes = ds.groups.get("flashes") or ds
             if "latitude" not in flashes.variables or "longitude" not in flashes.variables:
                 raise RuntimeError("variabili latitude/longitude non presenti nel gruppo flashes LI")
-            lat = np.ma.filled(flashes.variables["latitude"][:], np.nan).astype(float)
-            lon = np.ma.filled(flashes.variables["longitude"][:], np.nan).astype(float)
+            lat = np.ma.asarray(flashes.variables["latitude"][:], dtype=float).filled(np.nan)
+            lon = np.ma.asarray(flashes.variables["longitude"][:], dtype=float).filled(np.nan)
     return lat, lon
 
 
