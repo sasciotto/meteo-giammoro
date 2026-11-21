@@ -1,0 +1,25 @@
+name: Verifica grezzi Radar DPC (temporanea)
+
+on:
+  pull_request:
+    paths:
+      - "tools/diagnose_dpc_raw.py"
+      - ".github/workflows/diagnose-dpc-raw.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-raster-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Dipendenze
+        run: pip install "requests>=2.32,<3" "numpy>=2,<3" "rasterio>=1.4,<2"
+      - name: Diagnostica DPC grezzi in sola lettura
+        run: python -u tools/diagnose_dpc_raw.py
