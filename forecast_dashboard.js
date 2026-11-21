@@ -290,14 +290,14 @@
     const check = Date.parse(data?.meta?.last_check_iso || '');
     const oldCycle = !Number.isFinite(check) || (Date.now() - check > 25 * 60 * 1000);
     const parseAge = station => {
-      const match = String(station?.updated || '').match(/(?:^|\\s)(\\d{1,2}):(\\d{2})\\b/);
-      if (!match || !Number.isFinite(check)) return null;
-      const observed = new Date(check);
-      const hour = Number(match[1]), minute = Number(match[2]);
-      if (hour > 23 || minute > 59) return null;
-      observed.setHours(hour, minute, 0, 0);
-      if (observed.getTime() > check + 10 * 60 * 1000) observed.setDate(observed.getDate() - 1);
-      return Math.max(0, (Date.now() - observed.getTime()) / 60000);
+      const match = String(station?.updated || '').match(/^\s*(\d{1,2}):(\d{2})\b/);
+      const stamp = String(data?.meta?.last_check_iso || '').match(/T(\d{2}):(\d{2})/);
+      if (!match || !stamp || !Number.isFinite(check)) return null;
+      const hh = Number(match[1]), mm = Number(match[2]);
+      if (hh > 23 || mm > 59) return null;
+      let observedAge = Number(stamp[1]) * 60 + Number(stamp[2]) - hh * 60 - mm;
+      if (observedAge < -10) observedAge += 1440;
+      return Math.max(0, observedAge + (Date.now() - check) / 60000);
     };
     const live = support.filter(s => !oldCycle && s.status === 'online' && !s.excluded_from_analysis && num(s.temperature) !== null && parseAge(s) !== null && parseAge(s) <= 15);
     const primary = stations.find(s => s?.name === 'MeteoGiammoro');
