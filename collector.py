@@ -111,6 +111,8 @@ def station_age_status(time_hhmm: str | None, now: datetime | None = None) -> tu
         return "unknown", "Orario non disponibile", None
     now = now or now_local()
     hh, mm = map(int, time_hhmm.split(":"))
+    if not 0 <= hh <= 23 or not 0 <= mm <= 59:
+        return "unknown", "Orario non valido", None
     stamp = now.replace(hour=hh, minute=mm, second=0, microsecond=0)
     if stamp > now + timedelta(minutes=10):
         stamp -= timedelta(days=1)
