@@ -106,10 +106,13 @@ def _read_flash_arrays_from_netcdf(raw: bytes) -> tuple[np.ndarray, np.ndarray]:
         tmp.write(nc_bytes)
         tmp.flush()
         with Dataset(tmp.name, "r") as ds:
-            if "latitude" not in ds.variables or "longitude" not in ds.variables:
-                raise RuntimeError("variabili latitude/longitude non presenti nel prodotto LI")
-            lat = np.asarray(ds.variables["latitude"][:], dtype=float)
-            lon = np.asarray(ds.variables["longitude"][:], dtype=float)
+            # EUMETSAT LFL stores the flash coordinates in the 'flashes'
+            # NetCDF group; some converted files put them at the root.
+            flashes = ds.groups.get("flashes") or ds
+            if "latitude" not in flashes.variables or "longitude" not in flashes.variables:
+                raise RuntimeError("variabili latitude/longitude non presenti nel gruppo flashes LI")
+            lat = np.ma.filled(flashes.variables["latitude"][:], np.nan).astype(float)
+            lon = np.ma.filled(flashes.variables["longitude"][:], np.nan).astype(float)
     return lat, lon
 
 
