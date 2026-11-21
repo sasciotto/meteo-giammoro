@@ -250,7 +250,14 @@ def use_validated_satellite_lightning(data: dict, snapshot: dict) -> bool:
     if (data.get("lightning", {}) or {}).get("status") in {"ok", "ok_wms"}:
         return False
     data["lightning"] = snapshot
-    data.setdefault("nowcast_evidence", {})["lightning"] = v2.lightning_summary(snapshot)
+    evidence = v2.lightning_summary(snapshot)
+    data.setdefault("nowcast_evidence", {})["lightning"] = evidence
+    # Replace the DPC unavailable sentence, rather than presenting contradictory
+    # availability statements after a successful validated satellite fallback.
+    note = str((data.get("nowcast", {}) or {}).get("note") or "")
+    missing_dpc = "LTG/LAMPINET non disponibile in questo ciclo; nessun dato di fulminazione viene inventato."
+    if missing_dpc in note:
+        data.setdefault("nowcast", {})["note"] = note.replace(missing_dpc, evidence)
     data["analysis_confidence"] = v2.enhanced_confidence(
         data, data.get("nowcast_tracking", {}) or {}, snapshot
     )
