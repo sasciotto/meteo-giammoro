@@ -87,15 +87,16 @@
   }
 
   function renderObservationStrip(data) {
-    const inner = document.querySelector('#weatherMain .weather-main-inner');
-    if (!inner) return;
+    const footer = document.querySelector('main .foot');
+    if (!footer) return;
 
     let strip = byId('homeObservationStrip');
     if (!strip) {
-      strip = document.createElement('div');
+      strip = document.createElement('section');
       strip.id = 'homeObservationStrip';
-      strip.className = 'home-observation-strip';
-      inner.appendChild(strip);
+      strip.className = 'home-only home-observation-strip';
+      strip.setAttribute('aria-label', 'Riferimenti e fonti delle osservazioni');
+      footer.before(strip);
     }
 
     const metrics = data?.territory?.metrics || {};
