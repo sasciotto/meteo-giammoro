@@ -2,6 +2,17 @@ name: Aggiorna fulminazioni MTG-LI (indipendente)
 
 on:
   workflow_dispatch:
+  # GitHub scheduled jobs can be delayed or skipped. Refresh satellite
+  # observations after a successful meteorological workflow as well.
+  workflow_run:
+    workflows: ["Aggiorna Meteo Giammoro"]
+    types: [completed]
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - "lightning_mtg_li.py"
+      - ".github/workflows/update-mtg-li.yml"
   schedule:
     - cron: "5,20,35,50 * * * *"
 
@@ -14,6 +25,7 @@ concurrency:
 
 jobs:
   collect-mtg-li:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 4
     env:
