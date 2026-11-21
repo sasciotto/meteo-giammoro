@@ -116,6 +116,11 @@
     main.className = 'home-observation-main';
     main.textContent = `Riferimento: coordinate di Giammoro · ${support}`;
     strip.appendChild(main);
+    const modelContext = document.createElement('div');
+    modelContext.className = 'home-observation-main';
+    const modelBasis = data?.home_summary?.source || 'modello non disponibile';
+    modelContext.textContent = `Nowcast osservativo 0–3 h · Previsione oraria: ${modelBasis}`;
+    strip.appendChild(modelContext);
 
     const sourceWrap = document.createElement('div');
     sourceWrap.className = 'home-observation-sources';
@@ -257,8 +262,8 @@
     if (heading) heading.textContent = 'Prossime ore · Oggi e domani';
     const source = titleWrap.querySelector('.forecast-source');
     if (source) {
-      const basis = data?.home_summary?.source || 'modello di riferimento';
-      source.textContent = `Nowcast osservativo 0–3 h · scenario orario ${basis}`;
+      source.hidden = true;
+      source.textContent = '';
     }
 
     let actions = titleWrap.querySelector('.home-forecast-actions');
