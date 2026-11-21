@@ -1,15 +1,15 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-11-21T04:20:44+00:00",
+  "updated_at": "2026-11-21T04:38:10+00:00",
   "active_event": {
     "id": "EVT-20261121T042044Z",
     "type": "local_convective_signal",
     "started_at": "2026-11-21T04:20:44+00:00",
-    "last_seen_at": "2026-11-21T04:20:44+00:00",
+    "last_seen_at": "2026-11-21T04:38:10+00:00",
     "ended_at": null,
-    "samples": 1,
-    "min_radar_distance_km": 10.5,
-    "max_radar_peak": 30.0,
+    "samples": 2,
+    "min_radar_distance_km": 3.3,
+    "max_radar_peak": 33.0,
     "max_rain_1h_mm": 0.0,
     "max_flashes_20km": 0,
     "max_confidence_score": null
@@ -778,7 +778,7 @@
       "true_positive": 84,
       "true_negative": 6461,
       "false_positive": 145,
-      "false_negative": 253
+      "false_negative": 255
     },
     "by_horizon": {
       "30": {
@@ -791,18 +791,16 @@
         "true_positive": 31,
         "true_negative": 2131,
         "false_positive": 72,
-        "false_negative": 80
+        "false_negative": 81
       },
       "120": {
         "true_positive": 5,
         "true_negative": 2183,
         "false_positive": 11,
-        "false_negative": 108
+        "false_negative": 109
       }
     },
     "processed_keys": [
-      "20261114T231946Z:30",
-      "20261114T220047Z:120",
       "20261114T230228Z:60",
       "20261114T233100Z:30",
       "20261114T221917Z:120",
@@ -1700,11 +1698,92 @@
       "20261121T030441Z:60",
       "20261121T032011Z:60",
       "20261121T033458Z:30",
-      "20261121T035031Z:30"
+      "20261121T035031Z:30",
+      "20261121T023627Z:120",
+      "20261121T033458Z:60"
     ],
-    "latest_verified_at": "2026-11-21T04:20:44+00:00"
+    "latest_verified_at": "2026-11-21T04:38:10+00:00"
   },
   "verification_event_archive": [
+    {
+      "snapshot_id": "20261121T023627Z",
+      "issued_at": "2026-11-21T02:36:27+00:00",
+      "verified_at": "2026-11-21T04:38:10+00:00",
+      "horizon_minutes": 120,
+      "outcome": "missed_event",
+      "predicted_event": false,
+      "predicted_watch": false,
+      "observed_event": true,
+      "nearby_signal": true,
+      "prediction_reasons": [],
+      "watch_reasons": [],
+      "confidence_score": null,
+      "eta_predicted_minutes": null,
+      "eta_error_minutes": null,
+      "trajectory_error_km": null,
+      "observation": {
+        "evaluable": true,
+        "event": true,
+        "nearby_signal": true,
+        "event_drivers": [
+          "radar_15km"
+        ],
+        "radar_distance_km": 3.3,
+        "radar_fresh": true,
+        "radar_candidate_count": 1,
+        "rain_1h_mm": null,
+        "lightning_20km": null,
+        "lightning_30km": null,
+        "lightning_fresh": false,
+        "track_id": "VMI-202611210510-SW10",
+        "cell_lat": 38.17503,
+        "cell_lon": 15.3015,
+        "cell_role": "nearest_candidate",
+        "tracked_cell_lat": 38.17503,
+        "tracked_cell_lon": 15.3015
+      }
+    },
+    {
+      "snapshot_id": "20261121T033458Z",
+      "issued_at": "2026-11-21T03:34:58+00:00",
+      "verified_at": "2026-11-21T04:38:10+00:00",
+      "horizon_minutes": 60,
+      "outcome": "missed_event",
+      "predicted_event": false,
+      "predicted_watch": true,
+      "observed_event": true,
+      "nearby_signal": true,
+      "prediction_reasons": [],
+      "watch_reasons": [
+        "nucleo radar significativo entro 25 km",
+        "sintesi nowcasting in monitoraggio"
+      ],
+      "confidence_score": null,
+      "eta_predicted_minutes": null,
+      "eta_error_minutes": null,
+      "trajectory_error_km": null,
+      "observation": {
+        "evaluable": true,
+        "event": true,
+        "nearby_signal": true,
+        "event_drivers": [
+          "radar_15km"
+        ],
+        "radar_distance_km": 3.3,
+        "radar_fresh": true,
+        "radar_candidate_count": 1,
+        "rain_1h_mm": null,
+        "lightning_20km": null,
+        "lightning_30km": null,
+        "lightning_fresh": false,
+        "track_id": "VMI-202611210510-SW10",
+        "cell_lat": 38.17503,
+        "cell_lon": 15.3015,
+        "cell_role": "nearest_candidate",
+        "tracked_cell_lat": 38.17503,
+        "tracked_cell_lon": 15.3015
+      }
+    },
     {
       "snapshot_id": "20261121T020410Z",
       "issued_at": "2026-11-21T02:04:10+00:00",
@@ -21498,27 +21577,6 @@
     "metric_version": "local-precipitation-v2",
     "pending": [
       {
-        "id": "20261121T023624Z",
-        "issued_at": "2026-11-21T02:36:24+00:00",
-        "prediction": {
-          "by_horizon": {
-            "30": false,
-            "60": true,
-            "120": true
-          },
-          "forecast_status": "supported",
-          "wet_models": 4,
-          "current_wet_models": 0,
-          "notable_models": 1,
-          "max_precip_0_3h_mm": 0.9,
-          "observed_at_issue": false
-        },
-        "evaluated_horizons": [
-          30,
-          60
-        ]
-      },
-      {
         "id": "20261121T024931Z",
         "issued_at": "2026-11-21T02:49:31+00:00",
         "prediction": {
@@ -21598,7 +21656,8 @@
           "observed_at_issue": false
         },
         "evaluated_horizons": [
-          30
+          30,
+          60
         ]
       },
       {
@@ -21635,6 +21694,24 @@
           "current_wet_models": 2,
           "notable_models": 1,
           "max_precip_0_3h_mm": 0.8,
+          "observed_at_issue": false
+        },
+        "evaluated_horizons": []
+      },
+      {
+        "id": "20261121T043736Z",
+        "issued_at": "2026-11-21T04:37:36+00:00",
+        "prediction": {
+          "by_horizon": {
+            "30": false,
+            "60": false,
+            "120": false
+          },
+          "forecast_status": "low",
+          "wet_models": 0,
+          "current_wet_models": 0,
+          "notable_models": 0,
+          "max_precip_0_3h_mm": 0.0,
           "observed_at_issue": false
         },
         "evaluated_horizons": []
@@ -23304,9 +23381,11 @@
       "20261121T030438Z:60",
       "20261121T032008Z:60",
       "20261121T033456Z:30",
-      "20261121T035028Z:30"
+      "20261121T035028Z:30",
+      "20261121T023624Z:120",
+      "20261121T033456Z:60"
     ],
-    "skipped_unverifiable": 622
+    "skipped_unverifiable": 624
   },
   "precipitation_verification_legacy_v1": {
     "metric_version": "local-precipitation-v1",
