@@ -109,8 +109,15 @@
       }
 
       if (stamp !== knownStamp) {
-        knownStamp = stamp;
-        reloadWithFreshUrl();
+        // Render the new meteorological state without navigating away or losing
+        // the current view, scroll position or active radar controls.
+        if (typeof window.applyMeteoData === 'function') {
+          await window.applyMeteoData(data);
+          knownStamp = stamp;
+        } else {
+          knownStamp = stamp;
+          reloadWithFreshUrl();
+        }
       }
     } catch (_) {
       // Un errore di rete non deve interferire con la dashboard già caricata.
