@@ -36,13 +36,46 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Evita acquisizioni satellitari duplicate con snapshot recente
+        id: freshness
+        shell: bash
+        run: |
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          reuse = False
+          try:
+              data = json.loads(Path("lightning_mtg_li.json").read_text(encoding="utf-8"))
+              def age_minutes(value):
+                  stamp = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+                  if stamp.tzinfo is None:
+                      return None
+                  return (datetime.now(timezone.utc) - stamp.astimezone(timezone.utc)).total_seconds() / 60
+              observation_age = age_minutes(data.get("observed_at"))
+              retrieval_age = age_minutes(data.get("retrieved_at"))
+              reuse = (
+                  os.environ.get("GITHUB_EVENT_NAME") == "workflow_run"
+                  and data.get("status") == "ok"
+                  and observation_age is not None and 0 <= observation_age <= 30
+                  and retrieval_age is not None and 0 <= retrieval_age <= 8
+              )
+          except (OSError, ValueError, TypeError, KeyError):
+              pass
+          print(f"should_collect={'false' if reuse else 'true'}")
+          PY
       - name: Python
+        if: steps.freshness.outputs.should_collect == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Dipendenze MTG-LI
+        if: steps.freshness.outputs.should_collect == 'true'
         run: pip install "numpy>=2,<3" "eumdac>=3.1,<4" "netCDF4>=1.7,<2"
       - name: Raccolta MTG-LI con limite rigido
+        if: steps.freshness.outputs.should_collect == 'true'
         shell: bash
         run: |
           # Accesso satellitare isolato: il timeout non coinvolge update-weather.yml.
@@ -66,6 +99,7 @@ jobs:
             python lightning_mtg_li.py --output lightning_mtg_li.json --mark-unavailable "$state" --phase "$phase"
           fi
       - name: Salva snapshot MTG-LI senza modificare la pipeline meteo
+        if: steps.freshness.outputs.should_collect == 'true'
         shell: bash
         run: |
           git config user.name "meteo-giammoro-bot"
