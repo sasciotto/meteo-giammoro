@@ -52,7 +52,7 @@
     'body.mode-home #forecastDetail .home-nowcast-signal b{font-size:12px;line-height:1.45;color:#17465e}',
     'body.mode-home .render-radar-panel{display:flex;flex-direction:column;gap:8px;min-width:0}',
     'body.mode-home .render-radar-media{position:relative;display:flex;flex:1;align-items:stretch;justify-content:center;min-height:235px;border:1px solid rgba(194,231,246,.4);border-radius:15px;background:linear-gradient(140deg,#082e4f,#0b476a);overflow:hidden}',
-    'body.mode-home .render-radar-media img{display:block;width:100%;height:100%;max-height:350px;object-fit:cover;object-position:center}',
+    'body.mode-home .render-radar-media img{display:block;width:100%;height:245px;max-height:350px;object-fit:contain;object-position:center}',
     'body.mode-home .render-radar-fallback{display:flex;align-items:center;justify-content:center;flex:1;padding:24px;text-align:center;color:#e6f3fa;font-size:13px;line-height:1.6}',
     'body.mode-home .render-radar-title{font-size:16px;font-weight:790;color:#fff}',
     'body.mode-home .render-radar-meta{font-size:11px;color:#d0e7f5;line-height:1.4}',
@@ -65,6 +65,7 @@
     'body.mode-home .render-hourly-panel .hour-cell{background:#f0f8fd;border-color:#c4dfed;border-radius:14px;min-height:173px;text-align:center}',
     'body.mode-home .render-hourly-panel .hour-icon{font-size:29px}',
     'body.mode-home .render-hourly-panel .hour-meta{font-size:10px}',
+    'body.mode-home .render-lower-grid.stations-only{grid-template-columns:1fr}',
     'body.mode-home .render-lower-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:14px;margin-top:17px;align-items:stretch}',
     'body.mode-home .render-day-panel{min-width:0;padding:17px;border:1px solid #c6dfec;border-radius:18px;background:#e2f1fa}',
     'body.mode-home .render-day-panel .forecast-day-heading{margin:0 0 10px}',
@@ -129,7 +130,7 @@
       && now - check >= 0 && now - check < 35 * 60000;
     const meta = make('render-radar-meta');
     meta.textContent = fresh
-      ? 'SRI: ' + new Date(observed).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome'}) + ' CET · osservazione radar, non previsione'
+      ? 'SRI: ' + new Intl.DateTimeFormat('it-IT', {hour:'2-digit', minute:'2-digit', timeZone:'Europe/Rome', timeZoneName:'short'}).format(new Date(observed)) + ' · prodotto radar; orario distinto dallo screenshot'
       : 'SRI: dato attuale non verificabile';
     const media = make('render-radar-media');
     const link = make('render-radar-link', 'a');
@@ -214,7 +215,10 @@
       dayPanel = make('render-day-panel');
       lower.appendChild(dayPanel);
     }
-    if (dayHeading && dayGrid) dayPanel.replaceChildren(dayHeading, dayGrid);
+    const hasDays = Boolean(dayHeading && dayGrid);
+    lower.classList.toggle('stations-only', !hasDays);
+    dayPanel.hidden = !hasDays;
+    if (hasDays) dayPanel.replaceChildren(dayHeading, dayGrid);
     else dayPanel.replaceChildren();
 
     const stations = byId('homeStationsOverview');
