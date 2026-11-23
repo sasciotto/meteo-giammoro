@@ -342,14 +342,14 @@
       : '';
 
     const hourHtml = hourly.map(h => {
-      const rain = num(h.precipitation) || 0;
+      const rain = num(h.precipitation);
       const gust = num(h.gust_kmh);
       return `<div class="hour-cell">
         <div class="hour-time">${esc(h.label_time || '—')}</div>
         <div class="hour-icon" aria-hidden="true">${esc(h.icon || '•')}</div>
         <div class="hour-temp">${fmt(h.temperature,1)} °C</div>
         <div class="hour-cond">${esc(h.label || '')}</div>
-        <div class="hour-meta">Pioggia ${fmt(rain,1)} mm<br>Vento ${fmt(h.wind_kmh)} km/h${gust == null ? '' : ` · raff. ${fmt(gust)}`}</div>
+        <div class="hour-meta">Pioggia ${rain == null ? '—' : fmt(rain,1) + ' mm'}<br>Vento ${num(h.wind_kmh) == null ? '—' : fmt(h.wind_kmh) + ' km/h'}${gust == null ? '' : ` · raff. ${fmt(gust)} km/h`}</div>
       </div>`;
     }).join('');
 
@@ -360,13 +360,24 @@
       <div class="day-basis">Previsione giornaliera · fonte: ${esc(day.basis || 'modello di riferimento')} (distinta dal consenso orario)</div>
     </div>`).join('');
 
+    const previousHourlyScroll = section.querySelector('.hourly-strip')?.scrollLeft || 0;
+    const hourlyBlock = hourly.length
+      ? `<div class="forecast-block-heading"><div><div class="forecast-block-eyebrow">PREVISIONE MODELLISTICA</div><h3>Prossime ore</h3></div><span class="forecast-block-hint">Scorri per vedere le ore successive</span></div>
+         <div class="hourly-strip" aria-label="Previsione oraria, scorrevole" tabindex="0">${hourHtml}</div>`
+      : '';
+    const dayBlock = days.length
+      ? `<div class="forecast-block-heading forecast-day-heading"><div><div class="forecast-block-eyebrow">PANORAMICA</div><h3>Oggi e domani</h3></div></div>
+         <div class="day-grid">${dayHtml}</div>`
+      : '';
     section.innerHTML = `
-      <div class="section-title"><div><h2>Previsione per Giammoro</h2><div class="forecast-source">Previsione oraria · ${esc(home.source || 'modello di riferimento')} · aggiornato automaticamente</div></div></div>
+      <div class="section-title"><div><h2>Previsioni per Giammoro</h2></div></div>
       ${nowcastHtml}
-      ${outlookHtml}
       ${staleHtml}
-      <div class="hourly-strip" aria-label="Previsione oraria">${hourHtml}</div>
-      <div class="day-grid">${dayHtml}</div>`;
+      ${hourlyBlock}
+      ${dayBlock}
+      ${outlookHtml}`;
+    const newHourlyStrip = section.querySelector('.hourly-strip');
+    if (newHourlyStrip) newHourlyStrip.scrollLeft = previousHourlyScroll;
   }
 
   window.renderForecastDashboard = render;
