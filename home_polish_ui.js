@@ -102,7 +102,8 @@
       body.mode-home .quick-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:26px}
       body.mode-home .quick{min-width:0;min-height:121px;background:rgba(255,255,255,.82);border:1px solid #dce7ec;border-radius:17px;padding:14px 16px;box-shadow:0 2px 8px rgba(31,64,82,.025)}
       body.mode-home .quick .k{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:780;letter-spacing:.02em;color:#5c7484}
-      body.mode-home .quick-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;background:#edf5f8;color:#166f89;flex:0 0 28px}
+      body.mode-home .quick .k .quick-icon{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:9px;background:#edf5f8;color:#166f89;flex:0 0 28px}
+      body.mode-home .quick .k>span:last-child{display:inline;min-width:0;font-size:11px;line-height:1.3}
       body.mode-home .quick-icon svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
       body.mode-home .quick b{font-size:clamp(18px,2vw,24px);font-weight:800;letter-spacing:-.025em;margin-top:9px;color:#18384b}
       body.mode-home .quick span{font-size:11px;line-height:1.4}
