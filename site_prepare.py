@@ -125,11 +125,22 @@ def transform(html: str) -> str:
         "const wx=d.home_summary?.current||homeWeather(m,d,tr,flashes20);",
         1,
     )
-    html = html.replace(
-        "}).catch(err=>{$('homeDescription').textContent='Dati temporaneamente non disponibili';",
-        ";window.renderForecastDashboard?.(d);window.renderSolarMonitoring?.(d)}).catch(err=>{$('homeDescription').textContent='Dati temporaneamente non disponibili';",
-        1,
-    )
+    # Render auxiliary dashboards before committing the timestamp shown.
+    # The source has two supported forms (pre/post in-place refresh fix).
+    updated_marker = "window.meteoRenderedStamp=nextStamp}).catch(err=>{$('homeDescription').textContent='Dati temporaneamente non disponibili';"
+    if updated_marker in html:
+        html = html.replace(
+            updated_marker,
+            "window.renderForecastDashboard?.(d);window.renderSolarMonitoring?.(d);"
+            + updated_marker,
+            1,
+        )
+    else:
+        html = html.replace(
+            "}).catch(err=>{$('homeDescription').textContent='Dati temporaneamente non disponibili';",
+            ";window.renderForecastDashboard?.(d);window.renderSolarMonitoring?.(d)}).catch(err=>{$('homeDescription').textContent='Dati temporaneamente non disponibili';",
+            1,
+        )
 
     forecast_tag = '<script src="forecast_dashboard.js"></script>'
     if forecast_tag not in html:
