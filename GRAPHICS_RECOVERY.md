@@ -1,5 +1,10 @@
 # METEO Giammoro — ripristino grafico di emergenza
 
+## Stato grafico attuale — ritorno al tema chiaro (23 novembre 2026)
+Ripristinati i file dell'interfaccia dal backup `backup/main-20261123-before-mobile-blue-redesign` (versione **bianca/azzurro molto chiaro precedente al tema blu**). È rimasta l'intestazione solo «Meteo Giammoro», secondo la preferenza espressa. I successivi renderer blu e i relativi test sono stati rimossi dal codice attivo, senza modificare `data.json` o i motori.
+
+Il backup immediatamente precedente al ripristino è `backup/main-20261123-before-return-to-white` e permette il ritorno alla versione prima della richiesta. Gli altri rami di backup storici rimangono disponibili.
+
 Questo file è il riferimento **persistente nel repository** per ritrovare le versioni grafiche precedenti, senza fare affidamento sulla memoria della chat.
 
 ## Copie di sicurezza (non eliminare)
