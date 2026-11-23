@@ -3,6 +3,9 @@
 
   const byId = id => document.getElementById(id);
   const num = value => {
+    // Missing values are unknown, never a measured/modelled zero.
+    if (value === null || value === undefined || value === '' ||
+        (typeof value === 'string' && !value.trim())) return null;
     const x = Number(value);
     return Number.isFinite(x) ? x : null;
   };
