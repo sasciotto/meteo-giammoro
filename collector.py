@@ -21,6 +21,7 @@ import math
 import os
 import re
 import statistics
+import unicodedata
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -189,10 +190,26 @@ def _match_cms_station(rows: dict[str, dict[str, Any]], candidate: str) -> dict[
     """
     if candidate in rows:
         return rows[candidate]
-    matches = [
-        row for name, row in rows.items()
-        if name.casefold().startswith(candidate.casefold() + " ")
-    ]
+
+    def canonical(text: str) -> str:
+        # Ignore accent/punctuation differences but never discard a
+        # station's network suffix: Messina (SIAS) != Messina (other).
+        text = unicodedata.normalize("NFKD", text.casefold())
+        text = "".join(ch for ch in text if not unicodedata.combining(ch))
+        return " ".join(re.findall(r"[a-z0-9]+", text))
+
+    target = canonical(candidate)
+    if not target:
+        return None
+    exact = [row for name, row in rows.items() if canonical(name) == target]
+    if len(exact) == 1:
+        return exact[0]
+    if len(exact) > 1:
+        return None
+    # Instrument-model suffixes are supported only when the full configured
+    # name is the prefix and the resulting match is unambiguous.
+    matches = [row for name, row in rows.items()
+               if canonical(name).startswith(target + " ")]
     return matches[0] if len(matches) == 1 else None
 
 
@@ -323,7 +340,19 @@ def fetch_stations() -> tuple[list[dict[str, Any]], dict[str, Any]]:
             "note": "Stazione aggiuntiva di supporto territoriale."
         })
 
-    meta = {"source": "Centro Meteorologico Siciliano - Database Stazioni Live", "url": CMS_URL, "rows": len(rows)}
+    meta = {
+        "source": "Centro Meteorologico Siciliano - Database Stazioni Live",
+        "url": CMS_URL,
+        "rows": len(rows),
+        "configured_groups": len(CONFIG["station_groups"]),
+        "matched_groups": len(found),
+        "online_support": sum(
+            station.get("status") == "online" and not station.get("excluded_from_analysis")
+            for station in stations if station.get("source_quality") != "primary"
+        ),
+        "unmatched_groups": [group["label"] for group in CONFIG["station_groups"]
+                             if group["label"] not in found],
+    }
     return stations, meta
 
 
