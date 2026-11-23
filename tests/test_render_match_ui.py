@@ -47,6 +47,15 @@ def test_radar_preview_is_real_and_falls_back_when_absent_or_stale():
     assert "canvas" not in code
 
 
+def test_station_wind_is_shown_only_from_current_support_observations():
+    forecast = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+    layout = Path("render_match_ui.js").read_text(encoding="utf-8")
+    assert "const wind = current ? num(s.wind) : null;" in forecast
+    assert "home-station-wind" in forecast
+    assert "wind === null ? 'Vento —'" in forecast
+    assert "home-station-wind{grid-column:3" in layout
+
+
 def test_pressure_and_cloud_provenance_kept_separate():
     html = Path("index.html").read_text(encoding="utf-8")
     assert 'id="homePressure"' in html
