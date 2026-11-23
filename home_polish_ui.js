@@ -72,7 +72,7 @@
 
     // New visual layer is scoped to the public Meteo view. The expert / radar
     // views keep their existing layout, while data provenance stays in footer.
-    style.textContent += \`
+    style.textContent += `
       body.mode-home{background:radial-gradient(ellipse at 12% 0%,rgba(212,232,243,.66),transparent 43%),#edf3f6;color:#142b40}
       body.mode-home .wrap{max-width:1200px;padding-top:22px}
       body.mode-home .hero{padding:4px 1px 17px;gap:15px}
@@ -185,7 +185,7 @@
       @media(prefers-reduced-motion:reduce){
         body.mode-home .mode-btn,body.mode-home .weather-main *{transition:none!important}
       }
-    \`;
+    `;
     document.head.appendChild(style);
   }
 
