@@ -8,6 +8,11 @@ Questo file è il riferimento **persistente nel repository** per ritrovare le ve
 - **Backup prima della grafica blu**: `backup/main-20261123-before-mobile-blue-redesign`.
 - **Backup prima del primo restyling**: `backup/main-20261123-before-home-redesign`.
 
+## Nuovo layout ispirato al rendering (23 novembre 2026)
+- **Backup dello stato precedente al layout ispirato al rendering:** `backup/main-20261123-before-render-match` (baseline `75f34e8ca7c5c19b78bc24b3428b724bbb370e55`).
+- Il nuovo layout si trova in `render_match_ui.js` e viene iniettato da `site_prepare.py`. Per annullare **solo** questo restyling, ripristinare questi file dal backup in un ramo/PR, senza toccare `data.json` o i motori meteorologici.
+- Il backup originario `backup/graphics-original-emergency-20261123` resta disponibile per un recupero più ampio della grafica.
+
 ## Ripristino sicuro della sola grafica iniziale
 Non fare reset forzati di `main` o ripristini integrali: annullerebbero anche i successivi dati meteorologici pubblicati automaticamente.
 
