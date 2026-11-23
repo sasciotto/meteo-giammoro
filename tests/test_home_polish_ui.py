@@ -8,7 +8,7 @@ def test_home_polish_is_injected_and_keeps_single_data_pipeline():
     scripts = s._dashboard_scripts()
     assert "homePolishStyles" in js
     assert "Radar live" in js
-    assert "Nowcast 0–3 h" in js
+    assert "Nowcast osservativo 0–3 h" in js
     assert "Aggiornamento automatico" in js
     assert "homeObservationStrip" in js
     assert "homeSummaryCards" in js
