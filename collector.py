@@ -1145,6 +1145,7 @@ def run(offline: bool = False) -> dict[str, Any]:
             "time": "—", "title": "Nessun cambiamento registrato", "text": "—", "window": "—", "confidence": "—", "evidence": "—"
         }),
         "stations": stations,
+        "station_feed_health": station_meta,
         "dpc_observations": dpc_obs,
         "nowcast_evidence": {
             "radar": dpc_radar_evidence(dpc_obs),
