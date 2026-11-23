@@ -20,6 +20,7 @@ VERIFICATION_HISTORY_UI_PATH = Path(__file__).with_name("verification_history_ui
 RADAR_UI_PATH = Path(__file__).with_name("radar_ui.js")
 RADAR_SOURCES_UI_PATH = Path(__file__).with_name("radar_sources_ui.js")
 HOME_POLISH_UI_PATH = Path(__file__).with_name("home_polish_ui.js")
+RENDER_MATCH_UI_PATH = Path(__file__).with_name("render_match_ui.js")
 SEISMIC_EVENTS_UI_PATH = Path(__file__).with_name("seismic_events_ui.js")
 SOLAR_MONITORING_UI_PATH = Path(__file__).with_name("solar_monitoring_ui.js")
 SOLAR_HISTORY_UI_PATH = Path(__file__).with_name("solar_history_ui.js")
@@ -37,6 +38,7 @@ def _dashboard_scripts() -> str:
         RADAR_UI_PATH,
         RADAR_SOURCES_UI_PATH,
         HOME_POLISH_UI_PATH,
+        RENDER_MATCH_UI_PATH,
         SEISMIC_EVENTS_UI_PATH,
         SOLAR_MONITORING_UI_PATH,
         SOLAR_HISTORY_UI_PATH,
