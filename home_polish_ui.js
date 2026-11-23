@@ -183,6 +183,112 @@
         body.mode-home .quick{padding:10px 9px}
         body.mode-home .quick-icon{width:24px;height:24px;flex-basis:24px}
       }
+
+      /* Mobile-first blue redesign: pure CSS gradients, no coastal imagery. */
+      body.mode-home{background:linear-gradient(180deg,#d4eaf6 0%,#e3f2fa 48%,#dcebf4 100%);--surface:#f0f8fd;--surface2:#e4f2fa;--line:#b9d4e5;--text:#102f48;--muted:#4a697f;--accent:#08688c;--shadow:0 7px 22px rgba(11,66,99,.10)}
+      body.mode-home .wrap{max-width:1130px;width:100%;min-width:0}
+      body.mode-home .hero{background:linear-gradient(112deg,#083d67 0%,#0b5f8a 55%,#147ca6 100%);border-radius:20px;padding:20px 24px;margin-bottom:13px;box-shadow:0 10px 27px rgba(5,53,84,.18);color:#f5fcff}
+      body.mode-home .hero h1{margin:0;color:#fff;font-size:clamp(25px,3.4vw,37px);letter-spacing:-.035em;line-height:1.12;text-transform:uppercase}
+      body.mode-home .hero .sub{display:none}
+      body.mode-home .hero-meta{min-width:0;max-width:100%;background:rgba(4,50,79,.54);border-color:rgba(203,233,247,.23);color:#e0f1f8;font-size:11px}
+      body.mode-home .hero-meta .muted{color:#deedf6}
+      body.mode-home .home-auto-refresh{color:#b9e8d2;font-size:10px}
+      body.mode-home .mode-switch{border-color:#aacfe2;background:#c5e2f0}
+      body.mode-home .mode-btn.active{background:#075b82}
+      body.mode-home .weather-main{background:#0a608e;border-color:#0c729c;box-shadow:0 13px 33px rgba(9,75,117,.19)}
+      body.mode-home .weather-main.calm:before,
+      body.mode-home .weather-main.cloudy:before,
+      body.mode-home .weather-main.rain:before,
+      body.mode-home .weather-main.storm:before{background:linear-gradient(117deg,#075080 0%,#0875a7 69%,#459bc1 100%);opacity:1}
+      body.mode-home .weather-main .weather-place,
+      body.mode-home .weather-main .weather-temp,
+      body.mode-home .weather-main .weather-description,
+      body.mode-home .weather-main .weather-subline{color:#fff}
+      body.mode-home .weather-main .weather-place{color:#cbeafa}
+      body.mode-home .weather-icon{background:rgba(238,251,255,.16);border:1px solid rgba(229,247,255,.27);filter:none}
+      body.mode-home .weather-main .quick{background:#d5eefa;border-color:#aad6eb;box-shadow:0 4px 11px rgba(5,43,67,.10)}
+      body.mode-home .weather-main .quick .k,
+      body.mode-home .weather-main .quick b{color:#103e59}
+      body.mode-home .weather-main .quick span{color:#375d73}
+      body.mode-home .weather-main .quick .quick-icon{background:#b7dfef;color:#075d83}
+      body.mode-home .weather-main .wind-compass{background:#b9e2f4;border-color:#a0cee1;color:#075b80}
+      body.mode-home .weather-main .wind-arrow{color:#075b80}
+      body.mode-home .weather-gust{background:#f4e4bf;border-color:#dfbd83;color:#664009}
+      body.mode-home .weather-gust.strong,
+      body.mode-home .weather-gust.severe{background:#ffdfd5;border-color:#efa89e;color:#902b20}
+      body.mode-home #forecastDetail{background:#e6f4fb;border:1px solid #b8d9eb;box-shadow:0 9px 23px rgba(25,75,107,.09)}
+      body.mode-home #forecastDetail .home-nowcast{background:#d4edf7;border-color:#a8d3e7;color:#194962}
+      body.mode-home #forecastDetail .home-nowcast.calm{background:#d3ece6;border-color:#add8c6;color:#19513e}
+      body.mode-home #forecastDetail .home-nowcast.watch{background:#f6eacb;border-color:#e1c78b;color:#71501b}
+      body.mode-home #forecastDetail .home-nowcast.incoming{background:#f7e1cc;border-color:#e5bd93;color:#714113}
+      body.mode-home #forecastDetail .home-nowcast.active{background:#f4d9d9;border-color:#dfaaa9;color:#752928}
+      body.mode-home #forecastDetail .home-nowcast-signal{background:rgba(246,253,255,.79);border-color:rgba(95,153,178,.28)}
+      body.mode-home #forecastDetail .hour-cell{background:#d9edf9;border:1px solid #b8d8e8;min-width:0}
+      body.mode-home #forecastDetail .day-card{background:#d9eef9;border-color:#b9daea}
+      body.mode-home #forecastDetail .home-model-outlook{background:#dcecf5;border-color:#b9d8e8}
+      body.mode-home .home-stations{background:#d6eaf7;border:1px solid #b8d7e8}
+      body.mode-home .home-station-item{background:#edf7fc;border-color:#bad9ea}
+      body.mode-home #homeObservationStrip{background:#daeaf4;border-color:#bed8e7}
+      body.mode-home #homeObservationStrip .home-observation-chip{background:#edf7fc;border-color:#bbd9e9}
+      body.mode-home .home-alert.home-alert-compact{background:#d8ede6;border-color:#b1d5c7}
+      body.mode-home .forecast-block-hint{color:#426b84}
+      @media(max-width:760px){
+        body.mode-home .wrap{padding:12px}
+        body.mode-home .hero{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:17px 17px 15px;border-radius:17px}
+        body.mode-home .hero h1{font-size:clamp(24px,6.5vw,35px);overflow-wrap:anywhere}
+        body.mode-home .hero-meta{display:flex;flex-direction:row;align-items:center;gap:6px;justify-content:flex-start;flex-wrap:wrap;padding:7px 10px;text-align:left;max-width:100%;font-size:10px}
+        body.mode-home .hero-meta strong{font-size:11px}
+        body.mode-home .hero-meta .home-auto-refresh{width:100%;margin:2px 0 0}
+        body.mode-home .navbar{margin-bottom:12px}
+        body.mode-home .mode-switch{width:100%}
+        body.mode-home .mode-btn{flex:1;min-height:43px}
+        body.mode-home .weather-main-inner{padding:16px}
+        body.mode-home .weather-main{border-radius:17px}
+        body.mode-home .weather-top{display:grid;grid-template-columns:60px minmax(0,1fr);gap:12px;align-items:center}
+        body.mode-home .weather-icon{width:60px;height:60px;min-width:60px;font-size:38px;border-radius:16px}
+        body.mode-home .weather-temp{font-size:clamp(45px,10vw,69px);line-height:1}
+        body.mode-home .weather-description{font-size:clamp(17px,4.4vw,23px);margin-top:7px}
+        body.mode-home .weather-place{margin:0 0 7px;font-size:10px}
+        body.mode-home .weather-badge{grid-column:1 / -1}
+        body.mode-home .quick-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:16px}
+        body.mode-home .quick{padding:12px;min-height:105px}
+        body.mode-home .quick .k{font-size:10px;gap:6px}
+        body.mode-home .quick .k>span:last-child{font-size:10px}
+        body.mode-home .quick b{font-size:clamp(17px,4.2vw,22px);margin-top:7px}
+        body.mode-home .quick span{overflow-wrap:anywhere}
+        body.mode-home #forecastDetail{padding:15px 12px;margin-top:14px}
+        body.mode-home #forecastDetail .home-nowcast{padding:13px}
+        body.mode-home #forecastDetail .home-nowcast-title{font-size:18px}
+        body.mode-home #forecastDetail .home-nowcast-text{font-size:13px}
+        body.mode-home #forecastDetail .home-nowcast-signals{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+        body.mode-home #forecastDetail .hourly-strip{display:grid;grid-auto-columns:minmax(125px,45%);gap:8px;overflow-x:auto}
+        body.mode-home #forecastDetail .day-grid{grid-template-columns:1fr}
+        body.mode-home .home-stations-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+        body.mode-home .home-stations{padding:15px 12px}
+        body.mode-home .forecast-block-heading{flex-wrap:wrap}
+        body.mode-home .forecast-block-hint{font-size:10px}
+      }
+      @media(max-width:440px){
+        body.mode-home .wrap{padding:9px}
+        body.mode-home .hero{padding:15px 14px}
+        body.mode-home .hero h1{font-size:clamp(23px,6.5vw,29px)}
+        body.mode-home .quick{padding:10px;min-height:100px}
+        body.mode-home .quick .k .quick-icon{width:24px;height:24px;flex-basis:24px}
+        body.mode-home .weather-top{grid-template-columns:50px minmax(0,1fr);gap:10px}
+        body.mode-home .weather-icon{width:50px;height:50px;min-width:50px;font-size:32px}
+        body.mode-home .weather-temp{font-size:clamp(39px,10.6vw,50px)}
+        body.mode-home .weather-description{font-size:17px}
+        body.mode-home .home-stations-grid{grid-template-columns:1fr}
+        body.mode-home #forecastDetail .home-nowcast-signals{grid-template-columns:1fr 1fr}
+        body.mode-home #forecastDetail .hourly-strip{grid-auto-columns:minmax(120px,62%)}
+        body.mode-home #forecastDetail .day-card{padding:13px}
+      }
+      @media(max-width:330px){
+        body.mode-home .weather-top{grid-template-columns:1fr}
+        body.mode-home .weather-icon{display:none}
+        body.mode-home .quick-grid{grid-template-columns:1fr}
+        body.mode-home #forecastDetail .home-nowcast-signals{grid-template-columns:1fr}
+      }
       @media(prefers-reduced-motion:reduce){
         body.mode-home .mode-btn,body.mode-home .weather-main *{transition:none!important}
       }
