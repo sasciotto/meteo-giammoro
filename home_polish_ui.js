@@ -252,6 +252,48 @@
       sourceWrap.appendChild(chip);
     });
     strip.appendChild(sourceWrap);
+
+    // Display source health in the existing technical footer, never in the
+    // main weather hero. Each indicator needs its own observation timestamp.
+    const health = document.createElement('div');
+    health.className = 'home-observation-sources';
+    health.setAttribute('aria-label', 'Disponibilità delle fonti meteorologiche');
+    const cycleTime = Date.parse(data?.meta?.last_check_iso || '');
+    const cycleFresh = Number.isFinite(cycleTime) &&
+      cycleTime <= Date.now() + 5 * 60000 && Date.now() - cycleTime <= 25 * 60000;
+    const sri = data?.dpc_observations?.products?.SRI || {};
+    const radarTime = Date.parse(sri.timestamp || '');
+    const radarFresh = cycleFresh && sri.ok === true &&
+      Number.isFinite(radarTime) && radarTime <= Date.now() + 5 * 60000 &&
+      Date.now() - radarTime <= 30 * 60000;
+    const liveStations = (Array.isArray(data?.stations) ? data.stations : [])
+      .filter(s => s && s.source_quality !== 'primary' && s.status === 'online' &&
+        !s.excluded_from_analysis);
+    const stationStatus = cycleFresh
+      ? `Stazioni di supporto: ${liveStations.length} online nel ciclo · verifica orari singoli`
+      : 'Stazioni: dati non recenti';
+    const mtg = data?.mtg_li || {};
+    const lightningTime = Date.parse((data?.lightning || {}).observed_at || '');
+    const lightningFresh = cycleFresh && data?.lightning?.status === 'ok' &&
+      Number.isFinite(lightningTime) && lightningTime <= Date.now() + 2 * 60000 &&
+      Date.now() - lightningTime <= 45 * 60000;
+    const alertClass = String(data?.alert?.level_class || 'unknown').toLowerCase();
+    const alertStatus = !cycleFresh ? 'Allerte: aggiornamento da verificare'
+      : ['unknown', 'unavailable', ''].includes(alertClass)
+        ? 'Allerte ufficiali: livello non verificato'
+        : 'Allerte ufficiali: livello verificato nel ciclo';
+    for (const label of [
+      radarFresh ? 'Radar SRI: recente' : 'Radar SRI: non verificabile ora',
+      stationStatus,
+      lightningFresh ? 'Fulminazioni: dato recente' : 'Fulminazioni: dato non disponibile o non recente',
+      alertStatus
+    ]) {
+      const chip = document.createElement('span');
+      chip.className = 'home-observation-chip';
+      chip.textContent = label;
+      health.appendChild(chip);
+    }
+    strip.appendChild(health);
   }
 
   function currentSkyConsensus(data) {
