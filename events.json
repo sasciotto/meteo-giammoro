@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "updated_at": "2026-11-23T14:11:54+00:00",
+  "updated_at": "2026-11-23T14:26:53+00:00",
   "active_event": null,
   "events": [
     {
@@ -777,20 +777,20 @@
     "semantics_commit": "b63ae2becaf09e42cbfa7568bb368fa52232ece1",
     "counts": {
       "true_positive": 85,
-      "true_negative": 6998,
+      "true_negative": 7000,
       "false_positive": 150,
       "false_negative": 257
     },
     "by_horizon": {
       "30": {
         "true_positive": 49,
-        "true_negative": 2328,
+        "true_negative": 2329,
         "false_positive": 64,
         "false_negative": 65
       },
       "60": {
         "true_positive": 31,
-        "true_negative": 2309,
+        "true_negative": 2310,
         "false_positive": 75,
         "false_negative": 82
       },
@@ -802,8 +802,6 @@
       }
     },
     "processed_keys": [
-      "20261117T013609Z:30",
-      "20261117T002038Z:120",
       "20261117T011839Z:60",
       "20261117T014903Z:30",
       "20261117T003608Z:120",
@@ -1701,9 +1699,11 @@
       "20261123T124912Z:60",
       "20261123T132644Z:30",
       "20261123T131052Z:60",
-      "20261123T134141Z:30"
+      "20261123T134141Z:30",
+      "20261123T132644Z:60",
+      "20261123T135634Z:30"
     ],
-    "latest_verified_at": "2026-11-23T14:11:54+00:00"
+    "latest_verified_at": "2026-11-23T14:26:53+00:00"
   },
   "verification_event_archive": [
     {
@@ -21978,7 +21978,8 @@
           "observed_at_issue": false
         },
         "evaluated_horizons": [
-          30
+          30,
+          60
         ]
       },
       {
@@ -22017,11 +22018,31 @@
           "max_precip_0_3h_mm": 0.5,
           "observed_at_issue": false
         },
-        "evaluated_horizons": []
+        "evaluated_horizons": [
+          30
+        ]
       },
       {
         "id": "20261123T141151Z",
         "issued_at": "2026-11-23T14:11:51+00:00",
+        "prediction": {
+          "by_horizon": {
+            "30": false,
+            "60": false,
+            "120": true
+          },
+          "forecast_status": "weak",
+          "wet_models": 2,
+          "current_wet_models": 0,
+          "notable_models": 1,
+          "max_precip_0_3h_mm": 0.5,
+          "observed_at_issue": false
+        },
+        "evaluated_horizons": []
+      },
+      {
+        "id": "20261123T142650Z",
+        "issued_at": "2026-11-23T14:26:50+00:00",
         "prediction": {
           "by_horizon": {
             "30": false,
@@ -28302,24 +28323,48 @@
         "forecast_status": "weak",
         "wet_models": 2,
         "current_wet_models": 0
+      },
+      {
+        "snapshot_id": "20261123T132641Z",
+        "issued_at": "2026-11-23T13:26:41+00:00",
+        "verified_at": "2026-11-23T14:26:50+00:00",
+        "horizon_minutes": 60,
+        "predicted_rain": false,
+        "observed_rain": false,
+        "outcome": "true_negative",
+        "forecast_status": "weak",
+        "wet_models": 2,
+        "current_wet_models": 0
+      },
+      {
+        "snapshot_id": "20261123T135631Z",
+        "issued_at": "2026-11-23T13:56:31+00:00",
+        "verified_at": "2026-11-23T14:26:50+00:00",
+        "horizon_minutes": 30,
+        "predicted_rain": false,
+        "observed_rain": false,
+        "outcome": "true_negative",
+        "forecast_status": "weak",
+        "wet_models": 2,
+        "current_wet_models": 0
       }
     ],
     "counts": {
       "true_positive": 0,
-      "true_negative": 481,
+      "true_negative": 483,
       "false_positive": 41,
       "false_negative": 0
     },
     "by_horizon": {
       "30": {
         "true_positive": 0,
-        "true_negative": 204,
+        "true_negative": 205,
         "false_positive": 3,
         "false_negative": 0
       },
       "60": {
         "true_positive": 0,
-        "true_negative": 164,
+        "true_negative": 165,
         "false_positive": 15,
         "false_negative": 0
       },
@@ -28331,8 +28376,6 @@
       }
     },
     "processed_keys": [
-      "20261118T223227Z:60",
-      "20261118T230239Z:30",
       "20261118T214649Z:120",
       "20261118T224351Z:60",
       "20261118T231753Z:30",
@@ -29530,7 +29573,9 @@
       "20261123T124909Z:60",
       "20261123T132641Z:30",
       "20261123T131049Z:60",
-      "20261123T134138Z:30"
+      "20261123T134138Z:30",
+      "20261123T132641Z:60",
+      "20261123T135631Z:30"
     ],
     "skipped_unverifiable": 764
   },
