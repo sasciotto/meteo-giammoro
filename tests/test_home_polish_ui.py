@@ -8,7 +8,7 @@ def test_home_polish_is_injected_and_keeps_single_data_pipeline():
     scripts = s._dashboard_scripts()
     assert "homePolishStyles" in js
     assert "Radar live" in js
-    assert "Nowcast 0–3 h" in js
+    assert "Nowcast osservativo 0–3 h" in js
     assert "Aggiornamento automatico" in js
     assert "homeObservationStrip" in js
     assert "homeSummaryCards" in js
@@ -18,30 +18,37 @@ def test_home_polish_is_injected_and_keeps_single_data_pipeline():
     assert "fetch(`data.json" not in js
 
 
-def test_home_polish_reuses_backend_nowcast_and_marks_model_timeline():
+def test_home_polish_keeps_observation_separate_from_model_timeline():
     js = Path("home_polish_ui.js").read_text(encoding="utf-8")
+    forecast = Path("forecast_dashboard.js").read_text(encoding="utf-8")
     compact = "".join(js.split())
-    assert "data?.home_summary?.hourly" in js
-    assert "Pioggia modello" in js
-    assert "homeNowcastSimple" in js
     assert "renderForecastDashboard" in js
     assert "home-alert-compact" in js
     assert "['warning','orange','red']" in compact
+    assert "Nowcast osservativo 0–3 h" in js
+    assert "homeObservationStrip" in js
+    assert "homeNowcastSimple" in forecast
+    assert "PREVISIONE MODELLISTICA" in forecast
+    assert "const hourly = Array.isArray(home.hourly)" in forecast
+    assert "renderNowcastTimeline(data)" not in js
 
 
-def test_home_polish_hourly_cards_use_backend_weather_icons():
+def test_home_hourly_cards_use_consensus_weather_icons_without_duplicates():
     js = Path("home_polish_ui.js").read_text(encoding="utf-8")
-    assert "row?.icon || fallbackWeatherIcon(row?.label)" in js
-    assert "home-nowcast-step-icon" in js
-    assert "fallbackWeatherIcon" in js
-    assert "aria-hidden" in js
+    forecast = Path("forecast_dashboard.js").read_text(encoding="utf-8")
+    assert 'class="hour-icon"' in forecast
+    assert "esc(h.icon || '•')" in forecast
+    assert 'aria-hidden="true"' in forecast
+    assert 'aria-label="Previsione oraria, scorrevole"' in forecast
+    assert "home-nowcast-step-icon" in js  # legacy CSS is harmless, but not rendered
+    assert "renderNowcastTimeline(data)" not in js
 
 
 def test_home_polish_emphasizes_operational_nowcast_message():
     js = Path("home_polish_ui.js").read_text(encoding="utf-8")
-    compact = "".join(js.split())
-    assert ".home-nowcast-text{font-size:17px;font-weight:640;line-height:1.55" in compact
-    assert ".home-nowcast-text{font-size:16px;line-height:1.5}" in compact
+    assert "body.mode-home #forecastDetail .home-nowcast-title" in js
+    assert "body.mode-home #forecastDetail .home-nowcast-text" in js
+    assert "@media(max-width:650px)" in js
 
 
 def test_home_polish_keeps_support_station_identity_explicit():
