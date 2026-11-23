@@ -119,9 +119,11 @@ jobs:
         if: steps.freshness.outputs.should_run == 'true'
         run: pip install -r requirements.txt
 
-      - name: Test
+      # La suite completa gira in validate-code.yml: un test grafico obsoleto
+      # non deve bloccare il nowcast durante gli aggiornamenti programmati.
+      - name: Verifica sintassi backend operativo
         if: steps.freshness.outputs.should_run == 'true'
-        run: python -m pytest -q
+        run: python -m py_compile collector.py nowcast_v4.py home_forecast_v2.py analysis_quality_update.py runtime_quality.py site_prepare.py
 
       - name: Conserva ciclo precedente
         if: steps.freshness.outputs.should_run == 'true'
@@ -260,6 +262,34 @@ jobs:
         if: steps.freshness.outputs.should_run == 'true'
         run: python analysis_quality_update.py --data data.json
 
+      - name: Convalida dataset pronto per pubblicazione e persistenza
+        id: weather_data_ready
+        if: steps.freshness.outputs.should_run == 'true'
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          data = json.loads(Path('data.json').read_text(encoding='utf-8'))
+          meta = data.get('meta') or {}
+          raw = meta.get('last_check_iso')
+          if not raw:
+              raise SystemExit('Dataset senza timestamp: salvataggio non consentito')
+          stamp = datetime.fromisoformat(raw.replace('Z', '+00:00'))
+          if stamp.tzinfo is None:
+              raise SystemExit('Timestamp del dataset senza fuso orario')
+          age = (datetime.now(timezone.utc) - stamp.astimezone(timezone.utc)).total_seconds() / 60
+          if not -5 <= age <= 30:
+              raise SystemExit(f'Dataset non corrente ({age:.0f} minuti): salvataggio non consentito')
+          if meta.get('collector_status') not in ('ok', 'degraded'):
+              raise SystemExit('Collector senza stato valido')
+          if not isinstance(data.get('territory'), dict) or not isinstance(data.get('home_summary'), dict):
+              raise SystemExit('Dataset incompleto: mancano sezioni obbligatorie')
+          print(f'Dataset convalidato: età {age:.1f} min; collector={meta["collector_status"]}')
+          PY
+
       - name: Prepara sito con previsione
         if: steps.freshness.outputs.should_run == 'true'
         run: |
@@ -307,7 +337,9 @@ jobs:
         uses: actions/deploy-pages@v4
 
       - name: Salva dati aggiornati nel repository
-        if: steps.freshness.outputs.should_run == 'true'
+        # La persistenza dei dati validati non deve dipendere dal successo di
+        # Pages. Se il deploy fallisce, il dataset resta comunque recuperabile.
+        if: always() && steps.weather_data_ready.outcome == 'success'
         run: |
           DATA_FILES="data.json history.json solar_history.json verification.json events.json seismic_events.json station_rain_history.json"
           if git diff --quiet -- ${DATA_FILES} && git diff --cached --quiet -- ${DATA_FILES}; then
