@@ -308,7 +308,8 @@
       const ageLabel = age === null ? 'Orario non verificabile' : age <= 15 ? 'Osservazione recente' : age <= 30 ? 'Osservazione in ritardo' : age <= 60 ? 'Osservazione vecchia' : 'Dato non corrente';
       const label = s.display_name || s.name || 'Stazione';
       const value = current ? num(s.temperature) : null;
-      return `<article class="home-station-item"><b>${esc(label)}</b><small>${esc(s.name || '')}</small><div class="home-station-observation">${value === null ? 'Non disponibile' : fmt(value, 1) + ' °C'}</div><small>${esc(ageLabel + ' · ' + (s.updated || 'Orario non disponibile'))}</small></article>`;
+      const wind = current ? num(s.wind) : null;
+      return `<article class="home-station-item"><b>${esc(label)}</b><small>${esc(s.name || '')}</small><div class="home-station-observation">${value === null ? 'Non disponibile' : fmt(value, 1) + ' °C'}</div><span class="home-station-wind">${wind === null ? 'Vento —' : 'Vento ' + fmt(wind, 1) + ' km/h'}</span><small>${esc(ageLabel + ' · ' + (s.updated || 'Orario non disponibile'))}</small></article>`;
     }).join('');
     section.innerHTML = `<div class="section-title"><div><h2>Stazioni nei dintorni</h2><div class="home-stations-note">Dati osservati nelle località indicate; non sono misure di Giammoro.</div></div></div>
       <div class="home-stations-note">${oldCycle ? 'Aggiornamento generale non recente · ' : ''}${live.length} stazioni con osservazione recente (≤15 min) su ${support.length} di supporto. ${esc(primaryNote)}</div>
