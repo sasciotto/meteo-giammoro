@@ -51,3 +51,4 @@ def test_primary_station_not_implicitly_activated():
     assert '"excluded_from_analysis": True' in source
     assert '"unmatched_groups"' in source
     assert '"matched_groups"' in source
+    assert '"station_feed_health": station_meta' in source
