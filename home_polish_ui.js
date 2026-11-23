@@ -289,6 +289,109 @@
         body.mode-home .quick-grid{grid-template-columns:1fr}
         body.mode-home #forecastDetail .home-nowcast-signals{grid-template-columns:1fr}
       }
+
+      /* Readable balanced theme: emergency baseline remains on its own branch. */
+      body.mode-home{background:linear-gradient(180deg,#e4eef3 0%,#eef3f5 58%,#e9f0f4 100%);--surface:#f8fbfc;--surface2:#edf5f8;--line:#c8dae3;--text:#162f40;--muted:#526d7d;--accent:#116a82;--shadow:0 6px 19px rgba(20,56,78,.07)}
+      body.mode-home .wrap{max-width:1080px}
+      body.mode-home .hero{background:linear-gradient(112deg,#174f67 0%,#216a83 100%);padding:19px 23px;border-radius:17px;box-shadow:0 7px 21px rgba(30,75,98,.11);gap:16px}
+      body.mode-home .hero h1{font-size:clamp(26px,3.2vw,34px);line-height:1.17;letter-spacing:-.028em}
+      body.mode-home .hero-meta{background:rgba(10,54,76,.20);border:1px solid rgba(224,243,248,.37);padding:10px 13px;line-height:1.45;font-size:12px}
+      body.mode-home .hero-meta strong{font-size:13px}
+      body.mode-home .hero-meta .home-auto-refresh{font-size:11px}
+      body.mode-home .navbar{justify-content:flex-start;margin-bottom:16px}
+      body.mode-home .mode-switch{display:flex;flex-wrap:wrap;max-width:100%;gap:3px;padding:4px}
+      body.mode-home .mode-btn{min-height:43px;padding:9px 16px;font-size:13px}
+      body.mode-home .weather-main{background:#e3f1f7;border:1px solid #bed7e3;border-radius:18px;box-shadow:0 9px 26px rgba(20,71,99,.085)}
+      body.mode-home .weather-main.calm:before,
+      body.mode-home .weather-main.cloudy:before,
+      body.mode-home .weather-main.rain:before,
+      body.mode-home .weather-main.storm:before{background:linear-gradient(115deg,#d4e8f2 0%,#e8f4f9 68%,#f0f8fb 100%);opacity:1}
+      body.mode-home .weather-main .weather-place{color:#38677e}
+      body.mode-home .weather-main .weather-temp{color:#133c56}
+      body.mode-home .weather-main .weather-description{color:#28566c}
+      body.mode-home .weather-main .weather-subline{color:#496b7b}
+      body.mode-home .weather-main-inner{padding:24px}
+      body.mode-home .weather-top{align-items:center;gap:17px}
+      body.mode-home .weather-icon{background:#c2e2f1;border-color:#b1d3e4}
+      body.mode-home .weather-temp{font-size:clamp(57px,7vw,78px)}
+      body.mode-home .weather-description{font-size:clamp(20px,2.4vw,26px)}
+      body.mode-home .quick-grid{margin-top:22px;gap:11px}
+      body.mode-home .weather-main .quick{background:#f4fafc;border-color:#cbdfe8;min-height:113px;padding:14px;box-shadow:none}
+      body.mode-home .weather-main .quick .k{color:#426c81;font-size:12px;letter-spacing:0}
+      body.mode-home .weather-main .quick .k>span:last-child{font-size:12px}
+      body.mode-home .weather-main .quick b{font-size:clamp(20px,2.3vw,25px);margin-top:7px}
+      body.mode-home .weather-main .quick span{font-size:12px}
+      body.mode-home #forecastDetail{background:#f1f8fb;border:1px solid #c6dce7;border-radius:17px;padding:21px}
+      body.mode-home #forecastDetail>.section-title h2{font-size:clamp(21px,2.4vw,25px)}
+      body.mode-home #forecastDetail .home-nowcast{background:#e1f1f6;border-color:#c1dce7;padding:17px 18px}
+      body.mode-home #forecastDetail .home-nowcast.calm{background:#e1f1ec;border-color:#c3ddd2}
+      body.mode-home #forecastDetail .home-nowcast.watch{background:#f8f0df;border-color:#e5d3b4}
+      body.mode-home #forecastDetail .home-nowcast.incoming{background:#f9e9dc;border-color:#eac5ad}
+      body.mode-home #forecastDetail .home-nowcast.active{background:#f8e3e1;border-color:#e8bcb9}
+      body.mode-home #forecastDetail .home-nowcast-k{font-size:11px;letter-spacing:.055em}
+      body.mode-home #forecastDetail .home-nowcast-title{font-size:clamp(20px,2.2vw,24px)}
+      body.mode-home #forecastDetail .home-nowcast-text{font-size:15px;line-height:1.55;font-weight:520}
+      body.mode-home #forecastDetail .home-nowcast-signals{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+      body.mode-home #forecastDetail .home-nowcast-signal{background:rgba(255,255,255,.55);padding:12px 13px;border-radius:11px}
+      body.mode-home #forecastDetail .home-nowcast-signal span{font-size:11px;letter-spacing:0;opacity:.85;margin-bottom:5px}
+      body.mode-home #forecastDetail .home-nowcast-signal b{font-size:13px;line-height:1.5;font-weight:690}
+      body.mode-home #forecastDetail .hour-cell{background:#e6f3fa;border-color:#c6dee9;padding:14px}
+      body.mode-home #forecastDetail .hour-time{font-size:13px}
+      body.mode-home #forecastDetail .hour-cond{font-size:12px}
+      body.mode-home #forecastDetail .hour-meta{font-size:11px}
+      body.mode-home #forecastDetail .day-card{background:#e9f4f9;border-color:#c8dee8}
+      body.mode-home .home-stations{background:#eef6fa;border-color:#c4dbe7}
+      body.mode-home .home-station-item{background:#f8fbfc;border-color:#d1e1e9}
+      body.mode-home .home-station-item b{font-size:14px}
+      body.mode-home .home-station-item small{font-size:12px}
+      body.mode-home .home-station-observation{font-size:21px}
+      body.mode-home #homeObservationStrip{background:#e6eef3;border-color:#ccdce5}
+      @media(max-width:920px){
+        body.mode-home .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+        body.mode-home .home-stations-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      }
+      @media(max-width:650px){
+        body.mode-home .wrap{padding:12px}
+        body.mode-home .hero{padding:16px;display:flex;flex-direction:column;gap:10px;align-items:stretch;border-radius:15px}
+        body.mode-home .hero h1{font-size:clamp(25px,6.5vw,32px)}
+        body.mode-home .hero-meta{display:flex;flex-wrap:wrap;justify-content:flex-start;align-items:center;gap:5px 8px;width:100%;padding:9px 11px;font-size:12px}
+        body.mode-home .hero-meta strong{font-size:12px}
+        body.mode-home .hero-meta .home-auto-refresh{width:100%;font-size:11px}
+        body.mode-home .navbar{margin-bottom:12px}
+        body.mode-home .mode-switch{width:100%;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:1px}
+        body.mode-home .mode-btn{min-width:0;padding:10px 3px;font-size:clamp(10px,2.75vw,12px);min-height:43px}
+        body.mode-home .weather-main-inner{padding:17px}
+        body.mode-home .weather-top{grid-template-columns:56px minmax(0,1fr);gap:12px}
+        body.mode-home .weather-icon{width:56px;height:56px;min-width:56px;font-size:36px;border-radius:14px}
+        body.mode-home .weather-temp{font-size:clamp(45px,12vw,62px)}
+        body.mode-home .weather-description{font-size:clamp(18px,4.5vw,22px)}
+        body.mode-home .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:17px}
+        body.mode-home .weather-main .quick{padding:12px;min-height:106px}
+        body.mode-home .weather-main .quick .k>span:last-child{font-size:11px}
+        body.mode-home .weather-main .quick b{font-size:clamp(18px,5vw,23px);overflow-wrap:anywhere}
+        body.mode-home .weather-main .quick span{font-size:11px}
+        body.mode-home #forecastDetail{padding:16px 13px}
+        body.mode-home #forecastDetail .home-nowcast{padding:14px}
+        body.mode-home #forecastDetail .home-nowcast-text{font-size:14px}
+        body.mode-home #forecastDetail .home-nowcast-signals{grid-template-columns:1fr}
+        body.mode-home #forecastDetail .home-nowcast-signal{padding:11px 12px}
+        body.mode-home #forecastDetail .home-nowcast-signal span{font-size:11px}
+        body.mode-home #forecastDetail .home-nowcast-signal b{font-size:13px}
+        body.mode-home #forecastDetail .hourly-strip{grid-auto-columns:minmax(133px,65%);scroll-snap-type:x mandatory}
+        body.mode-home #forecastDetail .day-grid{grid-template-columns:1fr}
+        body.mode-home .home-stations-grid{grid-template-columns:1fr}
+        body.mode-home .home-station-item{padding:13px}
+      }
+      @media(max-width:365px){
+        body.mode-home .wrap{padding:9px}
+        body.mode-home .weather-top{grid-template-columns:48px minmax(0,1fr);gap:9px}
+        body.mode-home .weather-icon{width:48px;height:48px;min-width:48px;font-size:30px}
+        body.mode-home .weather-temp{font-size:43px}
+        body.mode-home .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+        body.mode-home .weather-main .quick{padding:9px}
+        body.mode-home .weather-main .quick b{font-size:18px}
+        body.mode-home .mode-btn{font-size:10px}
+      }
       @media(prefers-reduced-motion:reduce){
         body.mode-home .mode-btn,body.mode-home .weather-main *{transition:none!important}
       }
