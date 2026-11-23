@@ -3,7 +3,6 @@
 
   const CHECK_INTERVAL_MS = 60_000;
   const STATE_KEY = 'meteo-giammoro:auto-refresh-state';
-  let knownStamp = null;
   let knownSeismicStamp = null;
   let checking = false;
   let checkingSeismic = false;
@@ -103,21 +102,18 @@
       const stamp = dataStamp(data);
       if (!stamp) return;
 
-      if (initial || !knownStamp) {
-        knownStamp = stamp;
-        return;
-      }
-
-      if (stamp !== knownStamp) {
-        // Render the new meteorological state without navigating away or losing
-        // the current view, scroll position or active radar controls.
-        if (typeof window.applyMeteoData === 'function') {
-          await window.applyMeteoData(data);
-          knownStamp = stamp;
-        } else {
-          knownStamp = stamp;
-          reloadWithFreshUrl();
-        }
+      // Compare with the dataset actually rendered, not merely a value
+      // observed during a concurrent background fetch on page startup.
+      const rendered = window.meteoRenderedStamp || null;
+      const nextTime = Date.parse(stamp);
+      const currentTime = Date.parse(rendered || '');
+      if (!Number.isFinite(nextTime)) return;
+      if (rendered && Number.isFinite(currentTime) && nextTime <= currentTime) return;
+      if (typeof window.applyMeteoData === 'function') {
+        await window.applyMeteoData(data);
+      } else if (!initial) {
+        // Old/unmodified pages may still use full reload as a fallback.
+        reloadWithFreshUrl();
       }
     } catch (_) {
       // Un errore di rete non deve interferire con la dashboard già caricata.
