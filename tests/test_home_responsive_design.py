@@ -7,13 +7,11 @@ from site_prepare import transform
 def test_home_uses_accessible_metric_icons_without_removing_values():
     html = Path("index.html").read_text(encoding="utf-8")
     assert html.count('class="quick-icon"') == 4
-    for label in ("Umidità", "Vento", "Pioggia 24 h", "Pressione"):
+    for label in ("Umidità", "Vento", "Pioggia 24 h", "Nuvolosità"):
         assert f"<span>{label}</span>" in html
     assert 'id="homeTemp"' in html
     assert 'id="homeGust" hidden' in html
     assert 'id="homeWind"' in html
-    assert 'id="homePressure"' in html
-    assert 'id="homeCloud" hidden' in html
 
 
 def test_forecast_has_distinct_sections_and_missing_rain_is_not_zero():
